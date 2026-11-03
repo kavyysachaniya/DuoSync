@@ -17,12 +17,13 @@ import {
 import { AnimatePresence, motion } from 'motion/react';
 import {
   Activity,
-  Cloud,
+  Droplet,
   HeartHandshake,
   LogOut,
   Sparkles,
   Users,
   Watch,
+  Wind,
 } from 'lucide-react';
 import {
   auth,
@@ -57,7 +58,6 @@ import { SkinDashboard } from './components/SkinDashboard';
 import { PartnerModal } from './components/PartnerModal';
 import { OnboardingSubmission, OnboardingWizard } from './components/OnboardingWizard';
 import { FitnessSyncModal } from './components/FitnessSyncModal';
-import { VercelGuideModal } from './components/VercelGuideModal';
 
 function generateSixDigitCode(): string {
   return String(Math.floor(100000 + Math.random() * 900000));
@@ -85,6 +85,9 @@ export default function App() {
   const [signingIn, setSigningIn] = useState(false);
   const [authError, setAuthError] = useState<string | null>(null);
 
+  // Interactive toggle for the Onboarding / Login Hero preview card
+  const [heroPreviewTab, setHeroPreviewTab] = useState<TopNavSection>('health');
+
   const [userDoc, setUserDoc] = useState<UserDoc | null>(null);
   const [workspace, setWorkspace] = useState<WorkspaceDoc | null>(null);
   const [manualWizardOpen, setManualWizardOpen] = useState(false);
@@ -99,7 +102,6 @@ export default function App() {
   // Modals
   const [isPartnerModalOpen, setIsPartnerModalOpen] = useState(false);
   const [isFitnessSyncOpen, setIsFitnessSyncOpen] = useState(false);
-  const [isVercelGuideOpen, setIsVercelGuideOpen] = useState(false);
 
   // Date state for Health Dashboard
   const [selectedDate, setSelectedDate] = useState<string>(todayDate);
@@ -398,7 +400,10 @@ export default function App() {
   }, [workspace?.productIds, careProductsMap]);
 
   // Helper to ensure partner1FitnessApp & partner2FitnessApp are always included in workspace updates
-  const getFitnessAppFields = (ws: WorkspaceDoc, overrides?: Partial<Record<'partner1FitnessApp' | 'partner2FitnessApp', FitnessAppId>>) => ({
+  const getFitnessAppFields = (
+    ws: WorkspaceDoc,
+    overrides?: Partial<Record<'partner1FitnessApp' | 'partner2FitnessApp', FitnessAppId>>
+  ) => ({
     partner1FitnessApp: overrides?.partner1FitnessApp || getValidFitnessApp(ws.partner1FitnessApp),
     partner2FitnessApp: overrides?.partner2FitnessApp || getValidFitnessApp(ws.partner2FitnessApp),
   });
@@ -463,8 +468,18 @@ export default function App() {
           partner2Name: cleanMyName,
           partner2Role: `${cleanMyName}’s Dashboard`,
           partner2WeightUnit: submission.weightUnit,
-          partner2StartWeight: clampNumber(submission.currentWeight, 0, VALIDATION_BOUNDS.MAX_WEIGHT, 60),
-          partner2TargetWeight: clampNumber(submission.targetWeight, 0, VALIDATION_BOUNDS.MAX_WEIGHT, 58),
+          partner2StartWeight: clampNumber(
+            submission.currentWeight,
+            0,
+            VALIDATION_BOUNDS.MAX_WEIGHT,
+            60
+          ),
+          partner2TargetWeight: clampNumber(
+            submission.targetWeight,
+            0,
+            VALIDATION_BOUNDS.MAX_WEIGHT,
+            58
+          ),
           partner2StepsGoal: clampNumber(submission.stepsGoal, 100, 100000, 8500),
           partner2SleepGoalMinutes: clampNumber(submission.sleepGoalMinutes, 60, 1440, 480),
           partner2WaterGoalMl: clampNumber(submission.waterGoalMl, 250, 15000, 2500),
@@ -1051,24 +1066,14 @@ export default function App() {
           <span className="text-lg font-bold tracking-tight text-white font-display whitespace-nowrap shrink-0">
             DuoPulse
           </span>
-          <div className="flex items-center gap-2">
-            <button
-              type="button"
-              onClick={() => setIsVercelGuideOpen(true)}
-              className="min-h-[40px] px-3 py-2 rounded-xl bg-white/8 hover:bg-white/12 border border-white/10 text-xs font-medium text-zinc-200 flex items-center gap-1.5 transition-colors"
-            >
-              <Cloud className="w-3.5 h-3.5 text-emerald-400" />
-              <span>Vercel Guide</span>
-            </button>
-            <button
-              type="button"
-              onClick={handleGoogleSignIn}
-              disabled={signingIn}
-              className="min-h-[40px] px-4 py-2 rounded-xl bg-white text-zinc-950 hover:bg-zinc-200 text-xs font-semibold transition-colors whitespace-nowrap shrink-0"
-            >
-              {signingIn ? 'Signing in...' : 'Sign In'}
-            </button>
-          </div>
+          <button
+            type="button"
+            onClick={handleGoogleSignIn}
+            disabled={signingIn}
+            className="min-h-[40px] px-4 py-2 rounded-xl bg-white text-zinc-950 hover:bg-zinc-200 text-xs font-semibold transition-colors whitespace-nowrap shrink-0"
+          >
+            {signingIn ? 'Signing in...' : 'Sign In'}
+          </button>
         </header>
 
         <main className="max-w-4xl w-full mx-auto my-auto py-8 sm:py-12 grid grid-cols-1 lg:grid-cols-12 gap-6 sm:gap-8 items-center">
@@ -1102,80 +1107,188 @@ export default function App() {
             </div>
           </div>
 
-          {/* Mobile-First Preview Card */}
+          {/* Interactive Mobile-First Preview Card with Working [ Health | Skin ] Toggle */}
           <div className="lg:col-span-5 rounded-3xl bg-[#12141C] border border-white/10 p-5 sm:p-6 space-y-4">
-            <div className="flex items-center justify-between border-b border-white/8 pb-3.5">
+            <div className="flex items-center justify-between border-b border-white/8 pb-3.5 gap-2">
               <div>
-                <div className="text-xs text-emerald-400 font-medium">Fitness App Sync</div>
+                <div className="text-xs text-emerald-400 font-medium">
+                  {heroPreviewTab === 'health' ? 'Fitness & Vitals Rings' : '3-Segment Care Shelf'}
+                </div>
                 <div className="text-sm sm:text-base font-bold text-white">
-                  Google Fit · Apple · Samsung · Fitbit
+                  {heroPreviewTab === 'health'
+                    ? 'Google Fit · Apple · Samsung'
+                    : 'Skincare · Haircare · Bodycare'}
                 </div>
               </div>
-              <div className="flex items-center gap-1 p-1 rounded-full bg-zinc-900 border border-white/10 text-xs font-medium">
-                <span className="px-2.5 py-1 rounded-full bg-white text-zinc-950 font-semibold">
-                  Health
-                </span>
-                <span className="px-2.5 py-1 text-zinc-400">Skin</span>
+
+              {/* Working Interactive Pilled Toggle */}
+              <div
+                role="tablist"
+                aria-label="Preview Dashboard Section"
+                className="flex items-center p-1 rounded-full bg-zinc-900 border border-white/10 text-xs font-medium shrink-0"
+              >
+                <button
+                  type="button"
+                  role="tab"
+                  aria-selected={heroPreviewTab === 'health'}
+                  onClick={() => setHeroPreviewTab('health')}
+                  className={`relative min-h-[32px] px-3 py-1 rounded-full text-xs font-semibold transition-colors flex items-center gap-1 ${
+                    heroPreviewTab === 'health'
+                      ? 'text-zinc-950'
+                      : 'text-zinc-400 hover:text-white'
+                  }`}
+                >
+                  {heroPreviewTab === 'health' && (
+                    <motion.span
+                      layoutId="heroPreviewPill"
+                      transition={{ duration: 0.16, ease: [0.16, 1, 0.3, 1] }}
+                      className="absolute inset-0 rounded-full bg-white"
+                    />
+                  )}
+                  <Activity className="w-3 h-3 relative z-10" />
+                  <span className="relative z-10">Health</span>
+                </button>
+
+                <button
+                  type="button"
+                  role="tab"
+                  aria-selected={heroPreviewTab === 'skin'}
+                  onClick={() => setHeroPreviewTab('skin')}
+                  className={`relative min-h-[32px] px-3 py-1 rounded-full text-xs font-semibold transition-colors flex items-center gap-1 ${
+                    heroPreviewTab === 'skin'
+                      ? 'text-zinc-950'
+                      : 'text-zinc-400 hover:text-white'
+                  }`}
+                >
+                  {heroPreviewTab === 'skin' && (
+                    <motion.span
+                      layoutId="heroPreviewPill"
+                      transition={{ duration: 0.16, ease: [0.16, 1, 0.3, 1] }}
+                      className="absolute inset-0 rounded-full bg-white"
+                    />
+                  )}
+                  <Sparkles className="w-3 h-3 relative z-10" />
+                  <span className="relative z-10">Skin</span>
+                </button>
               </div>
             </div>
 
-            <div className="grid grid-cols-2 gap-2.5">
-              <div className="rounded-2xl bg-zinc-900/90 border border-white/6 p-3 space-y-1">
-                <div className="text-xs text-rose-400 font-medium">Daily Weight</div>
-                <div className="text-base font-mono font-bold text-white tabular-nums">
-                  Start → Goal
-                </div>
-                <div className="text-[11px] text-zinc-400">Circular ring + 7d curve</div>
-              </div>
-              <div className="rounded-2xl bg-zinc-900/90 border border-white/6 p-3 space-y-1">
-                <div className="text-xs text-emerald-400 font-medium">Steps + Fitness App</div>
-                <div className="text-base font-mono font-bold text-white tabular-nums">
-                  Google Fit Sync
-                </div>
-                <div className="text-[11px] text-zinc-400">Or exact EOD input</div>
-              </div>
-              <div className="rounded-2xl bg-zinc-900/90 border border-white/6 p-3 space-y-1">
-                <div className="text-xs text-indigo-400 font-medium">Total Sleep</div>
-                <div className="text-base font-mono font-bold text-white tabular-nums">
-                  Hrs & Mins
-                </div>
-                <div className="text-[11px] text-zinc-400">Duration ring tracker</div>
-              </div>
-              <div className="rounded-2xl bg-zinc-900/90 border border-white/6 p-3 space-y-1">
-                <div className="text-xs text-sky-400 font-medium">Water Intake</div>
-                <div className="text-base font-mono font-bold text-white tabular-nums">
-                  Daily ml / L
-                </div>
-                <div className="text-[11px] text-zinc-400">Hydration progress ring</div>
-              </div>
-            </div>
+            <AnimatePresence mode="wait">
+              {heroPreviewTab === 'health' ? (
+                <motion.div
+                  key="hero-health-preview"
+                  initial={{ opacity: 0, y: 4 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -4 }}
+                  transition={{ duration: 0.15 }}
+                  className="space-y-3"
+                >
+                  <div className="grid grid-cols-2 gap-2.5">
+                    <div className="rounded-2xl bg-zinc-900/90 border border-white/6 p-3 space-y-1">
+                      <div className="text-xs text-rose-400 font-medium">Daily Weight</div>
+                      <div className="text-base font-mono font-bold text-white tabular-nums">
+                        Start → Goal
+                      </div>
+                      <div className="text-[11px] text-zinc-400">Circular ring + 7d curve</div>
+                    </div>
+                    <div className="rounded-2xl bg-zinc-900/90 border border-white/6 p-3 space-y-1">
+                      <div className="text-xs text-emerald-400 font-medium">Steps + Fitness App</div>
+                      <div className="text-base font-mono font-bold text-white tabular-nums">
+                        Google Fit Sync
+                      </div>
+                      <div className="text-[11px] text-zinc-400">Or exact EOD input</div>
+                    </div>
+                    <div className="rounded-2xl bg-zinc-900/90 border border-white/6 p-3 space-y-1">
+                      <div className="text-xs text-indigo-400 font-medium">Total Sleep</div>
+                      <div className="text-base font-mono font-bold text-white tabular-nums">
+                        Hrs & Mins
+                      </div>
+                      <div className="text-[11px] text-zinc-400">Duration ring tracker</div>
+                    </div>
+                    <div className="rounded-2xl bg-zinc-900/90 border border-white/6 p-3 space-y-1">
+                      <div className="text-xs text-sky-400 font-medium">Water Intake</div>
+                      <div className="text-base font-mono font-bold text-white tabular-nums">
+                        Daily ml / L
+                      </div>
+                      <div className="text-[11px] text-zinc-400">Hydration progress ring</div>
+                    </div>
+                  </div>
 
-            <div className="rounded-2xl bg-zinc-900/90 border border-white/6 p-3.5 space-y-1">
-              <div className="text-xs text-amber-400 font-medium">
-                Skincare · Haircare · Bodycare + Bulk Quantities
-              </div>
-              <p className="text-xs text-zinc-400 leading-relaxed">
-                Track custom categories, bulk quantities (shown when 2+), order/open/expiry dates, sale info, and prices paid.
-              </p>
-            </div>
+                  <div className="rounded-2xl bg-zinc-900/90 border border-white/6 p-3.5 space-y-1">
+                    <div className="text-xs text-emerald-400 font-medium">
+                      Real-Time Partner Account Switcher
+                    </div>
+                    <p className="text-xs text-zinc-400 leading-relaxed">
+                      Switch between your dashboard and your partner’s dashboard anytime to view or log daily vitals.
+                    </p>
+                  </div>
+                </motion.div>
+              ) : (
+                <motion.div
+                  key="hero-skin-preview"
+                  initial={{ opacity: 0, y: 4 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -4 }}
+                  transition={{ duration: 0.15 }}
+                  className="space-y-2.5"
+                >
+                  <div className="rounded-2xl bg-zinc-900/90 border border-white/6 p-3 flex items-center justify-between">
+                    <div className="space-y-0.5">
+                      <div className="text-xs font-semibold text-rose-400 flex items-center gap-1.5">
+                        <Sparkles className="w-3.5 h-3.5" />
+                        <span>1. Skincare Essentials</span>
+                      </div>
+                      <div className="text-[11px] text-zinc-400">
+                        Cleanser · Serum · Moisturizer · Sunscreen
+                      </div>
+                    </div>
+                    <span className="text-xs font-mono font-semibold text-white">Qty 2+</span>
+                  </div>
+
+                  <div className="rounded-2xl bg-zinc-900/90 border border-white/6 p-3 flex items-center justify-between">
+                    <div className="space-y-0.5">
+                      <div className="text-xs font-semibold text-amber-400 flex items-center gap-1.5">
+                        <Wind className="w-3.5 h-3.5" />
+                        <span>2. Haircare Essentials</span>
+                      </div>
+                      <div className="text-[11px] text-zinc-400">
+                        Shampoo · Conditioner · Mask · Scalp Oil
+                      </div>
+                    </div>
+                    <span className="text-xs font-mono font-semibold text-emerald-400">Sale %</span>
+                  </div>
+
+                  <div className="rounded-2xl bg-zinc-900/90 border border-white/6 p-3 flex items-center justify-between">
+                    <div className="space-y-0.5">
+                      <div className="text-xs font-semibold text-sky-400 flex items-center gap-1.5">
+                        <Droplet className="w-3.5 h-3.5" />
+                        <span>3. Bodycare Essentials</span>
+                      </div>
+                      <div className="text-[11px] text-zinc-400">
+                        Body Wash · Lotion · Scrub · Deodorant
+                      </div>
+                    </div>
+                    <span className="text-xs font-mono font-semibold text-zinc-300">Dates</span>
+                  </div>
+
+                  <div className="rounded-2xl bg-zinc-900/90 border border-white/6 p-3 space-y-1">
+                    <div className="text-xs text-amber-400 font-medium">
+                      Ordered · Opened · Expiry · Price Paid · Bulk Stock
+                    </div>
+                    <p className="text-[11px] text-zinc-400 leading-relaxed">
+                      Add custom categories, track bulk quantities (shown when 2 or more), and log sale prices with zero annoying alerts.
+                    </p>
+                  </div>
+                </motion.div>
+              )}
+            </AnimatePresence>
           </div>
         </main>
 
         <footer className="max-w-5xl w-full mx-auto text-xs text-zinc-500 flex items-center justify-between">
           <span>DuoPulse — Mobile-First Health & Care Tracker</span>
-          <button
-            type="button"
-            onClick={() => setIsVercelGuideOpen(true)}
-            className="text-zinc-400 hover:text-white underline underline-offset-4"
-          >
-            Host on Vercel Guide
-          </button>
+          <span>Real-Time Cloud Sync</span>
         </footer>
-
-        <VercelGuideModal
-          isOpen={isVercelGuideOpen}
-          onClose={() => setIsVercelGuideOpen(false)}
-        />
       </div>
     );
   }
@@ -1340,16 +1453,6 @@ export default function App() {
 
           <button
             type="button"
-            onClick={() => setIsVercelGuideOpen(true)}
-            className="min-w-[36px] min-h-[36px] rounded-full bg-[#12141C] hover:bg-white/10 border border-white/10 flex items-center justify-center text-zinc-300 hover:text-white transition-colors shrink-0"
-            title="Vercel Hosting & Setup Guide"
-            aria-label="Vercel Hosting Guide"
-          >
-            <Cloud className="w-3.5 h-3.5 text-sky-400" />
-          </button>
-
-          <button
-            type="button"
             onClick={() => signOut(auth)}
             className="min-w-[36px] min-h-[36px] rounded-full bg-[#12141C] hover:bg-white/10 border border-white/10 flex items-center justify-center text-zinc-400 hover:text-white transition-colors shrink-0"
             title="Sign Out"
@@ -1472,12 +1575,6 @@ export default function App() {
         onUnlinkPartner={handleUnlinkPartner}
         onOpenOnboardingWizard={() => setManualWizardOpen(true)}
         onUpdateWorkspaceIdentities={handleUpdateWorkspaceIdentities}
-      />
-
-      {/* Vercel Hosting & Firebase Domain Setup Guide Modal */}
-      <VercelGuideModal
-        isOpen={isVercelGuideOpen}
-        onClose={() => setIsVercelGuideOpen(false)}
       />
     </div>
   );
