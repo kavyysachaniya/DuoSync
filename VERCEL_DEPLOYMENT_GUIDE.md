@@ -24,14 +24,13 @@ npx vercel --prod
 
 ---
 
-## Step 2: Authorize Your Vercel Domain in Firebase (CRITICAL for Google Login)
+## Step 2: Authorize Your Vercel Domain in Firebase (`duosync-35b75`)
 
 Because DuoPulse is 100% login-based with **Google Sign-In** and **Firebase Firestore**, Firebase blocks sign-in popups from unknown domains until you whitelist your Vercel URL:
 
-1. Open the [Firebase Console](https://console.firebase.google.com/) and select your **DuoPulseSync** project.
-2. In the left sidebar, go to **Authentication** → **Settings** tab → **Authorized domains**.
-3. Click **Add domain** and paste your Vercel domain (for example: `your-app-name.vercel.app`).
-4. *(Optional for Google Fit direct sync)*: In **Google Cloud Console → APIs & Services → Library**, enable the **Fitness API** if you want one-tap Google Fit REST API pull in addition to manual/quick sync.
+1. Open [Firebase Console — `duosync-35b75` Authentication Settings](https://console.firebase.google.com/project/duosync-35b75/authentication/settings).
+2. Under **Authorized domains**, click **Add domain** and paste your Vercel domain (for example: `your-app-name.vercel.app`).
+3. *(Optional for Google Fit direct sync)*: In [Google Cloud Console → APIs & Services → Library (`duosync-35b75`)](https://console.cloud.google.com/apis/library?project=duosync-35b75), enable the **Fitness API** if you want one-tap Google Fit REST API pull in addition to manual/quick sync.
 
 ---
 
