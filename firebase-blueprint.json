@@ -1,0 +1,533 @@
+{
+  "entities": {
+    "User": {
+      "title": "User",
+      "description": "Authenticated user account mapping to their active workspace, onboarding state, and default profile slot.",
+      "type": "object",
+      "properties": {
+        "uid": {
+          "type": "string",
+          "description": "Firebase Auth UID of the user.",
+          "minLength": 1,
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
+        },
+        "displayName": {
+          "type": "string",
+          "description": "User's customized or Google display name stored in Firebase.",
+          "minLength": 1,
+          "maxLength": 60
+        },
+        "workspaceId": {
+          "type": "string",
+          "description": "ID of the active workspace.",
+          "minLength": 1,
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
+        },
+        "defaultSlot": {
+          "type": "string",
+          "description": "Which profile slot this user defaults to viewing.",
+          "enum": ["partner1", "partner2"]
+        },
+        "onboardingCompleted": {
+          "type": "boolean",
+          "description": "Whether the user has completed the initial health & routine onboarding questionnaire."
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Server timestamp of user profile creation."
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Server timestamp of last user profile update."
+        }
+      },
+      "required": [
+        "uid",
+        "displayName",
+        "workspaceId",
+        "defaultSlot",
+        "onboardingCompleted",
+        "createdAt",
+        "updatedAt"
+      ]
+    },
+    "PairingCode": {
+      "title": "PairingCode",
+      "description": "6-digit numeric partner pairing code mapping to a shared workspace.",
+      "type": "object",
+      "properties": {
+        "code": {
+          "type": "string",
+          "description": "6-digit numeric pairing code.",
+          "minLength": 6,
+          "maxLength": 6,
+          "pattern": "^[0-9]{6}$"
+        },
+        "workspaceId": {
+          "type": "string",
+          "description": "Target workspace ID.",
+          "minLength": 1,
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
+        },
+        "ownerUid": {
+          "type": "string",
+          "description": "UID of the user who created the workspace.",
+          "minLength": 1,
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
+        },
+        "ownerName": {
+          "type": "string",
+          "description": "Display name of the workspace creator.",
+          "minLength": 1,
+          "maxLength": 60
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Server timestamp when the pairing code was created."
+        }
+      },
+      "required": ["code", "workspaceId", "ownerUid", "ownerName", "createdAt"]
+    },
+    "Workspace": {
+      "title": "Workspace",
+      "description": "Personal and partner-connectable workspace holding profile names, connected fitness app preferences, daily health targets, custom care sub-categories, onboarding status, and product ID index.",
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Workspace document ID.",
+          "minLength": 1,
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
+        },
+        "ownerUid": {
+          "type": "string",
+          "description": "UID of User 1 who initialized the workspace.",
+          "minLength": 1,
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
+        },
+        "partnerUid": {
+          "type": "string",
+          "description": "UID of connected partner once linked via the 6-digit pairing code (empty string before linking).",
+          "minLength": 0,
+          "maxLength": 128
+        },
+        "pairingCode": {
+          "type": "string",
+          "description": "6-digit pairing code for linking a partner.",
+          "minLength": 6,
+          "maxLength": 6,
+          "pattern": "^[0-9]{6}$"
+        },
+        "onboardingCompleted": {
+          "type": "boolean",
+          "description": "Whether onboarding setup has been completed for this workspace."
+        },
+        "currency": {
+          "type": "string",
+          "description": "Currency symbol for product prices.",
+          "minLength": 1,
+          "maxLength": 6
+        },
+        "partner1Name": {
+          "type": "string",
+          "description": "Display name for Primary User.",
+          "minLength": 1,
+          "maxLength": 60
+        },
+        "partner1Role": {
+          "type": "string",
+          "description": "Custom subtitle or tag for Primary User.",
+          "minLength": 1,
+          "maxLength": 40
+        },
+        "partner1FitnessApp": {
+          "type": "string",
+          "description": "Preferred fitness app synced for Primary User.",
+          "enum": ["google_fit", "apple_health", "samsung_health", "fitbit", "garmin", "manual"]
+        },
+        "partner1WeightUnit": {
+          "type": "string",
+          "description": "Weight unit for Primary User.",
+          "enum": ["kg", "lbs"]
+        },
+        "partner1TargetWeight": {
+          "type": "number",
+          "description": "Target weight goal for Primary User."
+        },
+        "partner1StartWeight": {
+          "type": "number",
+          "description": "Starting baseline weight for Primary User."
+        },
+        "partner1StepsGoal": {
+          "type": "number",
+          "description": "Daily steps target for Primary User."
+        },
+        "partner1SleepGoalMinutes": {
+          "type": "number",
+          "description": "Daily sleep target in minutes for Primary User."
+        },
+        "partner1WaterGoalMl": {
+          "type": "number",
+          "description": "Daily water intake goal in milliliters for Primary User."
+        },
+        "partner2Name": {
+          "type": "string",
+          "description": "Display name for Partner.",
+          "minLength": 1,
+          "maxLength": 60
+        },
+        "partner2Role": {
+          "type": "string",
+          "description": "Custom subtitle or tag for Partner.",
+          "minLength": 1,
+          "maxLength": 40
+        },
+        "partner2FitnessApp": {
+          "type": "string",
+          "description": "Preferred fitness app synced for Partner.",
+          "enum": ["google_fit", "apple_health", "samsung_health", "fitbit", "garmin", "manual"]
+        },
+        "partner2WeightUnit": {
+          "type": "string",
+          "description": "Weight unit for Partner.",
+          "enum": ["kg", "lbs"]
+        },
+        "partner2TargetWeight": {
+          "type": "number",
+          "description": "Target weight goal for Partner."
+        },
+        "partner2StartWeight": {
+          "type": "number",
+          "description": "Starting baseline weight for Partner."
+        },
+        "partner2StepsGoal": {
+          "type": "number",
+          "description": "Daily steps target for Partner."
+        },
+        "partner2SleepGoalMinutes": {
+          "type": "number",
+          "description": "Daily sleep target in minutes for Partner."
+        },
+        "partner2WaterGoalMl": {
+          "type": "number",
+          "description": "Daily water intake goal in milliliters for Partner."
+        },
+        "skincareCategories": {
+          "type": "array",
+          "description": "Bounded list of custom skincare sub-categories (max 30)."
+        },
+        "haircareCategories": {
+          "type": "array",
+          "description": "Bounded list of custom haircare sub-categories (max 30)."
+        },
+        "bodycareCategories": {
+          "type": "array",
+          "description": "Bounded list of custom bodycare sub-categories (max 30)."
+        },
+        "productIds": {
+          "type": "array",
+          "description": "Bounded list of careProduct document IDs in this workspace (max 100)."
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Server timestamp of workspace creation."
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Server timestamp of last workspace update."
+        }
+      },
+      "required": [
+        "id",
+        "ownerUid",
+        "partnerUid",
+        "pairingCode",
+        "onboardingCompleted",
+        "currency",
+        "partner1Name",
+        "partner1Role",
+        "partner1FitnessApp",
+        "partner1WeightUnit",
+        "partner1TargetWeight",
+        "partner1StartWeight",
+        "partner1StepsGoal",
+        "partner1SleepGoalMinutes",
+        "partner1WaterGoalMl",
+        "partner2Name",
+        "partner2Role",
+        "partner2FitnessApp",
+        "partner2WeightUnit",
+        "partner2TargetWeight",
+        "partner2StartWeight",
+        "partner2StepsGoal",
+        "partner2SleepGoalMinutes",
+        "partner2WaterGoalMl",
+        "skincareCategories",
+        "haircareCategories",
+        "bodycareCategories",
+        "productIds",
+        "createdAt",
+        "updatedAt"
+      ]
+    },
+    "HealthLog": {
+      "title": "HealthLog",
+      "description": "Daily health vitals record for a specific profile slot and date (Weight, Steps, Sleep, Water).",
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Deterministic ID: {profileSlot}_{YYYY-MM-DD}.",
+          "minLength": 1,
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
+        },
+        "workspaceId": {
+          "type": "string",
+          "description": "Parent workspace ID.",
+          "minLength": 1,
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
+        },
+        "profileSlot": {
+          "type": "string",
+          "description": "Which partner profile this daily log belongs to.",
+          "enum": ["partner1", "partner2"]
+        },
+        "date": {
+          "type": "string",
+          "description": "ISO date string YYYY-MM-DD.",
+          "minLength": 10,
+          "maxLength": 10,
+          "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}$"
+        },
+        "weight": {
+          "type": "number",
+          "description": "Logged daily weight (0 if not recorded yet)."
+        },
+        "steps": {
+          "type": "number",
+          "description": "End-of-day total step count."
+        },
+        "sleepMinutes": {
+          "type": "number",
+          "description": "Daily total sleep in minutes."
+        },
+        "waterMl": {
+          "type": "number",
+          "description": "Daily water intake in milliliters."
+        },
+        "note": {
+          "type": "string",
+          "description": "Optional daily wellness note.",
+          "minLength": 0,
+          "maxLength": 280
+        },
+        "updatedByUid": {
+          "type": "string",
+          "description": "UID of the user who last saved this entry.",
+          "minLength": 1,
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Server timestamp when first logged."
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Server timestamp when last updated."
+        }
+      },
+      "required": [
+        "id",
+        "workspaceId",
+        "profileSlot",
+        "date",
+        "weight",
+        "steps",
+        "sleepMinutes",
+        "waterMl",
+        "note",
+        "updatedByUid",
+        "createdAt",
+        "updatedAt"
+      ]
+    },
+    "CareProduct": {
+      "title": "CareProduct",
+      "description": "Skincare, Haircare, or Bodycare inventory product card with bulk quantity, order/open/expiry dates, sale info, and price paid.",
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique product document ID.",
+          "minLength": 1,
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
+        },
+        "workspaceId": {
+          "type": "string",
+          "description": "Parent workspace ID.",
+          "minLength": 1,
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
+        },
+        "profileSlot": {
+          "type": "string",
+          "description": "Which partner profile uses this product (or shared).",
+          "enum": ["partner1", "partner2", "shared"]
+        },
+        "segment": {
+          "type": "string",
+          "description": "Primary care category segment.",
+          "enum": ["skincare", "haircare", "bodycare"]
+        },
+        "subCategory": {
+          "type": "string",
+          "description": "Product sub-category (e.g. Cleanser, Moisturizer, Serum, Shampoo).",
+          "minLength": 1,
+          "maxLength": 50
+        },
+        "name": {
+          "type": "string",
+          "description": "Product name.",
+          "minLength": 1,
+          "maxLength": 100
+        },
+        "brand": {
+          "type": "string",
+          "description": "Brand name.",
+          "minLength": 1,
+          "maxLength": 80
+        },
+        "quantity": {
+          "type": "number",
+          "description": "Quantity of units ordered/stocked (1 to 999). Only shown on card when >= 2."
+        },
+        "orderedDate": {
+          "type": "string",
+          "description": "Date ordered (YYYY-MM-DD or empty string).",
+          "minLength": 0,
+          "maxLength": 20
+        },
+        "openedDate": {
+          "type": "string",
+          "description": "Date opened (YYYY-MM-DD or empty string).",
+          "minLength": 0,
+          "maxLength": 20
+        },
+        "expiryDate": {
+          "type": "string",
+          "description": "Expiry date (YYYY-MM-DD or empty string).",
+          "minLength": 0,
+          "maxLength": 20
+        },
+        "saleInfo": {
+          "type": "string",
+          "description": "Sale or discount event details (e.g. Nykaa Pink Friday 30% Off).",
+          "minLength": 0,
+          "maxLength": 100
+        },
+        "pricePaid": {
+          "type": "number",
+          "description": "Actual price paid for the product."
+        },
+        "originalPrice": {
+          "type": "number",
+          "description": "Original MRP/list price before sale discount."
+        },
+        "status": {
+          "type": "string",
+          "description": "Usage status of the product.",
+          "enum": ["in_use", "unopened", "finished"]
+        },
+        "routineTime": {
+          "type": "string",
+          "description": "When the product is used in the daily routine.",
+          "enum": ["am", "pm", "both", "weekly"]
+        },
+        "notes": {
+          "type": "string",
+          "description": "Optional texture, shade, or repurchase notes.",
+          "minLength": 0,
+          "maxLength": 280
+        },
+        "updatedByUid": {
+          "type": "string",
+          "description": "UID of the user who last saved this product.",
+          "minLength": 1,
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Server timestamp of product creation."
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Server timestamp of last product update."
+        }
+      },
+      "required": [
+        "id",
+        "workspaceId",
+        "profileSlot",
+        "segment",
+        "subCategory",
+        "name",
+        "brand",
+        "quantity",
+        "orderedDate",
+        "openedDate",
+        "expiryDate",
+        "saleInfo",
+        "pricePaid",
+        "originalPrice",
+        "status",
+        "routineTime",
+        "notes",
+        "updatedByUid",
+        "createdAt",
+        "updatedAt"
+      ]
+    }
+  },
+  "firestore": {
+    "/users/{userId}": {
+      "schema": { "$ref": "#/entities/User" },
+      "description": "Stores each authenticated user's profile, real name, onboarding state, and active workspace pointer."
+    },
+    "/pairingCodes/{code}": {
+      "schema": { "$ref": "#/entities/PairingCode" },
+      "description": "Maps a 6-digit numeric partner pairing code to a workspace."
+    },
+    "/workspaces/{workspaceId}": {
+      "schema": { "$ref": "#/entities/Workspace" },
+      "description": "Stores the workspace configuration, partner profiles, fitness app choice, health goals, sub-categories, onboarding flag, and product ID index."
+    },
+    "/workspaces/{workspaceId}/healthLogs/{logId}": {
+      "schema": { "$ref": "#/entities/HealthLog" },
+      "description": "Stores daily health vitals (Weight, Steps, Sleep, Water) per profile slot and date."
+    },
+    "/workspaces/{workspaceId}/careProducts/{productId}": {
+      "schema": { "$ref": "#/entities/CareProduct" },
+      "description": "Stores skincare, haircare, and bodycare inventory items (including bulk quantity) for the workspace."
+    }
+  }
+}

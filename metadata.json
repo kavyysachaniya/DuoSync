@@ -1,0 +1,6 @@
+{
+  "name": "DuoPulse — Coupled Health & Care Tracker",
+  "description": "A mobile-first dark-themed dashboard for couples to track daily health vitals with circular progress rings and organize shared skincare, haircare, and bodycare inventory in real time.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

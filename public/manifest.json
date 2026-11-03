@@ -1,0 +1,10 @@
+{
+  "name": "DuoPulse — Coupled Health & Care Tracker",
+  "short_name": "DuoPulse",
+  "description": "Mobile-first dark dashboard to track daily weight, steps, sleep, water rings, fitness app sync, and shared skincare, haircare & bodycare essentials.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#090A0F",
+  "theme_color": "#090A0F",
+  "orientation": "portrait"
+}

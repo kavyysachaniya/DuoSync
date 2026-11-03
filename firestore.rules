@@ -1,0 +1,400 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Global Safety Net: Default-deny catch-all
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // =========================================================================
+    // Global Primitives & Helpers
+    // =========================================================================
+
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isVerified() {
+      return request.auth.token.email_verified == true;
+    }
+
+    function isOwner(userId) {
+      return isSignedIn() && request.auth.uid == userId;
+    }
+
+    function incoming() {
+      return request.resource.data;
+    }
+
+    function existing() {
+      return resource.data;
+    }
+
+    function isValidId(id) {
+      return id is string && id.size() >= 1 && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+
+    function isValidPairingCodeId(code) {
+      return code is string && code.size() == 6 && code.matches('^[0-9]{6}$');
+    }
+
+    function isValidFitnessApp(app) {
+      return app == 'google_fit' ||
+        app == 'apple_health' ||
+        app == 'samsung_health' ||
+        app == 'fitbit' ||
+        app == 'garmin' ||
+        app == 'manual';
+    }
+
+    function isExistingWorkspaceMember(wsData) {
+      return isSignedIn() && (
+        wsData.ownerUid == request.auth.uid ||
+        (wsData.partnerUid is string && wsData.partnerUid.size() > 0 && wsData.partnerUid == request.auth.uid)
+      );
+    }
+
+    function isWorkspaceMember(workspaceId) {
+      let ws = get(/databases/$(database)/documents/workspaces/$(workspaceId)).data;
+      return isSignedIn() && (
+        ws.ownerUid == request.auth.uid ||
+        (ws.partnerUid is string && ws.partnerUid.size() > 0 && ws.partnerUid == request.auth.uid)
+      );
+    }
+
+    // =========================================================================
+    // Entity Validation Blueprints (Anti-Update-Gap)
+    // =========================================================================
+
+    function isValidUser(data) {
+      return data.keys().hasAll([
+        'uid', 'displayName', 'workspaceId', 'defaultSlot', 'onboardingCompleted', 'createdAt', 'updatedAt'
+      ]) &&
+      data.keys().hasOnly([
+        'uid', 'displayName', 'workspaceId', 'defaultSlot', 'onboardingCompleted', 'createdAt', 'updatedAt'
+      ]) &&
+      data.uid is string && data.uid.size() >= 1 && data.uid.size() <= 128 &&
+      data.uid == request.auth.uid &&
+      data.displayName is string && data.displayName.size() >= 1 && data.displayName.size() <= 60 &&
+      isValidId(data.workspaceId) &&
+      (data.defaultSlot == 'partner1' || data.defaultSlot == 'partner2') &&
+      data.onboardingCompleted is bool &&
+      data.createdAt is timestamp &&
+      data.updatedAt is timestamp;
+    }
+
+    function isValidPairingCode(data) {
+      return data.keys().hasAll([
+        'code', 'workspaceId', 'ownerUid', 'ownerName', 'createdAt'
+      ]) &&
+      data.keys().hasOnly([
+        'code', 'workspaceId', 'ownerUid', 'ownerName', 'createdAt'
+      ]) &&
+      isValidPairingCodeId(data.code) &&
+      isValidId(data.workspaceId) &&
+      isValidId(data.ownerUid) &&
+      data.ownerUid == request.auth.uid &&
+      data.ownerName is string && data.ownerName.size() >= 1 && data.ownerName.size() <= 60 &&
+      data.createdAt is timestamp;
+    }
+
+    function isValidWorkspace(data) {
+      return data.keys().hasAll([
+        'id', 'ownerUid', 'partnerUid', 'pairingCode', 'onboardingCompleted', 'currency',
+        'partner1Name', 'partner1Role', 'partner1FitnessApp', 'partner1WeightUnit', 'partner1TargetWeight', 'partner1StartWeight', 'partner1StepsGoal', 'partner1SleepGoalMinutes', 'partner1WaterGoalMl',
+        'partner2Name', 'partner2Role', 'partner2FitnessApp', 'partner2WeightUnit', 'partner2TargetWeight', 'partner2StartWeight', 'partner2StepsGoal', 'partner2SleepGoalMinutes', 'partner2WaterGoalMl',
+        'skincareCategories', 'haircareCategories', 'bodycareCategories', 'productIds',
+        'createdAt', 'updatedAt'
+      ]) &&
+      data.keys().hasOnly([
+        'id', 'ownerUid', 'partnerUid', 'pairingCode', 'onboardingCompleted', 'currency',
+        'partner1Name', 'partner1Role', 'partner1FitnessApp', 'partner1WeightUnit', 'partner1TargetWeight', 'partner1StartWeight', 'partner1StepsGoal', 'partner1SleepGoalMinutes', 'partner1WaterGoalMl',
+        'partner2Name', 'partner2Role', 'partner2FitnessApp', 'partner2WeightUnit', 'partner2TargetWeight', 'partner2StartWeight', 'partner2StepsGoal', 'partner2SleepGoalMinutes', 'partner2WaterGoalMl',
+        'skincareCategories', 'haircareCategories', 'bodycareCategories', 'productIds',
+        'createdAt', 'updatedAt'
+      ]) &&
+      isValidId(data.id) &&
+      isValidId(data.ownerUid) &&
+      data.partnerUid is string && data.partnerUid.size() <= 128 &&
+      isValidPairingCodeId(data.pairingCode) &&
+      data.onboardingCompleted is bool &&
+      data.currency is string && data.currency.size() >= 1 && data.currency.size() <= 6 &&
+      data.partner1Name is string && data.partner1Name.size() >= 1 && data.partner1Name.size() <= 60 &&
+      data.partner1Role is string && data.partner1Role.size() >= 1 && data.partner1Role.size() <= 40 &&
+      isValidFitnessApp(data.partner1FitnessApp) &&
+      (data.partner1WeightUnit == 'kg' || data.partner1WeightUnit == 'lbs') &&
+      data.partner1TargetWeight is number && data.partner1TargetWeight >= 0 && data.partner1TargetWeight <= 500 &&
+      data.partner1StartWeight is number && data.partner1StartWeight >= 0 && data.partner1StartWeight <= 500 &&
+      data.partner1StepsGoal is number && data.partner1StepsGoal >= 100 && data.partner1StepsGoal <= 100000 &&
+      data.partner1SleepGoalMinutes is number && data.partner1SleepGoalMinutes >= 60 && data.partner1SleepGoalMinutes <= 1440 &&
+      data.partner1WaterGoalMl is number && data.partner1WaterGoalMl >= 250 && data.partner1WaterGoalMl <= 15000 &&
+      data.partner2Name is string && data.partner2Name.size() >= 1 && data.partner2Name.size() <= 60 &&
+      data.partner2Role is string && data.partner2Role.size() >= 1 && data.partner2Role.size() <= 40 &&
+      isValidFitnessApp(data.partner2FitnessApp) &&
+      (data.partner2WeightUnit == 'kg' || data.partner2WeightUnit == 'lbs') &&
+      data.partner2TargetWeight is number && data.partner2TargetWeight >= 0 && data.partner2TargetWeight <= 500 &&
+      data.partner2StartWeight is number && data.partner2StartWeight >= 0 && data.partner2StartWeight <= 500 &&
+      data.partner2StepsGoal is number && data.partner2StepsGoal >= 100 && data.partner2StepsGoal <= 100000 &&
+      data.partner2SleepGoalMinutes is number && data.partner2SleepGoalMinutes >= 60 && data.partner2SleepGoalMinutes <= 1440 &&
+      data.partner2WaterGoalMl is number && data.partner2WaterGoalMl >= 250 && data.partner2WaterGoalMl <= 15000 &&
+      data.skincareCategories is list && data.skincareCategories.size() >= 1 && data.skincareCategories.size() <= 30 &&
+      data.skincareCategories[0] is string && data.skincareCategories[0].size() >= 1 && data.skincareCategories[0].size() <= 50 &&
+      data.haircareCategories is list && data.haircareCategories.size() >= 1 && data.haircareCategories.size() <= 30 &&
+      data.haircareCategories[0] is string && data.haircareCategories[0].size() >= 1 && data.haircareCategories[0].size() <= 50 &&
+      data.bodycareCategories is list && data.bodycareCategories.size() >= 1 && data.bodycareCategories.size() <= 30 &&
+      data.bodycareCategories[0] is string && data.bodycareCategories[0].size() >= 1 && data.bodycareCategories[0].size() <= 50 &&
+      data.productIds is list && data.productIds.size() <= 100 &&
+      (data.productIds.size() == 0 || (data.productIds[0] is string && data.productIds[0].size() >= 1 && data.productIds[0].size() <= 128)) &&
+      data.createdAt is timestamp &&
+      data.updatedAt is timestamp;
+    }
+
+    function isValidHealthLog(data) {
+      return data.keys().hasAll([
+        'id', 'workspaceId', 'profileSlot', 'date',
+        'weight', 'steps', 'sleepMinutes', 'waterMl', 'note',
+        'updatedByUid', 'createdAt', 'updatedAt'
+      ]) &&
+      data.keys().hasOnly([
+        'id', 'workspaceId', 'profileSlot', 'date',
+        'weight', 'steps', 'sleepMinutes', 'waterMl', 'note',
+        'updatedByUid', 'createdAt', 'updatedAt'
+      ]) &&
+      isValidId(data.id) &&
+      isValidId(data.workspaceId) &&
+      (data.profileSlot == 'partner1' || data.profileSlot == 'partner2') &&
+      data.date is string && data.date.size() == 10 && data.date.matches('^[0-9]{4}-[0-9]{2}-[0-9]{2}$') &&
+      data.weight is number && data.weight >= 0 && data.weight <= 500 &&
+      data.steps is number && data.steps >= 0 && data.steps <= 200000 &&
+      data.sleepMinutes is number && data.sleepMinutes >= 0 && data.sleepMinutes <= 1440 &&
+      data.waterMl is number && data.waterMl >= 0 && data.waterMl <= 20000 &&
+      data.note is string && data.note.size() <= 280 &&
+      isValidId(data.updatedByUid) &&
+      data.updatedByUid == request.auth.uid &&
+      data.createdAt is timestamp &&
+      data.updatedAt is timestamp;
+    }
+
+    function isValidCareProduct(data) {
+      return data.keys().hasAll([
+        'id', 'workspaceId', 'profileSlot', 'segment', 'subCategory',
+        'name', 'brand', 'quantity', 'orderedDate', 'openedDate', 'expiryDate',
+        'saleInfo', 'pricePaid', 'originalPrice', 'status', 'routineTime', 'notes',
+        'updatedByUid', 'createdAt', 'updatedAt'
+      ]) &&
+      data.keys().hasOnly([
+        'id', 'workspaceId', 'profileSlot', 'segment', 'subCategory',
+        'name', 'brand', 'quantity', 'orderedDate', 'openedDate', 'expiryDate',
+        'saleInfo', 'pricePaid', 'originalPrice', 'status', 'routineTime', 'notes',
+        'updatedByUid', 'createdAt', 'updatedAt'
+      ]) &&
+      isValidId(data.id) &&
+      isValidId(data.workspaceId) &&
+      (data.profileSlot == 'partner1' || data.profileSlot == 'partner2' || data.profileSlot == 'shared') &&
+      (data.segment == 'skincare' || data.segment == 'haircare' || data.segment == 'bodycare') &&
+      data.subCategory is string && data.subCategory.size() >= 1 && data.subCategory.size() <= 50 &&
+      data.name is string && data.name.size() >= 1 && data.name.size() <= 100 &&
+      data.brand is string && data.brand.size() >= 1 && data.brand.size() <= 80 &&
+      data.quantity is number && data.quantity >= 1 && data.quantity <= 999 &&
+      data.orderedDate is string && data.orderedDate.size() <= 20 &&
+      data.openedDate is string && data.openedDate.size() <= 20 &&
+      data.expiryDate is string && data.expiryDate.size() <= 20 &&
+      data.saleInfo is string && data.saleInfo.size() <= 100 &&
+      data.pricePaid is number && data.pricePaid >= 0 && data.pricePaid <= 1000000 &&
+      data.originalPrice is number && data.originalPrice >= 0 && data.originalPrice <= 1000000 &&
+      (data.status == 'in_use' || data.status == 'unopened' || data.status == 'finished') &&
+      (data.routineTime == 'am' || data.routineTime == 'pm' || data.routineTime == 'both' || data.routineTime == 'weekly') &&
+      data.notes is string && data.notes.size() <= 280 &&
+      isValidId(data.updatedByUid) &&
+      data.updatedByUid == request.auth.uid &&
+      data.createdAt is timestamp &&
+      data.updatedAt is timestamp;
+    }
+
+    // =========================================================================
+    // Collection Match Rules
+    // =========================================================================
+
+    match /users/{userId} {
+      allow get: if isSignedIn() && isVerified() && isValidId(userId) && isOwner(userId);
+      allow list: if false;
+
+      allow create: if isSignedIn() && isVerified() &&
+        isValidId(userId) && isOwner(userId) &&
+        isValidUser(incoming()) &&
+        incoming().uid == userId &&
+        incoming().createdAt == request.time &&
+        incoming().updatedAt == request.time &&
+        existsAfter(/databases/$(database)/documents/workspaces/$(incoming().workspaceId));
+
+      allow update: if isSignedIn() && isVerified() &&
+        isValidUser(incoming()) &&
+        isValidId(userId) && isOwner(userId) &&
+        incoming().uid == existing().uid &&
+        incoming().createdAt == existing().createdAt &&
+        incoming().updatedAt == request.time &&
+        incoming().diff(existing()).affectedKeys().hasOnly([
+          'displayName', 'workspaceId', 'defaultSlot', 'onboardingCompleted', 'updatedAt'
+        ]) &&
+        exists(/databases/$(database)/documents/workspaces/$(incoming().workspaceId));
+
+      allow delete: if false;
+    }
+
+    match /pairingCodes/{code} {
+      allow get: if isSignedIn() && isVerified() && isValidPairingCodeId(code);
+      allow list: if false;
+
+      allow create: if isSignedIn() && isVerified() &&
+        isValidPairingCodeId(code) &&
+        isValidPairingCode(incoming()) &&
+        incoming().code == code &&
+        incoming().ownerUid == request.auth.uid &&
+        incoming().createdAt == request.time &&
+        existsAfter(/databases/$(database)/documents/workspaces/$(incoming().workspaceId));
+
+      allow update: if isSignedIn() && isVerified() &&
+        isValidPairingCode(incoming()) &&
+        isValidPairingCodeId(code) &&
+        incoming().code == existing().code &&
+        incoming().workspaceId == existing().workspaceId &&
+        incoming().ownerUid == existing().ownerUid &&
+        incoming().ownerUid == request.auth.uid &&
+        incoming().createdAt == existing().createdAt &&
+        incoming().diff(existing()).affectedKeys().hasOnly(['ownerName']);
+
+      allow delete: if false;
+    }
+
+    match /workspaces/{workspaceId} {
+      allow get: if isSignedIn() && isVerified() && isValidId(workspaceId) && (
+        isExistingWorkspaceMember(existing()) ||
+        (existing().partnerUid == "" && exists(/databases/$(database)/documents/pairingCodes/$(existing().pairingCode)))
+      );
+      allow list: if false;
+
+      allow create: if isSignedIn() && isVerified() &&
+        isValidId(workspaceId) &&
+        isValidWorkspace(incoming()) &&
+        incoming().id == workspaceId &&
+        incoming().ownerUid == request.auth.uid &&
+        incoming().partnerUid == "" &&
+        incoming().createdAt == request.time &&
+        incoming().updatedAt == request.time &&
+        existsAfter(/databases/$(database)/documents/pairingCodes/$(incoming().pairingCode));
+
+      allow update: if isSignedIn() && isVerified() &&
+        isValidWorkspace(incoming()) &&
+        isValidId(workspaceId) &&
+        incoming().id == existing().id &&
+        incoming().ownerUid == existing().ownerUid &&
+        incoming().pairingCode == existing().pairingCode &&
+        incoming().createdAt == existing().createdAt &&
+        incoming().updatedAt == request.time && (
+          // Action 1: Partner 2 joins an unpaired workspace via pairing code
+          (
+            (existing().partnerUid == "" || existing().partnerUid == request.auth.uid) &&
+            existing().ownerUid != request.auth.uid &&
+            incoming().partnerUid == request.auth.uid &&
+            incoming().diff(existing()).affectedKeys().hasOnly([
+              'partnerUid', 'partner2Name', 'partner2Role', 'partner2FitnessApp', 'partner2WeightUnit',
+              'partner2TargetWeight', 'partner2StartWeight', 'partner2StepsGoal',
+              'partner2SleepGoalMinutes', 'partner2WaterGoalMl', 'onboardingCompleted', 'updatedAt'
+            ])
+          ) ||
+          // Action 2: Connected member unlinks partner
+          (
+            isExistingWorkspaceMember(existing()) &&
+            incoming().partnerUid == "" &&
+            incoming().diff(existing()).affectedKeys().hasOnly(['partnerUid', 'updatedAt'])
+          ) ||
+          // Action 3: Connected member updates goals, fitness app, names, onboarding state, sub-categories, or productIds
+          (
+            isExistingWorkspaceMember(existing()) &&
+            incoming().partnerUid == existing().partnerUid &&
+            incoming().diff(existing()).affectedKeys().hasOnly([
+              'onboardingCompleted', 'currency',
+              'partner1Name', 'partner1Role', 'partner1FitnessApp', 'partner1WeightUnit', 'partner1TargetWeight', 'partner1StartWeight', 'partner1StepsGoal', 'partner1SleepGoalMinutes', 'partner1WaterGoalMl',
+              'partner2Name', 'partner2Role', 'partner2FitnessApp', 'partner2WeightUnit', 'partner2TargetWeight', 'partner2StartWeight', 'partner2StepsGoal', 'partner2SleepGoalMinutes', 'partner2WaterGoalMl',
+              'skincareCategories', 'haircareCategories', 'bodycareCategories', 'productIds',
+              'updatedAt'
+            ])
+          )
+        );
+
+      allow delete: if false;
+
+      match /healthLogs/{logId} {
+        allow get: if isSignedIn() && isVerified() &&
+          isValidId(workspaceId) && isValidId(logId) &&
+          isWorkspaceMember(workspaceId);
+        allow list: if false;
+
+        allow create: if isSignedIn() && isVerified() &&
+          isValidId(workspaceId) && isValidId(logId) &&
+          isValidHealthLog(incoming()) &&
+          incoming().id == logId &&
+          incoming().workspaceId == workspaceId &&
+          incoming().createdAt == request.time &&
+          incoming().updatedAt == request.time &&
+          isWorkspaceMember(workspaceId);
+
+        allow update: if isSignedIn() && isVerified() &&
+          isValidHealthLog(incoming()) &&
+          isValidId(workspaceId) && isValidId(logId) &&
+          incoming().id == existing().id &&
+          incoming().workspaceId == existing().workspaceId &&
+          incoming().profileSlot == existing().profileSlot &&
+          incoming().date == existing().date &&
+          incoming().createdAt == existing().createdAt &&
+          incoming().updatedAt == request.time &&
+          incoming().diff(existing()).affectedKeys().hasOnly([
+            'weight', 'steps', 'sleepMinutes', 'waterMl', 'note', 'updatedByUid', 'updatedAt'
+          ]) &&
+          isWorkspaceMember(workspaceId);
+
+        allow delete: if isSignedIn() && isVerified() &&
+          isValidId(workspaceId) && isValidId(logId) &&
+          isWorkspaceMember(workspaceId);
+      }
+
+      match /careProducts/{productId} {
+        allow get: if isSignedIn() && isVerified() &&
+          isValidId(workspaceId) && isValidId(productId) &&
+          isWorkspaceMember(workspaceId);
+        allow list: if false;
+
+        allow create: if isSignedIn() && isVerified() &&
+          isValidId(workspaceId) && isValidId(productId) &&
+          isValidCareProduct(incoming()) &&
+          incoming().id == productId &&
+          incoming().workspaceId == workspaceId &&
+          incoming().createdAt == request.time &&
+          incoming().updatedAt == request.time &&
+          isWorkspaceMember(workspaceId) &&
+          productId in getAfter(/databases/$(database)/documents/workspaces/$(workspaceId)).data.productIds;
+
+        allow update: if isSignedIn() && isVerified() &&
+          isValidCareProduct(incoming()) &&
+          isValidId(workspaceId) && isValidId(productId) &&
+          incoming().id == existing().id &&
+          incoming().workspaceId == existing().workspaceId &&
+          incoming().createdAt == existing().createdAt &&
+          incoming().updatedAt == request.time &&
+          incoming().diff(existing()).affectedKeys().hasOnly([
+            'profileSlot', 'segment', 'subCategory', 'name', 'brand', 'quantity',
+            'orderedDate', 'openedDate', 'expiryDate', 'saleInfo',
+            'pricePaid', 'originalPrice', 'status', 'routineTime', 'notes',
+            'updatedByUid', 'updatedAt'
+          ]) &&
+          isWorkspaceMember(workspaceId);
+
+        allow delete: if isSignedIn() && isVerified() &&
+          isValidId(workspaceId) && isValidId(productId) &&
+          isWorkspaceMember(workspaceId);
+      }
+    }
+  }
+}
