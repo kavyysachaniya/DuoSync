@@ -50,7 +50,7 @@ interface HealthDashboardProps {
     fitnessApp: FitnessAppId;
   }) => Promise<void>;
   onSwitchToPartner: () => void;
-  onOpenFitnessSync: () => void;
+  onOpenFitnessSync?: () => void;
 }
 
 function calculateWeightProgress(
@@ -362,22 +362,12 @@ export const HealthDashboard: React.FC<HealthDashboardProps> = ({
             {profile.name}’s Daily Health
           </h1>
           <p className="text-xs text-zinc-400">
-            All changes auto-save to Firebase Cloud · Synced with {activeFitnessAppMeta.name}
+            All health vitals auto-save to Firebase Cloud in real time
           </p>
         </div>
 
         {/* Mobile-First Action Row */}
         <div className="grid grid-cols-2 sm:flex sm:flex-wrap items-center gap-2">
-          {/* Fitness App Sync Trigger Button */}
-          <button
-            type="button"
-            onClick={onOpenFitnessSync}
-            className="min-h-[44px] px-3.5 py-2 rounded-2xl bg-emerald-500/15 hover:bg-emerald-500/25 border border-emerald-500/30 text-xs font-semibold text-emerald-300 flex items-center justify-center gap-2 transition-colors whitespace-nowrap"
-          >
-            <RefreshCw className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
-            <span className="truncate">Sync {activeFitnessAppMeta.shortLabel}</span>
-          </button>
-
           {/* Customize Targets Button */}
           <button
             type="button"
@@ -385,7 +375,7 @@ export const HealthDashboard: React.FC<HealthDashboardProps> = ({
             className="min-h-[44px] px-3.5 py-2 rounded-2xl bg-white/8 hover:bg-white/12 border border-white/10 text-xs font-medium text-white flex items-center justify-center gap-2 transition-colors whitespace-nowrap"
           >
             <SlidersHorizontal className="w-3.5 h-3.5 text-rose-400 shrink-0" />
-            <span className="truncate">Targets & App</span>
+            <span className="truncate">Targets & Profile</span>
           </button>
 
           {/* Quick Partner Glance / Switch Button (Full width on mobile below the 2 buttons) */}

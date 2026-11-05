@@ -62,7 +62,7 @@ export const OnboardingWizard: React.FC<OnboardingWizardProps> = ({
   initialName,
   initialPartnerName = 'Partner',
   initialCurrency = '₹',
-  initialFitnessApp = 'google_fit',
+  initialFitnessApp = 'manual',
   pairingCode,
   onComplete,
   onCancel,
@@ -75,7 +75,7 @@ export const OnboardingWizard: React.FC<OnboardingWizardProps> = ({
   const [myName, setMyName] = useState(initialName || '');
   const [myRole, setMyRole] = useState('My Routine');
   const [currency, setCurrency] = useState(initialCurrency || '₹');
-  const [fitnessApp, setFitnessApp] = useState<FitnessAppId>(initialFitnessApp || 'google_fit');
+  const [fitnessApp, setFitnessApp] = useState<FitnessAppId>(initialFitnessApp || 'manual');
   const [setupMode, setSetupMode] = useState<'own_workspace' | 'join_code'>('own_workspace');
   const [partnerName, setPartnerName] = useState(
     initialPartnerName === 'My Girlfriend' ? 'Partner' : initialPartnerName

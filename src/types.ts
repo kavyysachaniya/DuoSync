@@ -5,7 +5,7 @@ export type ProductOwnerSlot = 'partner1' | 'partner2' | 'shared';
 export type CareSegment = 'skincare' | 'haircare' | 'bodycare';
 export type ProductStatus = 'in_use' | 'unopened' | 'finished';
 export type RoutineTime = 'am' | 'pm' | 'both' | 'weekly';
-export type TopNavSection = 'health' | 'skin';
+export type TopNavSection = 'health' | 'skin' | 'wardrobe';
 export type FitnessAppId =
   | 'google_fit'
   | 'apple_health'
@@ -24,16 +24,18 @@ export interface FitnessAppOption {
   accentColor: string;
 }
 
+// Unreliable integrations (Google Fit & Samsung Health) removed as requested.
+// Direct manual logging is prioritized along with supported summary inputs.
 export const FITNESS_APP_CATALOG: FitnessAppOption[] = [
   {
-    id: 'google_fit',
-    name: 'Google Fit',
-    shortLabel: 'Google Fit',
-    ecosystem: 'Android · Wear OS · iOS',
-    supportsDirectCloudSync: true,
+    id: 'manual',
+    name: 'Manual Daily Tracking',
+    shortLabel: 'Manual Log',
+    ecosystem: 'Direct Input Only',
+    supportsDirectCloudSync: false,
     description:
-      'Direct Google OAuth sync for daily Steps, Weight, Sleep duration, and Hydration.',
-    accentColor: '#10B981',
+      'Log your exact end-of-day steps, weight, sleep, and water directly on the dashboard.',
+    accentColor: '#A1A1AA',
   },
   {
     id: 'apple_health',
@@ -42,18 +44,8 @@ export const FITNESS_APP_CATALOG: FitnessAppOption[] = [
     ecosystem: 'iPhone · Apple Watch',
     supportsDirectCloudSync: false,
     description:
-      'Sync iPhone & Apple Watch daily rings via quick summary paste or end-of-day entry.',
+      'Track iPhone & Apple Watch daily activity metrics directly on the dashboard.',
     accentColor: '#F43F5E',
-  },
-  {
-    id: 'samsung_health',
-    name: 'Samsung Health',
-    shortLabel: 'Samsung Health',
-    ecosystem: 'Galaxy Phone · Galaxy Watch',
-    supportsDirectCloudSync: false,
-    description:
-      'Sync Galaxy Watch & Samsung Health daily steps, sleep, weight, and water logs.',
-    accentColor: '#38BDF8',
   },
   {
     id: 'fitbit',
@@ -74,16 +66,6 @@ export const FITNESS_APP_CATALOG: FitnessAppOption[] = [
     description:
       'Log daily Garmin Connect step totals, sleep duration, body weight, and hydration.',
     accentColor: '#818CF8',
-  },
-  {
-    id: 'manual',
-    name: 'Manual Daily Log',
-    shortLabel: 'Manual Log',
-    ecosystem: 'Direct Input Only',
-    supportsDirectCloudSync: false,
-    description:
-      'Log your exact end-of-day steps, weight, sleep, and water directly on the dashboard.',
-    accentColor: '#A1A1AA',
   },
 ];
 
@@ -180,6 +162,145 @@ export interface CareProductDoc {
   originalPrice: number;
   status: ProductStatus;
   routineTime: RoutineTime;
+  scheduleType?: 'daily' | 'weekly';
+  scheduledDays?: WeekDay[];
+  notes: string;
+  updatedByUid: string;
+  createdAt?: Timestamp;
+  updatedAt?: Timestamp;
+}
+
+export type WeekDay =
+  | 'monday'
+  | 'tuesday'
+  | 'wednesday'
+  | 'thursday'
+  | 'friday'
+  | 'saturday'
+  | 'sunday';
+
+export const WEEKDAY_OPTIONS: { id: WeekDay; label: string; shortLabel: string }[] = [
+  { id: 'monday', label: 'Monday', shortLabel: 'Mon' },
+  { id: 'tuesday', label: 'Tuesday', shortLabel: 'Tue' },
+  { id: 'wednesday', label: 'Wednesday', shortLabel: 'Wed' },
+  { id: 'thursday', label: 'Thursday', shortLabel: 'Thu' },
+  { id: 'friday', label: 'Friday', shortLabel: 'Fri' },
+  { id: 'saturday', label: 'Saturday', shortLabel: 'Sat' },
+  { id: 'sunday', label: 'Sunday', shortLabel: 'Sun' },
+];
+
+export function getWeekdayFromDate(dateStr: string): WeekDay {
+  const [y, m, d] = dateStr.split('-').map(Number);
+  const date = new Date(y, m - 1, d);
+  const days: WeekDay[] = [
+    'sunday',
+    'monday',
+    'tuesday',
+    'wednesday',
+    'thursday',
+    'friday',
+    'saturday',
+  ];
+  return days[date.getDay()];
+}
+
+export function getDayDisplayName(dateStr: string): string {
+  const [y, m, d] = dateStr.split('-').map(Number);
+  const date = new Date(y, m - 1, d);
+  return date.toLocaleDateString('en-US', { weekday: 'long' });
+}
+
+export interface RoutineCompletionDoc {
+  id: string; // Deterministic: `${profileSlot}_${productId}_${date}`
+  workspaceId: string;
+  profileSlot: ProfileSlot;
+  productId: string;
+  date: string; // YYYY-MM-DD
+  completed: boolean;
+  completedAt: Timestamp;
+  updatedByUid: string;
+  createdAt?: Timestamp;
+  updatedAt?: Timestamp;
+}
+
+export type WardrobeCategory =
+  | 'Tops'
+  | 'Bottoms'
+  | 'Footwear'
+  | 'Outerwear'
+  | 'Accessories'
+  | 'Dresses'
+  | 'Activewear';
+
+export const WARDROBE_CATEGORIES: WardrobeCategory[] = [
+  'Tops',
+  'Bottoms',
+  'Footwear',
+  'Outerwear',
+  'Accessories',
+  'Dresses',
+  'Activewear',
+];
+
+export type WardrobeOccasion =
+  | 'Casual'
+  | 'College'
+  | 'Formal'
+  | 'Party'
+  | 'Date Night'
+  | 'Work'
+  | 'Athletic';
+
+export const WARDROBE_OCCASIONS: WardrobeOccasion[] = [
+  'Casual',
+  'College',
+  'Formal',
+  'Party',
+  'Date Night',
+  'Work',
+  'Athletic',
+];
+
+export type WardrobeSeason =
+  | 'All Season'
+  | 'Spring'
+  | 'Summer'
+  | 'Fall'
+  | 'Winter';
+
+export const WARDROBE_SEASONS: WardrobeSeason[] = [
+  'All Season',
+  'Spring',
+  'Summer',
+  'Fall',
+  'Winter',
+];
+
+export interface WardrobeItemDoc {
+  id: string;
+  workspaceId: string;
+  profileSlot: ProductOwnerSlot;
+  name: string;
+  category: string;
+  brand: string;
+  color: string;
+  size: string;
+  season: string;
+  occasion: string;
+  imageUrl: string;
+  notes: string;
+  updatedByUid: string;
+  createdAt?: Timestamp;
+  updatedAt?: Timestamp;
+}
+
+export interface OutfitDoc {
+  id: string;
+  workspaceId: string;
+  profileSlot: ProductOwnerSlot;
+  name: string;
+  occasion: string;
+  itemIds: string[];
   notes: string;
   updatedByUid: string;
   createdAt?: Timestamp;

@@ -6,6 +6,8 @@ import {
   User as FirebaseUser,
 } from 'firebase/auth';
 import {
+  collection,
+  deleteDoc,
   doc,
   getDoc,
   onSnapshot,
@@ -20,9 +22,9 @@ import {
   Droplet,
   HeartHandshake,
   LogOut,
+  Shirt,
   Sparkles,
   Users,
-  Watch,
   Wind,
 } from 'lucide-react';
 import {
@@ -46,18 +48,21 @@ import {
   getFitnessAppMeta,
   getLastNDates,
   HealthLogDoc,
+  OutfitDoc,
   PairingCodeDoc,
   PartnerProfileView,
   ProfileSlot,
+  RoutineCompletionDoc,
   TopNavSection,
   UserDoc,
+  WardrobeItemDoc,
   WorkspaceDoc,
 } from './types';
 import { HealthDashboard } from './components/HealthDashboard';
 import { SkinDashboard } from './components/SkinDashboard';
+import { WardrobeDashboard } from './components/WardrobeDashboard';
 import { PartnerModal } from './components/PartnerModal';
 import { OnboardingSubmission, OnboardingWizard } from './components/OnboardingWizard';
-import { FitnessSyncModal } from './components/FitnessSyncModal';
 
 function generateSixDigitCode(): string {
   return String(Math.floor(100000 + Math.random() * 900000));
@@ -65,16 +70,14 @@ function generateSixDigitCode(): string {
 
 function getValidFitnessApp(val?: string): FitnessAppId {
   if (
-    val === 'google_fit' ||
+    val === 'manual' ||
     val === 'apple_health' ||
-    val === 'samsung_health' ||
     val === 'fitbit' ||
-    val === 'garmin' ||
-    val === 'manual'
+    val === 'garmin'
   ) {
     return val;
   }
-  return 'google_fit';
+  return 'manual';
 }
 
 export default function App() {
@@ -101,14 +104,16 @@ export default function App() {
 
   // Modals
   const [isPartnerModalOpen, setIsPartnerModalOpen] = useState(false);
-  const [isFitnessSyncOpen, setIsFitnessSyncOpen] = useState(false);
 
   // Date state for Health Dashboard
   const [selectedDate, setSelectedDate] = useState<string>(todayDate);
 
-  // Real-time maps of HealthLogs and CareProducts
+  // Real-time maps of HealthLogs, CareProducts, RoutineCompletions, WardrobeItems and Outfits
   const [healthLogsMap, setHealthLogsMap] = useState<Record<string, HealthLogDoc>>({});
   const [careProductsMap, setCareProductsMap] = useState<Record<string, CareProductDoc>>({});
+  const [routineCompletionsMap, setRoutineCompletionsMap] = useState<Record<string, RoutineCompletionDoc>>({});
+  const [wardrobeItemsMap, setWardrobeItemsMap] = useState<Record<string, WardrobeItemDoc>>({});
+  const [outfitsMap, setOutfitsMap] = useState<Record<string, OutfitDoc>>({});
 
   // 1. Listen to Firebase Auth state
   useEffect(() => {
@@ -120,6 +125,9 @@ export default function App() {
         setWorkspace(null);
         setHealthLogsMap({});
         setCareProductsMap({});
+        setRoutineCompletionsMap({});
+        setWardrobeItemsMap({});
+        setOutfitsMap({});
         setHasInitializedSlot(false);
       }
     });
@@ -178,7 +186,7 @@ export default function App() {
               partner1StepsGoal: 8500,
               partner1SleepGoalMinutes: 480,
               partner1WaterGoalMl: 2500,
-              partner1FitnessApp: 'google_fit',
+              partner1FitnessApp: 'manual',
               partner2Name: 'Partner',
               partner2Role: 'Partner’s Dashboard',
               partner2WeightUnit: 'kg',
@@ -187,7 +195,7 @@ export default function App() {
               partner2StepsGoal: 8500,
               partner2SleepGoalMinutes: 480,
               partner2WaterGoalMl: 2500,
-              partner2FitnessApp: 'google_fit',
+              partner2FitnessApp: 'manual',
               skincareCategories: DEFAULT_SKINCARE_CATEGORIES,
               haircareCategories: DEFAULT_HAIRCARE_CATEGORIES,
               bodycareCategories: DEFAULT_BODYCARE_CATEGORIES,
@@ -252,93 +260,120 @@ export default function App() {
     return () => unsub();
   }, [authReady, authUser, userDoc?.workspaceId]);
 
-  // 4. Listen to deterministic daily HealthLog documents for both profiles across the active date window
-  const watchedDates = useMemo(() => {
-    const recent10 = getLastNDates(10, todayDate);
-    const trend7 = getLastNDates(7, selectedDate);
-    return Array.from(new Set([...recent10, ...trend7, todayDate, selectedDate]));
-  }, [todayDate, selectedDate]);
-
+  // 4. Listen to HealthLog collection in real-time
   useEffect(() => {
     if (!authReady || !authUser || !workspace?.id) return;
+    const collPath = `workspaces/${workspace.id}/healthLogs`;
+    const collRef = collection(db, 'workspaces', workspace.id, 'healthLogs');
 
-    const unsubs: (() => void)[] = [];
-    const slots: ProfileSlot[] = ['partner1', 'partner2'];
-
-    for (const slot of slots) {
-      for (const dateStr of watchedDates) {
-        const logId = `${slot}_${dateStr}`;
-        const logPath = `workspaces/${workspace.id}/healthLogs/${logId}`;
-        const logRef = doc(db, 'workspaces', workspace.id, 'healthLogs', logId);
-
-        const u = onSnapshot(
-          logRef,
-          (snap) => {
-            setHealthLogsMap((prev) => {
-              const next = { ...prev };
-              if (snap.exists()) {
-                next[logId] = snap.data() as HealthLogDoc;
-              } else {
-                delete next[logId];
-              }
-              return next;
-            });
-          },
-          (error) => {
-            handleFirestoreError(error, OperationType.GET, logPath);
-          }
-        );
-        unsubs.push(u);
+    const unsub = onSnapshot(
+      collRef,
+      (snapshot) => {
+        const nextLogs: Record<string, HealthLogDoc> = {};
+        snapshot.docs.forEach((docSnap) => {
+          nextLogs[docSnap.id] = docSnap.data() as HealthLogDoc;
+        });
+        setHealthLogsMap(nextLogs);
+      },
+      (error) => {
+        handleFirestoreError(error, OperationType.LIST, collPath);
       }
-    }
+    );
 
-    return () => {
-      unsubs.forEach((fn) => fn());
-    };
-  }, [authReady, authUser, workspace?.id, watchedDates]);
+    return () => unsub();
+  }, [authReady, authUser, workspace?.id]);
 
-  // 5. Listen to CareProduct documents indexed in workspace.productIds
-  const productIdsKey = workspace?.productIds ? workspace.productIds.join(',') : '';
-
+  // 5. Listen to CareProduct collection in real-time
   useEffect(() => {
     if (!authReady || !authUser || !workspace?.id) return;
+    const collPath = `workspaces/${workspace.id}/careProducts`;
+    const collRef = collection(db, 'workspaces', workspace.id, 'careProducts');
 
-    const ids = workspace.productIds || [];
-    if (ids.length === 0) {
-      setCareProductsMap({});
-      return;
-    }
+    const unsub = onSnapshot(
+      collRef,
+      (snapshot) => {
+        const nextProds: Record<string, CareProductDoc> = {};
+        snapshot.docs.forEach((docSnap) => {
+          nextProds[docSnap.id] = docSnap.data() as CareProductDoc;
+        });
+        setCareProductsMap(nextProds);
+      },
+      (error) => {
+        handleFirestoreError(error, OperationType.LIST, collPath);
+      }
+    );
 
-    const unsubs: (() => void)[] = [];
+    return () => unsub();
+  }, [authReady, authUser, workspace?.id]);
 
-    for (const prodId of ids) {
-      const prodPath = `workspaces/${workspace.id}/careProducts/${prodId}`;
-      const prodRef = doc(db, 'workspaces', workspace.id, 'careProducts', prodId);
+  // 6. Listen to RoutineCompletions collection in real-time
+  useEffect(() => {
+    if (!authReady || !authUser || !workspace?.id) return;
+    const collPath = `workspaces/${workspace.id}/routineCompletions`;
+    const collRef = collection(db, 'workspaces', workspace.id, 'routineCompletions');
 
-      const u = onSnapshot(
-        prodRef,
-        (snap) => {
-          setCareProductsMap((prev) => {
-            const next = { ...prev };
-            if (snap.exists()) {
-              next[prodId] = snap.data() as CareProductDoc;
-            } else {
-              delete next[prodId];
-            }
-            return next;
-          });
-        },
-        (error) => {
-          handleFirestoreError(error, OperationType.GET, prodPath);
-        }
-      );
-      unsubs.push(u);
-    }
+    const unsub = onSnapshot(
+      collRef,
+      (snapshot) => {
+        const nextCompletions: Record<string, RoutineCompletionDoc> = {};
+        snapshot.docs.forEach((docSnap) => {
+          nextCompletions[docSnap.id] = docSnap.data() as RoutineCompletionDoc;
+        });
+        setRoutineCompletionsMap(nextCompletions);
+      },
+      (error) => {
+        handleFirestoreError(error, OperationType.LIST, collPath);
+      }
+    );
 
-    return () => {
-      unsubs.forEach((fn) => fn());
-    };
-  }, [authReady, authUser, workspace?.id, productIdsKey]);
+    return () => unsub();
+  }, [authReady, authUser, workspace?.id]);
+
+  // 7. Listen to WardrobeItems collection in real-time
+  useEffect(() => {
+    if (!authReady || !authUser || !workspace?.id) return;
+    const collPath = `workspaces/${workspace.id}/wardrobeItems`;
+    const collRef = collection(db, 'workspaces', workspace.id, 'wardrobeItems');
+
+    const unsub = onSnapshot(
+      collRef,
+      (snapshot) => {
+        const nextItems: Record<string, WardrobeItemDoc> = {};
+        snapshot.docs.forEach((docSnap) => {
+          nextItems[docSnap.id] = docSnap.data() as WardrobeItemDoc;
+        });
+        setWardrobeItemsMap(nextItems);
+      },
+      (error) => {
+        handleFirestoreError(error, OperationType.LIST, collPath);
+      }
+    );
+
+    return () => unsub();
+  }, [authReady, authUser, workspace?.id]);
+
+  // 8. Listen to Outfits collection in real-time
+  useEffect(() => {
+    if (!authReady || !authUser || !workspace?.id) return;
+    const collPath = `workspaces/${workspace.id}/outfits`;
+    const collRef = collection(db, 'workspaces', workspace.id, 'outfits');
+
+    const unsub = onSnapshot(
+      collRef,
+      (snapshot) => {
+        const nextOutfits: Record<string, OutfitDoc> = {};
+        snapshot.docs.forEach((docSnap) => {
+          nextOutfits[docSnap.id] = docSnap.data() as OutfitDoc;
+        });
+        setOutfitsMap(nextOutfits);
+      },
+      (error) => {
+        handleFirestoreError(error, OperationType.LIST, collPath);
+      }
+    );
+
+    return () => unsub();
+  }, [authReady, authUser, workspace?.id]);
 
   // Derived profile views
   const partner1Profile: PartnerProfileView | null = useMemo(() => {
@@ -393,10 +428,14 @@ export default function App() {
   }, [healthLogsMap, otherProfile, todayDate]);
 
   const orderedProductsList = useMemo(() => {
-    if (!workspace?.productIds) return [];
-    return workspace.productIds
+    const list = Object.values(careProductsMap);
+    if (!workspace?.productIds || workspace.productIds.length === 0) return list;
+    const ordered = workspace.productIds
       .map((id) => careProductsMap[id])
       .filter((p): p is CareProductDoc => Boolean(p));
+    const orderedIdSet = new Set(ordered.map((p) => p.id));
+    const unindexed = list.filter((p) => !orderedIdSet.has(p.id));
+    return [...ordered, ...unindexed];
   }, [workspace?.productIds, careProductsMap]);
 
   // Helper to ensure partner1FitnessApp & partner2FitnessApp are always included in workspace updates
@@ -806,6 +845,8 @@ export default function App() {
       originalPrice: clampNumber(productInput.originalPrice, 0, VALIDATION_BOUNDS.MAX_PRICE),
       status: productInput.status,
       routineTime: productInput.routineTime,
+      scheduleType: productInput.scheduleType || 'daily',
+      scheduledDays: productInput.scheduledDays || [],
       notes: sanitizeString(productInput.notes, VALIDATION_BOUNDS.MAX_NOTE),
       updatedByUid: authUser.uid,
       updatedAt: serverTimestamp(),
@@ -826,7 +867,6 @@ export default function App() {
           createdAt: serverTimestamp(),
         });
         batch.update(doc(db, 'workspaces', workspace.id), {
-          ...getFitnessAppFields(workspace),
           productIds: [...workspace.productIds, productId],
           updatedAt: serverTimestamp(),
         });
@@ -848,13 +888,160 @@ export default function App() {
       const batch = writeBatch(db);
       batch.delete(doc(db, 'workspaces', workspace.id, 'careProducts', productId));
       batch.update(doc(db, 'workspaces', workspace.id), {
-        ...getFitnessAppFields(workspace),
         productIds: workspace.productIds.filter((id) => id !== productId),
         updatedAt: serverTimestamp(),
       });
       await batch.commit();
     } catch (error) {
       handleFirestoreError(error, OperationType.DELETE, prodPath);
+    }
+  };
+
+  // Toggle routine completion for deterministic date-based persistence in Firestore
+  const handleToggleRoutineCompletion = async (
+    productId: string,
+    date: string,
+    completed: boolean
+  ) => {
+    if (!authUser || !workspace) return;
+    const completionId = `${activeSlot}_${productId}_${date}`;
+    const docPath = `workspaces/${workspace.id}/routineCompletions/${completionId}`;
+    const docRef = doc(db, 'workspaces', workspace.id, 'routineCompletions', completionId);
+
+    try {
+      if (completed) {
+        await setDoc(docRef, {
+          id: completionId,
+          workspaceId: workspace.id,
+          profileSlot: activeSlot,
+          productId,
+          date,
+          completed: true,
+          completedAt: serverTimestamp(),
+          updatedByUid: authUser.uid,
+          createdAt: serverTimestamp(),
+          updatedAt: serverTimestamp(),
+        });
+      } else {
+        await deleteDoc(docRef);
+      }
+    } catch (error) {
+      handleFirestoreError(
+        error,
+        completed ? OperationType.CREATE : OperationType.DELETE,
+        docPath
+      );
+    }
+  };
+
+  // Wardrobe Items CRUD
+  const handleSaveWardrobeItem = async (
+    itemInput: Omit<
+      WardrobeItemDoc,
+      'id' | 'workspaceId' | 'updatedByUid' | 'createdAt' | 'updatedAt'
+    >,
+    existingId?: string
+  ) => {
+    if (!authUser || !workspace) return;
+    const itemId = existingId || `cloth_${Date.now()}_${Math.floor(Math.random() * 1000)}`;
+    const itemPath = `workspaces/${workspace.id}/wardrobeItems/${itemId}`;
+    const itemRef = doc(db, 'workspaces', workspace.id, 'wardrobeItems', itemId);
+
+    const payload = {
+      profileSlot: itemInput.profileSlot,
+      name: sanitizeString(itemInput.name, 100, 'Clothing Item'),
+      category: itemInput.category,
+      brand: sanitizeString(itemInput.brand, 80, ''),
+      color: sanitizeString(itemInput.color, 40, ''),
+      size: sanitizeString(itemInput.size, 20, ''),
+      season: itemInput.season,
+      occasion: itemInput.occasion,
+      imageUrl: itemInput.imageUrl || '',
+      notes: sanitizeString(itemInput.notes, 500, ''),
+      updatedByUid: authUser.uid,
+      updatedAt: serverTimestamp(),
+    };
+
+    try {
+      if (existingId && wardrobeItemsMap[existingId]) {
+        await updateDoc(itemRef, payload);
+      } else {
+        await setDoc(itemRef, {
+          id: itemId,
+          workspaceId: workspace.id,
+          ...payload,
+          createdAt: serverTimestamp(),
+        });
+      }
+    } catch (error) {
+      handleFirestoreError(
+        error,
+        existingId ? OperationType.UPDATE : OperationType.CREATE,
+        itemPath
+      );
+    }
+  };
+
+  const handleDeleteWardrobeItem = async (itemId: string) => {
+    if (!authUser || !workspace) return;
+    const itemPath = `workspaces/${workspace.id}/wardrobeItems/${itemId}`;
+    try {
+      await deleteDoc(doc(db, 'workspaces', workspace.id, 'wardrobeItems', itemId));
+    } catch (error) {
+      handleFirestoreError(error, OperationType.DELETE, itemPath);
+    }
+  };
+
+  // Outfits CRUD
+  const handleSaveOutfit = async (
+    outfitInput: Omit<
+      OutfitDoc,
+      'id' | 'workspaceId' | 'updatedByUid' | 'createdAt' | 'updatedAt'
+    >,
+    existingId?: string
+  ) => {
+    if (!authUser || !workspace) return;
+    const outfitId = existingId || `fit_${Date.now()}_${Math.floor(Math.random() * 1000)}`;
+    const fitPath = `workspaces/${workspace.id}/outfits/${outfitId}`;
+    const fitRef = doc(db, 'workspaces', workspace.id, 'outfits', outfitId);
+
+    const payload = {
+      profileSlot: outfitInput.profileSlot,
+      name: sanitizeString(outfitInput.name, 100, 'My Outfit'),
+      occasion: outfitInput.occasion,
+      itemIds: outfitInput.itemIds.slice(0, 30),
+      notes: sanitizeString(outfitInput.notes, 500, ''),
+      updatedByUid: authUser.uid,
+      updatedAt: serverTimestamp(),
+    };
+
+    try {
+      if (existingId && outfitsMap[existingId]) {
+        await updateDoc(fitRef, payload);
+      } else {
+        await setDoc(fitRef, {
+          id: outfitId,
+          workspaceId: workspace.id,
+          ...payload,
+          createdAt: serverTimestamp(),
+        });
+      }
+    } catch (error) {
+      handleFirestoreError(
+        error,
+        existingId ? OperationType.UPDATE : OperationType.CREATE,
+        fitPath
+      );
+    }
+  };
+
+  const handleDeleteOutfit = async (outfitId: string) => {
+    if (!authUser || !workspace) return;
+    const fitPath = `workspaces/${workspace.id}/outfits/${outfitId}`;
+    try {
+      await deleteDoc(doc(db, 'workspaces', workspace.id, 'outfits', outfitId));
+    } catch (error) {
+      handleFirestoreError(error, OperationType.DELETE, fitPath);
     }
   };
 
@@ -881,7 +1068,6 @@ export default function App() {
     const wsPath = `workspaces/${workspace.id}`;
     try {
       await updateDoc(doc(db, 'workspaces', workspace.id), {
-        ...getFitnessAppFields(workspace),
         [fieldName]: [...currentList, clean],
         updatedAt: serverTimestamp(),
       });
@@ -908,7 +1094,6 @@ export default function App() {
     const wsPath = `workspaces/${workspace.id}`;
     try {
       await updateDoc(doc(db, 'workspaces', workspace.id), {
-        ...getFitnessAppFields(workspace),
         [fieldName]: updated,
         updatedAt: serverTimestamp(),
       });
@@ -955,7 +1140,6 @@ export default function App() {
 
       if (targetWs.ownerUid !== authUser.uid) {
         await updateDoc(targetWsRef, {
-          ...getFitnessAppFields(targetWs),
           partnerUid: authUser.uid,
           partner2Name: userDoc.displayName || 'Partner',
           partner2Role: `${userDoc.displayName || 'Partner'}’s Dashboard`,
@@ -982,7 +1166,6 @@ export default function App() {
     const wsPath = `workspaces/${workspace.id}`;
     try {
       await updateDoc(doc(db, 'workspaces', workspace.id), {
-        ...getFitnessAppFields(workspace),
         partnerUid: '',
         updatedAt: serverTimestamp(),
       });
@@ -1079,13 +1262,13 @@ export default function App() {
         <main className="max-w-4xl w-full mx-auto my-auto py-8 sm:py-12 grid grid-cols-1 lg:grid-cols-12 gap-6 sm:gap-8 items-center">
           <div className="lg:col-span-7 space-y-5">
             <div className="text-xs font-medium text-rose-400 tracking-wide">
-              Mobile-First · Cloud Saved · Google Fit & Multi-App Sync
+              Mobile-First · Real-Time Cloud Sync · Health, Skin & Wardrobe
             </div>
             <h1 className="text-3xl sm:text-5xl font-extrabold tracking-tight text-white leading-[1.1] text-balance">
-              Your daily health rings and care routine—saved & synced with your partner.
+              Your daily health rings, care routines & fits—saved & synced with your partner.
             </h1>
             <p className="text-sm sm:text-base text-zinc-400 leading-relaxed max-w-xl">
-              Sign in with Google so every log, fitness app connection (Google Fit, Apple Health, Samsung Health, Fitbit, Garmin), daily weight, step count, sleep, hydration ring, and Skincare/Haircare/Bodycare inventory (with bulk 2+ quantities) is saved automatically in real time.
+              Sign in with Google so every vitals log (daily steps, weight progress, sleep duration, hydration ring), care routine (skincare, haircare, weekly scheduler), and digital wardrobe & outfit builder is saved automatically in real time.
             </p>
 
             <div className="pt-1 space-y-3">
@@ -1107,17 +1290,23 @@ export default function App() {
             </div>
           </div>
 
-          {/* Interactive Mobile-First Preview Card with Working [ Health | Skin ] Toggle */}
+          {/* Interactive Mobile-First Preview Card with Working [ Health | Skin | Wardrobe ] Toggle */}
           <div className="lg:col-span-5 rounded-3xl bg-[#12141C] border border-white/10 p-5 sm:p-6 space-y-4">
             <div className="flex items-center justify-between border-b border-white/8 pb-3.5 gap-2">
               <div>
                 <div className="text-xs text-emerald-400 font-medium">
-                  {heroPreviewTab === 'health' ? 'Fitness & Vitals Rings' : '3-Segment Care Shelf'}
+                  {heroPreviewTab === 'health'
+                    ? 'Fitness & Vitals Rings'
+                    : heroPreviewTab === 'skin'
+                    ? '3-Segment Care Shelf'
+                    : 'Digital Wardrobe & Fits'}
                 </div>
                 <div className="text-sm sm:text-base font-bold text-white">
                   {heroPreviewTab === 'health'
-                    ? 'Google Fit · Apple · Samsung'
-                    : 'Skincare · Haircare · Bodycare'}
+                    ? 'Steps · Weight · Sleep · Water'
+                    : heroPreviewTab === 'skin'
+                    ? 'Skincare · Haircare · Bodycare'
+                    : 'Closet Items · Outfit Studio'}
                 </div>
               </div>
 
@@ -1132,7 +1321,7 @@ export default function App() {
                   role="tab"
                   aria-selected={heroPreviewTab === 'health'}
                   onClick={() => setHeroPreviewTab('health')}
-                  className={`relative min-h-[32px] px-3 py-1 rounded-full text-xs font-semibold transition-colors flex items-center gap-1 ${
+                  className={`relative min-h-[32px] px-2.5 py-1 rounded-full text-xs font-semibold transition-colors flex items-center gap-1 ${
                     heroPreviewTab === 'health'
                       ? 'text-zinc-950'
                       : 'text-zinc-400 hover:text-white'
@@ -1154,7 +1343,7 @@ export default function App() {
                   role="tab"
                   aria-selected={heroPreviewTab === 'skin'}
                   onClick={() => setHeroPreviewTab('skin')}
-                  className={`relative min-h-[32px] px-3 py-1 rounded-full text-xs font-semibold transition-colors flex items-center gap-1 ${
+                  className={`relative min-h-[32px] px-2.5 py-1 rounded-full text-xs font-semibold transition-colors flex items-center gap-1 ${
                     heroPreviewTab === 'skin'
                       ? 'text-zinc-950'
                       : 'text-zinc-400 hover:text-white'
@@ -1169,6 +1358,28 @@ export default function App() {
                   )}
                   <Sparkles className="w-3 h-3 relative z-10" />
                   <span className="relative z-10">Skin</span>
+                </button>
+
+                <button
+                  type="button"
+                  role="tab"
+                  aria-selected={heroPreviewTab === 'wardrobe'}
+                  onClick={() => setHeroPreviewTab('wardrobe')}
+                  className={`relative min-h-[32px] px-2.5 py-1 rounded-full text-xs font-semibold transition-colors flex items-center gap-1 ${
+                    heroPreviewTab === 'wardrobe'
+                      ? 'text-zinc-950'
+                      : 'text-zinc-400 hover:text-white'
+                  }`}
+                >
+                  {heroPreviewTab === 'wardrobe' && (
+                    <motion.span
+                      layoutId="heroPreviewPill"
+                      transition={{ duration: 0.16, ease: [0.16, 1, 0.3, 1] }}
+                      className="absolute inset-0 rounded-full bg-white"
+                    />
+                  )}
+                  <Shirt className="w-3 h-3 relative z-10" />
+                  <span className="relative z-10">Closet</span>
                 </button>
               </div>
             </div>
@@ -1192,11 +1403,11 @@ export default function App() {
                       <div className="text-[11px] text-zinc-400">Circular ring + 7d curve</div>
                     </div>
                     <div className="rounded-2xl bg-zinc-900/90 border border-white/6 p-3 space-y-1">
-                      <div className="text-xs text-emerald-400 font-medium">Steps + Fitness App</div>
+                      <div className="text-xs text-emerald-400 font-medium">Daily Steps</div>
                       <div className="text-base font-mono font-bold text-white tabular-nums">
-                        Google Fit Sync
+                        Step Ring
                       </div>
-                      <div className="text-[11px] text-zinc-400">Or exact EOD input</div>
+                      <div className="text-[11px] text-zinc-400">Target progress & streaks</div>
                     </div>
                     <div className="rounded-2xl bg-zinc-900/90 border border-white/6 p-3 space-y-1">
                       <div className="text-xs text-indigo-400 font-medium">Total Sleep</div>
@@ -1223,7 +1434,7 @@ export default function App() {
                     </p>
                   </div>
                 </motion.div>
-              ) : (
+              ) : heroPreviewTab === 'skin' ? (
                 <motion.div
                   key="hero-skin-preview"
                   initial={{ opacity: 0, y: 4 }}
@@ -1273,10 +1484,41 @@ export default function App() {
 
                   <div className="rounded-2xl bg-zinc-900/90 border border-white/6 p-3 space-y-1">
                     <div className="text-xs text-amber-400 font-medium">
-                      Ordered · Opened · Expiry · Price Paid · Bulk Stock
+                      Custom Weekly Routine Checklist
                     </div>
                     <p className="text-[11px] text-zinc-400 leading-relaxed">
-                      Add custom categories, track bulk quantities (shown when 2 or more), and log sale prices with zero annoying alerts.
+                      Schedule products for specific days of the week (e.g. Shampoo on Sun/Wed/Fri) with date-based check-off tracking.
+                    </p>
+                  </div>
+                </motion.div>
+              ) : (
+                <motion.div
+                  key="hero-wardrobe-preview"
+                  initial={{ opacity: 0, y: 4 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -4 }}
+                  transition={{ duration: 0.15 }}
+                  className="space-y-2.5"
+                >
+                  <div className="grid grid-cols-2 gap-2.5">
+                    <div className="rounded-2xl bg-zinc-900/90 border border-white/6 p-3 space-y-1">
+                      <div className="text-xs text-rose-400 font-medium">Digital Closet</div>
+                      <div className="text-base font-bold text-white">Visual Pieces</div>
+                      <div className="text-[11px] text-zinc-400">Tops, bottoms, shoes & accessories</div>
+                    </div>
+                    <div className="rounded-2xl bg-zinc-900/90 border border-white/6 p-3 space-y-1">
+                      <div className="text-xs text-amber-400 font-medium">Outfit Studio</div>
+                      <div className="text-base font-bold text-white">Create Your Fits</div>
+                      <div className="text-[11px] text-zinc-400">Combine pieces for date night & work</div>
+                    </div>
+                  </div>
+
+                  <div className="rounded-2xl bg-zinc-900/90 border border-white/6 p-3.5 space-y-1">
+                    <div className="text-xs text-emerald-400 font-medium">
+                      Shared Partner Wardrobe
+                    </div>
+                    <p className="text-xs text-zinc-400 leading-relaxed">
+                      Toggle between your items, your partner’s items, or shared apparel with custom tags and photos.
                     </p>
                   </div>
                 </motion.div>
@@ -1357,7 +1599,7 @@ export default function App() {
           DuoPulse
         </a>
 
-        {/* Zone 2: Top Pilled Navbar [ Health | Skin ] */}
+        {/* Zone 2: Top Pilled Navbar [ Health | Skin | Wardrobe ] */}
         <nav
           aria-label="Primary View Switcher"
           className="flex items-center p-1 rounded-full bg-[#12141C] border border-white/10"
@@ -1397,6 +1639,24 @@ export default function App() {
             <Sparkles className="w-3.5 h-3.5 relative z-10" />
             <span className="relative z-10">Skin</span>
           </button>
+
+          <button
+            type="button"
+            onClick={() => setActiveSection('wardrobe')}
+            className={`relative min-h-[34px] sm:min-h-[36px] px-3.5 sm:px-5 py-1 rounded-full text-xs font-semibold transition-colors whitespace-nowrap shrink-0 flex items-center gap-1.5 ${
+              activeSection === 'wardrobe' ? 'text-zinc-950' : 'text-zinc-400 hover:text-white'
+            }`}
+          >
+            {activeSection === 'wardrobe' && (
+              <motion.span
+                layoutId="topNavPill"
+                transition={{ duration: 0.18, ease: [0.16, 1, 0.3, 1] }}
+                className="absolute inset-0 rounded-full bg-white"
+              />
+            )}
+            <Shirt className="w-3.5 h-3.5 relative z-10" />
+            <span className="relative z-10">Wardrobe</span>
+          </button>
         </nav>
 
         {/* Zone 3: Connected Account Switcher & Actions */}
@@ -1428,16 +1688,6 @@ export default function App() {
               {partner2Profile.name}
             </button>
           </div>
-
-          <button
-            type="button"
-            onClick={() => setIsFitnessSyncOpen(true)}
-            className="hidden sm:flex min-h-[36px] px-3 rounded-full bg-emerald-500/15 hover:bg-emerald-500/25 border border-emerald-500/30 items-center justify-center gap-1.5 text-xs font-medium text-emerald-300 transition-colors shrink-0"
-            title={`Fitness App Sync (${activeFitnessMeta.name})`}
-          >
-            <Watch className="w-3.5 h-3.5 text-emerald-400" />
-            <span className="hidden lg:inline">{activeFitnessMeta.shortLabel}</span>
-          </button>
 
           <button
             type="button"
@@ -1487,10 +1737,9 @@ export default function App() {
                 onSwitchToPartner={() =>
                   setActiveSlot((prev) => (prev === 'partner2' ? 'partner1' : 'partner2'))
                 }
-                onOpenFitnessSync={() => setIsFitnessSyncOpen(true)}
               />
             </motion.div>
-          ) : (
+          ) : activeSection === 'skin' ? (
             <motion.div
               key="skin-inventory"
               initial={{ opacity: 0, y: 6 }}
@@ -1506,10 +1755,32 @@ export default function App() {
                 skincareCategories={workspace.skincareCategories || DEFAULT_SKINCARE_CATEGORIES}
                 haircareCategories={workspace.haircareCategories || DEFAULT_HAIRCARE_CATEGORIES}
                 bodycareCategories={workspace.bodycareCategories || DEFAULT_BODYCARE_CATEGORIES}
+                todayDate={todayDate}
+                routineCompletionsMap={routineCompletionsMap}
+                onToggleRoutineCompletion={handleToggleRoutineCompletion}
                 onSaveProduct={handleSaveProduct}
                 onDeleteProduct={handleDeleteProduct}
                 onAddSubCategory={handleAddSubCategory}
                 onRemoveSubCategory={handleRemoveSubCategory}
+              />
+            </motion.div>
+          ) : (
+            <motion.div
+              key="wardrobe-studio"
+              initial={{ opacity: 0, y: 6 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -6 }}
+              transition={{ duration: 0.16, ease: [0.16, 1, 0.3, 1] }}
+            >
+              <WardrobeDashboard
+                profile={activeProfile}
+                partnerProfile={otherProfile}
+                items={Object.values(wardrobeItemsMap)}
+                outfits={Object.values(outfitsMap)}
+                onSaveItem={handleSaveWardrobeItem}
+                onDeleteItem={handleDeleteWardrobeItem}
+                onSaveOutfit={handleSaveOutfit}
+                onDeleteOutfit={handleDeleteOutfit}
               />
             </motion.div>
           )}
@@ -1523,7 +1794,7 @@ export default function App() {
           onClick={() => setActiveSection('health')}
           className={`flex-1 min-h-[44px] rounded-2xl text-xs font-semibold flex items-center justify-center gap-1.5 transition-colors ${
             activeSection === 'health'
-              ? 'bg-white text-zinc-950'
+              ? 'bg-white text-zinc-950 font-bold'
               : 'bg-[#12141C] text-zinc-400 border border-white/8'
           }`}
         >
@@ -1536,7 +1807,7 @@ export default function App() {
           onClick={() => setActiveSection('skin')}
           className={`flex-1 min-h-[44px] rounded-2xl text-xs font-semibold flex items-center justify-center gap-1.5 transition-colors ${
             activeSection === 'skin'
-              ? 'bg-white text-zinc-950'
+              ? 'bg-white text-zinc-950 font-bold'
               : 'bg-[#12141C] text-zinc-400 border border-white/8'
           }`}
         >
@@ -1546,24 +1817,17 @@ export default function App() {
 
         <button
           type="button"
-          onClick={() => setIsFitnessSyncOpen(true)}
-          className="flex-1 min-h-[44px] rounded-2xl bg-emerald-500/15 border border-emerald-500/30 text-emerald-300 text-xs font-semibold flex items-center justify-center gap-1.5"
+          onClick={() => setActiveSection('wardrobe')}
+          className={`flex-1 min-h-[44px] rounded-2xl text-xs font-semibold flex items-center justify-center gap-1.5 transition-colors ${
+            activeSection === 'wardrobe'
+              ? 'bg-white text-zinc-950 font-bold'
+              : 'bg-[#12141C] text-zinc-400 border border-white/8'
+          }`}
         >
-          <Watch className="w-3.5 h-3.5 text-emerald-400" />
-          <span className="truncate">{activeFitnessMeta.shortLabel}</span>
+          <Shirt className="w-3.5 h-3.5" />
+          <span>Wardrobe</span>
         </button>
       </div>
-
-      {/* Fitness App Selection & Google Fit Sync Modal */}
-      <FitnessSyncModal
-        isOpen={isFitnessSyncOpen}
-        onClose={() => setIsFitnessSyncOpen(false)}
-        profile={activeProfile}
-        selectedDate={selectedDate}
-        currentLog={activeProfileLogsByDate[selectedDate]}
-        onSelectFitnessApp={handleSelectFitnessApp}
-        onApplySyncedMetrics={handleSaveHealthLog}
-      />
 
       {/* Partner Sync & Profile Customization Modal */}
       <PartnerModal

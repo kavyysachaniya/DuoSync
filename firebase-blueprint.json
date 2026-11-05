@@ -506,6 +506,75 @@
         "createdAt",
         "updatedAt"
       ]
+    },
+    "RoutineCompletion": {
+      "title": "RoutineCompletion",
+      "description": "Deterministic daily completion tracking record for scheduled weekly skincare and haircare routines.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "workspaceId": { "type": "string" },
+        "profileSlot": { "type": "string", "enum": ["partner1", "partner2"] },
+        "productId": { "type": "string" },
+        "date": { "type": "string", "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}$" },
+        "completed": { "type": "boolean" },
+        "completedAt": { "type": "string", "format": "date-time" },
+        "updatedByUid": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": [
+        "id", "workspaceId", "profileSlot", "productId", "date",
+        "completed", "completedAt", "updatedByUid", "createdAt", "updatedAt"
+      ]
+    },
+    "WardrobeItem": {
+      "title": "WardrobeItem",
+      "description": "Individual clothing piece in the digital closet with category, color, size, season, occasion, and image.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "workspaceId": { "type": "string" },
+        "profileSlot": { "type": "string", "enum": ["partner1", "partner2", "shared"] },
+        "name": { "type": "string", "minLength": 1, "maxLength": 100 },
+        "category": { "type": "string", "minLength": 1, "maxLength": 50 },
+        "brand": { "type": "string", "maxLength": 80 },
+        "color": { "type": "string", "maxLength": 40 },
+        "size": { "type": "string", "maxLength": 20 },
+        "season": { "type": "string", "maxLength": 40 },
+        "occasion": { "type": "string", "maxLength": 50 },
+        "imageUrl": { "type": "string" },
+        "notes": { "type": "string", "maxLength": 500 },
+        "updatedByUid": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": [
+        "id", "workspaceId", "profileSlot", "name", "category", "brand",
+        "color", "size", "season", "occasion", "imageUrl", "notes",
+        "updatedByUid", "createdAt", "updatedAt"
+      ]
+    },
+    "Outfit": {
+      "title": "Outfit",
+      "description": "Styled combination of multiple wardrobe items saved with name and occasion.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "workspaceId": { "type": "string" },
+        "profileSlot": { "type": "string", "enum": ["partner1", "partner2", "shared"] },
+        "name": { "type": "string", "minLength": 1, "maxLength": 100 },
+        "occasion": { "type": "string", "maxLength": 50 },
+        "itemIds": { "type": "array", "items": { "type": "string" } },
+        "notes": { "type": "string", "maxLength": 500 },
+        "updatedByUid": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": [
+        "id", "workspaceId", "profileSlot", "name", "occasion", "itemIds",
+        "notes", "updatedByUid", "createdAt", "updatedAt"
+      ]
     }
   },
   "firestore": {
@@ -528,6 +597,18 @@
     "/workspaces/{workspaceId}/careProducts/{productId}": {
       "schema": { "$ref": "#/entities/CareProduct" },
       "description": "Stores skincare, haircare, and bodycare inventory items (including bulk quantity) for the workspace."
+    },
+    "/workspaces/{workspaceId}/routineCompletions/{completionId}": {
+      "schema": { "$ref": "#/entities/RoutineCompletion" },
+      "description": "Stores deterministic date-based routine completions for scheduled products."
+    },
+    "/workspaces/{workspaceId}/wardrobeItems/{itemId}": {
+      "schema": { "$ref": "#/entities/WardrobeItem" },
+      "description": "Stores wardrobe clothing items with categories, colors, sizes, and images."
+    },
+    "/workspaces/{workspaceId}/outfits/{outfitId}": {
+      "schema": { "$ref": "#/entities/Outfit" },
+      "description": "Stores created outfits combining multiple wardrobe pieces."
     }
   }
 }

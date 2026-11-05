@@ -184,12 +184,21 @@ service cloud.firestore {
         'saleInfo', 'pricePaid', 'originalPrice', 'status', 'routineTime', 'notes',
         'updatedByUid', 'createdAt', 'updatedAt'
       ]) &&
-      data.keys().hasOnly([
-        'id', 'workspaceId', 'profileSlot', 'segment', 'subCategory',
-        'name', 'brand', 'quantity', 'orderedDate', 'openedDate', 'expiryDate',
-        'saleInfo', 'pricePaid', 'originalPrice', 'status', 'routineTime', 'notes',
-        'updatedByUid', 'createdAt', 'updatedAt'
-      ]) &&
+      (
+        data.keys().hasOnly([
+          'id', 'workspaceId', 'profileSlot', 'segment', 'subCategory',
+          'name', 'brand', 'quantity', 'orderedDate', 'openedDate', 'expiryDate',
+          'saleInfo', 'pricePaid', 'originalPrice', 'status', 'routineTime', 'notes',
+          'updatedByUid', 'createdAt', 'updatedAt'
+        ]) ||
+        data.keys().hasOnly([
+          'id', 'workspaceId', 'profileSlot', 'segment', 'subCategory',
+          'name', 'brand', 'quantity', 'orderedDate', 'openedDate', 'expiryDate',
+          'saleInfo', 'pricePaid', 'originalPrice', 'status', 'routineTime', 'notes',
+          'updatedByUid', 'createdAt', 'updatedAt',
+          'scheduleType', 'scheduledDays'
+        ])
+      ) &&
       isValidId(data.id) &&
       isValidId(data.workspaceId) &&
       (data.profileSlot == 'partner1' || data.profileSlot == 'partner2' || data.profileSlot == 'shared') &&
@@ -206,7 +215,82 @@ service cloud.firestore {
       data.originalPrice is number && data.originalPrice >= 0 && data.originalPrice <= 1000000 &&
       (data.status == 'in_use' || data.status == 'unopened' || data.status == 'finished') &&
       (data.routineTime == 'am' || data.routineTime == 'pm' || data.routineTime == 'both' || data.routineTime == 'weekly') &&
+      (!('scheduleType' in data) || data.scheduleType == 'daily' || data.scheduleType == 'weekly') &&
+      (!('scheduledDays' in data) || (data.scheduledDays is list && data.scheduledDays.size() <= 7)) &&
       data.notes is string && data.notes.size() <= 280 &&
+      isValidId(data.updatedByUid) &&
+      data.updatedByUid == request.auth.uid &&
+      data.createdAt is timestamp &&
+      data.updatedAt is timestamp;
+    }
+
+    function isValidRoutineCompletion(data) {
+      return data.keys().hasAll([
+        'id', 'workspaceId', 'profileSlot', 'productId', 'date',
+        'completed', 'completedAt', 'updatedByUid', 'createdAt', 'updatedAt'
+      ]) &&
+      data.keys().hasOnly([
+        'id', 'workspaceId', 'profileSlot', 'productId', 'date',
+        'completed', 'completedAt', 'updatedByUid', 'createdAt', 'updatedAt'
+      ]) &&
+      isValidId(data.id) &&
+      isValidId(data.workspaceId) &&
+      (data.profileSlot == 'partner1' || data.profileSlot == 'partner2') &&
+      isValidId(data.productId) &&
+      data.date is string && data.date.size() == 10 && data.date.matches('^[0-9]{4}-[0-9]{2}-[0-9]{2}$') &&
+      data.completed is bool &&
+      data.completedAt is timestamp &&
+      isValidId(data.updatedByUid) &&
+      data.updatedByUid == request.auth.uid &&
+      data.createdAt is timestamp &&
+      data.updatedAt is timestamp;
+    }
+
+    function isValidWardrobeItem(data) {
+      return data.keys().hasAll([
+        'id', 'workspaceId', 'profileSlot', 'name', 'category', 'brand',
+        'color', 'size', 'season', 'occasion', 'imageUrl', 'notes',
+        'updatedByUid', 'createdAt', 'updatedAt'
+      ]) &&
+      data.keys().hasOnly([
+        'id', 'workspaceId', 'profileSlot', 'name', 'category', 'brand',
+        'color', 'size', 'season', 'occasion', 'imageUrl', 'notes',
+        'updatedByUid', 'createdAt', 'updatedAt'
+      ]) &&
+      isValidId(data.id) &&
+      isValidId(data.workspaceId) &&
+      (data.profileSlot == 'partner1' || data.profileSlot == 'partner2' || data.profileSlot == 'shared') &&
+      data.name is string && data.name.size() >= 1 && data.name.size() <= 100 &&
+      data.category is string && data.category.size() >= 1 && data.category.size() <= 50 &&
+      data.brand is string && data.brand.size() <= 80 &&
+      data.color is string && data.color.size() <= 40 &&
+      data.size is string && data.size.size() <= 20 &&
+      data.season is string && data.season.size() <= 40 &&
+      data.occasion is string && data.occasion.size() <= 50 &&
+      data.imageUrl is string && data.imageUrl.size() <= 200000 &&
+      data.notes is string && data.notes.size() <= 500 &&
+      isValidId(data.updatedByUid) &&
+      data.updatedByUid == request.auth.uid &&
+      data.createdAt is timestamp &&
+      data.updatedAt is timestamp;
+    }
+
+    function isValidOutfit(data) {
+      return data.keys().hasAll([
+        'id', 'workspaceId', 'profileSlot', 'name', 'occasion', 'itemIds',
+        'notes', 'updatedByUid', 'createdAt', 'updatedAt'
+      ]) &&
+      data.keys().hasOnly([
+        'id', 'workspaceId', 'profileSlot', 'name', 'occasion', 'itemIds',
+        'notes', 'updatedByUid', 'createdAt', 'updatedAt'
+      ]) &&
+      isValidId(data.id) &&
+      isValidId(data.workspaceId) &&
+      (data.profileSlot == 'partner1' || data.profileSlot == 'partner2' || data.profileSlot == 'shared') &&
+      data.name is string && data.name.size() >= 1 && data.name.size() <= 100 &&
+      data.occasion is string && data.occasion.size() <= 50 &&
+      data.itemIds is list && data.itemIds.size() >= 1 && data.itemIds.size() <= 30 &&
+      data.notes is string && data.notes.size() <= 500 &&
       isValidId(data.updatedByUid) &&
       data.updatedByUid == request.auth.uid &&
       data.createdAt is timestamp &&
@@ -330,7 +414,9 @@ service cloud.firestore {
         allow get: if isSignedIn() && isVerified() &&
           isValidId(workspaceId) && isValidId(logId) &&
           isWorkspaceMember(workspaceId);
-        allow list: if false;
+        allow list: if isSignedIn() && isVerified() &&
+          isValidId(workspaceId) &&
+          isWorkspaceMember(workspaceId);
 
         allow create: if isSignedIn() && isVerified() &&
           isValidId(workspaceId) && isValidId(logId) &&
@@ -364,7 +450,9 @@ service cloud.firestore {
         allow get: if isSignedIn() && isVerified() &&
           isValidId(workspaceId) && isValidId(productId) &&
           isWorkspaceMember(workspaceId);
-        allow list: if false;
+        allow list: if isSignedIn() && isVerified() &&
+          isValidId(workspaceId) &&
+          isWorkspaceMember(workspaceId);
 
         allow create: if isSignedIn() && isVerified() &&
           isValidId(workspaceId) && isValidId(productId) &&
@@ -373,8 +461,7 @@ service cloud.firestore {
           incoming().workspaceId == workspaceId &&
           incoming().createdAt == request.time &&
           incoming().updatedAt == request.time &&
-          isWorkspaceMember(workspaceId) &&
-          productId in getAfter(/databases/$(database)/documents/workspaces/$(workspaceId)).data.productIds;
+          isWorkspaceMember(workspaceId);
 
         allow update: if isSignedIn() && isVerified() &&
           isValidCareProduct(incoming()) &&
@@ -387,12 +474,119 @@ service cloud.firestore {
             'profileSlot', 'segment', 'subCategory', 'name', 'brand', 'quantity',
             'orderedDate', 'openedDate', 'expiryDate', 'saleInfo',
             'pricePaid', 'originalPrice', 'status', 'routineTime', 'notes',
-            'updatedByUid', 'updatedAt'
+            'updatedByUid', 'updatedAt', 'scheduleType', 'scheduledDays'
           ]) &&
           isWorkspaceMember(workspaceId);
 
         allow delete: if isSignedIn() && isVerified() &&
           isValidId(workspaceId) && isValidId(productId) &&
+          isWorkspaceMember(workspaceId);
+      }
+
+      match /routineCompletions/{completionId} {
+        allow get: if isSignedIn() && isVerified() &&
+          isValidId(workspaceId) && isValidId(completionId) &&
+          isWorkspaceMember(workspaceId);
+        allow list: if isSignedIn() && isVerified() &&
+          isValidId(workspaceId) &&
+          isWorkspaceMember(workspaceId);
+
+        allow create: if isSignedIn() && isVerified() &&
+          isValidId(workspaceId) && isValidId(completionId) &&
+          isValidRoutineCompletion(incoming()) &&
+          incoming().id == completionId &&
+          incoming().workspaceId == workspaceId &&
+          incoming().createdAt == request.time &&
+          incoming().updatedAt == request.time &&
+          isWorkspaceMember(workspaceId);
+
+        allow update: if isSignedIn() && isVerified() &&
+          isValidRoutineCompletion(incoming()) &&
+          isValidId(workspaceId) && isValidId(completionId) &&
+          incoming().id == existing().id &&
+          incoming().workspaceId == existing().workspaceId &&
+          incoming().profileSlot == existing().profileSlot &&
+          incoming().productId == existing().productId &&
+          incoming().date == existing().date &&
+          incoming().createdAt == existing().createdAt &&
+          incoming().updatedAt == request.time &&
+          incoming().diff(existing()).affectedKeys().hasOnly([
+            'completed', 'completedAt', 'updatedByUid', 'updatedAt'
+          ]) &&
+          isWorkspaceMember(workspaceId);
+
+        allow delete: if isSignedIn() && isVerified() &&
+          isValidId(workspaceId) && isValidId(completionId) &&
+          isWorkspaceMember(workspaceId);
+      }
+
+      match /wardrobeItems/{itemId} {
+        allow get: if isSignedIn() && isVerified() &&
+          isValidId(workspaceId) && isValidId(itemId) &&
+          isWorkspaceMember(workspaceId);
+        allow list: if isSignedIn() && isVerified() &&
+          isValidId(workspaceId) &&
+          isWorkspaceMember(workspaceId);
+
+        allow create: if isSignedIn() && isVerified() &&
+          isValidId(workspaceId) && isValidId(itemId) &&
+          isValidWardrobeItem(incoming()) &&
+          incoming().id == itemId &&
+          incoming().workspaceId == workspaceId &&
+          incoming().createdAt == request.time &&
+          incoming().updatedAt == request.time &&
+          isWorkspaceMember(workspaceId);
+
+        allow update: if isSignedIn() && isVerified() &&
+          isValidWardrobeItem(incoming()) &&
+          isValidId(workspaceId) && isValidId(itemId) &&
+          incoming().id == existing().id &&
+          incoming().workspaceId == existing().workspaceId &&
+          incoming().createdAt == existing().createdAt &&
+          incoming().updatedAt == request.time &&
+          incoming().diff(existing()).affectedKeys().hasOnly([
+            'profileSlot', 'name', 'category', 'brand', 'color', 'size',
+            'season', 'occasion', 'imageUrl', 'notes', 'updatedByUid', 'updatedAt'
+          ]) &&
+          isWorkspaceMember(workspaceId);
+
+        allow delete: if isSignedIn() && isVerified() &&
+          isValidId(workspaceId) && isValidId(itemId) &&
+          isWorkspaceMember(workspaceId);
+      }
+
+      match /outfits/{outfitId} {
+        allow get: if isSignedIn() && isVerified() &&
+          isValidId(workspaceId) && isValidId(outfitId) &&
+          isWorkspaceMember(workspaceId);
+        allow list: if isSignedIn() && isVerified() &&
+          isValidId(workspaceId) &&
+          isWorkspaceMember(workspaceId);
+
+        allow create: if isSignedIn() && isVerified() &&
+          isValidId(workspaceId) && isValidId(outfitId) &&
+          isValidOutfit(incoming()) &&
+          incoming().id == outfitId &&
+          incoming().workspaceId == workspaceId &&
+          incoming().createdAt == request.time &&
+          incoming().updatedAt == request.time &&
+          isWorkspaceMember(workspaceId);
+
+        allow update: if isSignedIn() && isVerified() &&
+          isValidOutfit(incoming()) &&
+          isValidId(workspaceId) && isValidId(outfitId) &&
+          incoming().id == existing().id &&
+          incoming().workspaceId == existing().workspaceId &&
+          incoming().createdAt == existing().createdAt &&
+          incoming().updatedAt == request.time &&
+          incoming().diff(existing()).affectedKeys().hasOnly([
+            'profileSlot', 'name', 'occasion', 'itemIds', 'notes',
+            'updatedByUid', 'updatedAt'
+          ]) &&
+          isWorkspaceMember(workspaceId);
+
+        allow delete: if isSignedIn() && isVerified() &&
+          isValidId(workspaceId) && isValidId(outfitId) &&
           isWorkspaceMember(workspaceId);
       }
     }
