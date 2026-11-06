@@ -6,13 +6,7 @@ export type CareSegment = 'skincare' | 'haircare' | 'bodycare';
 export type ProductStatus = 'in_use' | 'unopened' | 'finished';
 export type RoutineTime = 'am' | 'pm' | 'both' | 'weekly';
 export type TopNavSection = 'health' | 'skin' | 'wardrobe';
-export type FitnessAppId =
-  | 'google_fit'
-  | 'apple_health'
-  | 'samsung_health'
-  | 'fitbit'
-  | 'garmin'
-  | 'manual';
+export type FitnessAppId = 'manual';
 
 export interface FitnessAppOption {
   id: FitnessAppId;
@@ -24,56 +18,23 @@ export interface FitnessAppOption {
   accentColor: string;
 }
 
-// Unreliable integrations (Google Fit & Samsung Health) removed as requested.
-// Direct manual logging is prioritized along with supported summary inputs.
+// Manual daily health logging is the only supported tracking method.
 export const FITNESS_APP_CATALOG: FitnessAppOption[] = [
   {
     id: 'manual',
     name: 'Manual Daily Tracking',
-    shortLabel: 'Manual Log',
-    ecosystem: 'Direct Input Only',
+    shortLabel: 'Manual',
+    ecosystem: 'Direct Input',
     supportsDirectCloudSync: false,
-    description:
-      'Log your exact end-of-day steps, weight, sleep, and water directly on the dashboard.',
-    accentColor: '#A1A1AA',
-  },
-  {
-    id: 'apple_health',
-    name: 'Apple Health',
-    shortLabel: 'Apple Health',
-    ecosystem: 'iPhone · Apple Watch',
-    supportsDirectCloudSync: false,
-    description:
-      'Track iPhone & Apple Watch daily activity metrics directly on the dashboard.',
-    accentColor: '#F43F5E',
-  },
-  {
-    id: 'fitbit',
-    name: 'Fitbit',
-    shortLabel: 'Fitbit',
-    ecosystem: 'Fitbit · Pixel Watch',
-    supportsDirectCloudSync: false,
-    description:
-      'Track and import daily Fitbit step count, sleep stages total, weight, and water.',
-    accentColor: '#14B8A6',
-  },
-  {
-    id: 'garmin',
-    name: 'Garmin Connect',
-    shortLabel: 'Garmin',
-    ecosystem: 'Garmin Watch · Index Scale',
-    supportsDirectCloudSync: false,
-    description:
-      'Log daily Garmin Connect step totals, sleep duration, body weight, and hydration.',
-    accentColor: '#818CF8',
+    description: 'Log your daily steps, weight, sleep, and water directly on the dashboard.',
+    accentColor: '#10B981',
   },
 ];
 
-export function getFitnessAppMeta(id?: FitnessAppId): FitnessAppOption {
-  return (
-    FITNESS_APP_CATALOG.find((app) => app.id === id) || FITNESS_APP_CATALOG[0]
-  );
+export function getFitnessAppMeta(_id?: unknown): FitnessAppOption {
+  return FITNESS_APP_CATALOG[0];
 }
+
 
 export interface UserDoc {
   uid: string;

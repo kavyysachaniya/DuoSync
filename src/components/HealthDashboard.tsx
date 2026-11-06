@@ -12,14 +12,11 @@ import {
   Sparkles,
   TrendingDown,
   TrendingUp,
-  Watch,
   X,
 } from 'lucide-react';
 import {
-  FITNESS_APP_CATALOG,
   FitnessAppId,
   formatSleepDuration,
-  getFitnessAppMeta,
   getLastNDates,
   HealthLogDoc,
   PartnerProfileView,
@@ -50,7 +47,6 @@ interface HealthDashboardProps {
     fitnessApp: FitnessAppId;
   }) => Promise<void>;
   onSwitchToPartner: () => void;
-  onOpenFitnessSync?: () => void;
 }
 
 function calculateWeightProgress(
@@ -100,11 +96,9 @@ export const HealthDashboard: React.FC<HealthDashboardProps> = ({
   onSaveHealthLog,
   onUpdateProfileGoals,
   onSwitchToPartner,
-  onOpenFitnessSync,
 }) => {
   const currentLog = logsByDate[selectedDate];
   const todayLog = logsByDate[todayDate];
-  const activeFitnessAppMeta = getFitnessAppMeta(profile.fitnessApp);
 
   // Local controlled inputs synced with selectedDate's log
   const [weightInput, setWeightInput] = useState<string>('');
@@ -132,9 +126,6 @@ export const HealthDashboard: React.FC<HealthDashboardProps> = ({
     String(profile.sleepGoalMinutes % 60)
   );
   const [goalWaterMl, setGoalWaterMl] = useState(String(profile.waterGoalMl));
-  const [goalFitnessApp, setGoalFitnessApp] = useState<FitnessAppId>(
-    profile.fitnessApp || 'google_fit'
-  );
 
   useEffect(() => {
     setWeightInput(currentLog?.weight ? String(currentLog.weight) : '');
@@ -164,7 +155,6 @@ export const HealthDashboard: React.FC<HealthDashboardProps> = ({
     setGoalSleepHours(String(Math.floor(profile.sleepGoalMinutes / 60)));
     setGoalSleepMins(String(profile.sleepGoalMinutes % 60));
     setGoalWaterMl(String(profile.waterGoalMl));
-    setGoalFitnessApp(profile.fitnessApp || 'google_fit');
   }, [profile]);
 
   const showSavedFeedback = (label: string) => {
@@ -314,10 +304,10 @@ export const HealthDashboard: React.FC<HealthDashboardProps> = ({
         stepsGoal: stepsG,
         sleepGoalMinutes: Math.min(1440, sleepH * 60 + sleepM),
         waterGoalMl: waterG,
-        fitnessApp: goalFitnessApp,
+        fitnessApp: 'manual',
       });
       setIsGoalsOpen(false);
-      showSavedFeedback('Targets saved to Cloud');
+      showSavedFeedback('Targets saved');
     } finally {
       setSavingField(null);
     }
@@ -335,7 +325,7 @@ export const HealthDashboard: React.FC<HealthDashboardProps> = ({
 
   return (
     <div className="space-y-4 sm:space-y-6 pb-24 sm:pb-12">
-      {/* Top Mobile-First Profile Banner & Fitness App Sync Bar */}
+      {/* Top Mobile-First Profile Banner */}
       <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-3.5 rounded-3xl bg-[#12141C] border border-white/8 p-4 sm:p-5">
         <div className="space-y-1">
           <div className="flex items-center flex-wrap gap-1.5 text-xs text-zinc-400">
@@ -343,10 +333,6 @@ export const HealthDashboard: React.FC<HealthDashboardProps> = ({
             <span aria-hidden="true">·</span>
             <span>
               {selectedDate === todayDate ? 'Today’s Live Vitals' : `Log Date: ${selectedDate}`}
-            </span>
-            <span aria-hidden="true">·</span>
-            <span className="text-emerald-400 font-medium">
-              {activeFitnessAppMeta.shortLabel}
             </span>
             {savedToast && (
               <>
@@ -362,7 +348,7 @@ export const HealthDashboard: React.FC<HealthDashboardProps> = ({
             {profile.name}’s Daily Health
           </h1>
           <p className="text-xs text-zinc-400">
-            All health vitals auto-save to Firebase Cloud in real time
+            Track and sync your daily vitals in real time
           </p>
         </div>
 
@@ -481,7 +467,7 @@ export const HealthDashboard: React.FC<HealthDashboardProps> = ({
               </span>
             </div>
             <p className="text-[11px] text-zinc-400">
-              Tap any ring card below or sync with {activeFitnessAppMeta.shortLabel}
+              Tap any card below to log or edit your daily metrics.
             </p>
           </div>
 
@@ -700,7 +686,7 @@ export const HealthDashboard: React.FC<HealthDashboardProps> = ({
             <div className="space-y-1">
               <div className="flex items-center gap-2 text-xs text-emerald-400 font-medium">
                 <Footprints className="w-4 h-4" />
-                <span>End-of-Day Steps · {activeFitnessAppMeta.shortLabel}</span>
+                <span>Daily Steps</span>
               </div>
               <h2 className="text-lg sm:text-xl font-bold text-white">Daily Step Count</h2>
               <p className="text-xs text-zinc-400 font-mono tabular-nums">
@@ -708,15 +694,6 @@ export const HealthDashboard: React.FC<HealthDashboardProps> = ({
                 {Math.max(0, profile.stepsGoal - loggedSteps).toLocaleString()}
               </p>
             </div>
-
-            <button
-              type="button"
-              onClick={onOpenFitnessSync}
-              className="min-h-[36px] px-3 rounded-xl bg-emerald-500/15 hover:bg-emerald-500/25 border border-emerald-500/30 text-[11px] font-semibold text-emerald-300 flex items-center gap-1.5 shrink-0"
-            >
-              <Watch className="w-3.5 h-3.5" />
-              <span>Sync App</span>
-            </button>
           </div>
 
           <div className="flex flex-col sm:flex-row items-center gap-4 sm:gap-6 py-1">
@@ -760,7 +737,7 @@ export const HealthDashboard: React.FC<HealthDashboardProps> = ({
                 </button>
               </div>
               <p className="text-[11px] text-zinc-400">
-                Enter your end-of-day step number or tap <strong className="text-zinc-200">Sync App</strong> for {activeFitnessAppMeta.shortLabel}.
+                Log your end-of-day step total to track your daily walking habit.
               </p>
             </form>
           </div>
@@ -1149,7 +1126,7 @@ export const HealthDashboard: React.FC<HealthDashboardProps> = ({
                   Customize {profile.name}’s Targets & App
                 </h3>
                 <p className="text-xs text-zinc-400">
-                  Saved to Firebase Cloud for all connected devices
+                  Saved automatically across your devices
                 </p>
               </div>
               <button
@@ -1162,27 +1139,6 @@ export const HealthDashboard: React.FC<HealthDashboardProps> = ({
             </div>
 
             <form onSubmit={handleSaveGoalsSubmit} className="space-y-4 pt-4">
-              <div>
-                <label className="block text-xs text-zinc-400 mb-1.5">
-                  Connected Fitness App
-                </label>
-                <div className="grid grid-cols-3 gap-1.5">
-                  {FITNESS_APP_CATALOG.map((app) => (
-                    <button
-                      key={app.id}
-                      type="button"
-                      onClick={() => setGoalFitnessApp(app.id)}
-                      className={`min-h-[38px] px-2 rounded-xl text-[11px] font-semibold border transition-colors ${
-                        goalFitnessApp === app.id
-                          ? 'bg-emerald-500 text-zinc-950 border-emerald-400'
-                          : 'bg-[#090A0F] text-zinc-400 border-white/8 hover:text-white'
-                      }`}
-                    >
-                      {app.shortLabel}
-                    </button>
-                  ))}
-                </div>
-              </div>
 
               <div className="grid grid-cols-2 gap-3">
                 <div>

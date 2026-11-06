@@ -333,7 +333,7 @@ export const AuthCard: React.FC<AuthCardProps> = ({ onSuccess }) => {
 
       <div className="pt-1 text-center">
         <p className="text-[11px] text-zinc-500">
-          Encrypted Firebase Cloud Sync · Pair cross-device with a 6-digit code.
+          Private & Encrypted · Pair cross-device with a 6-digit code.
         </p>
       </div>
     </div>

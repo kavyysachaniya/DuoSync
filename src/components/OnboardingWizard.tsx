@@ -14,14 +14,12 @@ import {
   Sparkles,
   User,
   Users,
-  Watch,
   Wind,
 } from 'lucide-react';
 import {
   DEFAULT_BODYCARE_CATEGORIES,
   DEFAULT_HAIRCARE_CATEGORIES,
   DEFAULT_SKINCARE_CATEGORIES,
-  FITNESS_APP_CATALOG,
   FitnessAppId,
   formatSleepDuration,
 } from '../types';
@@ -152,7 +150,7 @@ export const OnboardingWizard: React.FC<OnboardingWizardProps> = ({
     setError(null);
     if (step === 1) {
       if (!myName.trim()) {
-        setError('Please enter your name so we can personalize your Firebase profile.');
+        setError('Please enter your name so we can personalize your profile.');
         return;
       }
       if (setupMode === 'join_code' && partnerCodeInput.replace(/\D/g, '').length !== 6) {
@@ -275,20 +273,20 @@ export const OnboardingWizard: React.FC<OnboardingWizardProps> = ({
               <div className="space-y-1">
                 <div className="text-xs font-medium text-rose-400 flex items-center gap-1.5">
                   <User className="w-4 h-4" />
-                  <span>Step 1 · Profile, Partner & Fitness App</span>
+                  <span>Step 1 · Profile & Partner Setup</span>
                 </div>
                 <h1 className="text-xl sm:text-2xl font-bold text-white tracking-tight">
-                  Personalize your account & fitness sync
+                  Personalize your profile & shared space
                 </h1>
                 <p className="text-xs text-zinc-400 leading-relaxed">
-                  Everything you enter is saved to your Firebase account and synced across devices.
+                  Everything you enter is automatically saved and synced across both devices.
                 </p>
               </div>
 
               <div className="space-y-4">
                 <div>
                   <label className="block text-xs font-medium text-zinc-300 mb-1.5">
-                    Your Display Name (Saved to Firebase) *
+                    Your Display Name *
                   </label>
                   <input
                     type="text"
@@ -300,36 +298,7 @@ export const OnboardingWizard: React.FC<OnboardingWizardProps> = ({
                   />
                 </div>
 
-                {/* Preferred Fitness App to Sync */}
-                <div>
-                  <label className="block text-xs font-medium text-zinc-300 mb-1.5 flex items-center gap-1.5">
-                    <Watch className="w-3.5 h-3.5 text-emerald-400" />
-                    <span>Which Fitness App do you want to sync?</span>
-                  </label>
-                  <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
-                    {FITNESS_APP_CATALOG.map((app) => {
-                      const active = fitnessApp === app.id;
-                      return (
-                        <button
-                          key={app.id}
-                          type="button"
-                          onClick={() => setFitnessApp(app.id)}
-                          className={`min-h-[54px] p-2.5 rounded-2xl border text-left transition-all flex flex-col justify-between ${
-                            active
-                              ? 'bg-zinc-900 border-emerald-400 text-white'
-                              : 'bg-[#090A0F] border-white/8 text-zinc-400 hover:border-white/20'
-                          }`}
-                        >
-                          <div className="flex items-center justify-between gap-1">
-                            <span className="text-xs font-semibold truncate">{app.shortLabel}</span>
-                            {active && <Check className="w-3.5 h-3.5 text-emerald-400 shrink-0" />}
-                          </div>
-                          <span className="text-[10px] text-zinc-500 truncate">{app.ecosystem}</span>
-                        </button>
-                      );
-                    })}
-                  </div>
-                </div>
+
 
                 <div>
                   <label className="block text-xs font-medium text-zinc-300 mb-1.5">

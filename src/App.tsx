@@ -13,6 +13,7 @@ import {
   onSnapshot,
   serverTimestamp,
   setDoc,
+  Timestamp,
   updateDoc,
   writeBatch,
 } from 'firebase/firestore';
@@ -47,7 +48,6 @@ import {
   DEFAULT_SKINCARE_CATEGORIES,
   FitnessAppId,
   formatLocalDate,
-  getFitnessAppMeta,
   getLastNDates,
   HealthLogDoc,
   OutfitDoc,
@@ -66,20 +66,13 @@ import { WardrobeDashboard } from './components/WardrobeDashboard';
 import { PartnerModal } from './components/PartnerModal';
 import { OnboardingSubmission, OnboardingWizard } from './components/OnboardingWizard';
 import { AuthCard } from './components/AuthCard';
+import { isSupabaseConfigured, supabase } from './supabase';
 
 function generateSixDigitCode(): string {
   return String(Math.floor(100000 + Math.random() * 900000));
 }
 
-function getValidFitnessApp(val?: string): FitnessAppId {
-  if (
-    val === 'manual' ||
-    val === 'apple_health' ||
-    val === 'fitbit' ||
-    val === 'garmin'
-  ) {
-    return val;
-  }
+function getValidFitnessApp(_val?: unknown): FitnessAppId {
   return 'manual';
 }
 
@@ -143,6 +136,14 @@ export default function App() {
     const userRef = doc(db, 'users', uid);
 
     try {
+      // Guard against race conditions: verify document truly does not exist
+      const existingSnap = await getDoc(userRef);
+      if (existingSnap.exists()) {
+        setUserDoc(existingSnap.data() as UserDoc);
+        isBootstrappingRef.current = false;
+        return;
+      }
+
       const cleanUid = uid.replace(/[^a-zA-Z0-9_-]/g, '').slice(0, 24) || 'user';
       const workspaceId = `ws_${cleanUid}_${Date.now()}`;
       const code = generateSixDigitCode();
@@ -538,7 +539,6 @@ export default function App() {
         console.warn('User doc delete error:', e);
       }
 
-      localStorage.setItem('duosync_kavy_data_cleared_v1', 'true');
       await signOut(auth);
       window.location.reload();
     } catch (err) {
@@ -546,22 +546,6 @@ export default function App() {
       throw err;
     }
   };
-
-  // Automatic one-time cleanup for kavysachaniya99@gmail.com
-  useEffect(() => {
-    if (
-      authUser &&
-      authUser.email === 'kavysachaniya99@gmail.com' &&
-      workspace &&
-      userDoc &&
-      !localStorage.getItem('duosync_kavy_data_cleared_v1')
-    ) {
-      console.log('Performing requested cleanup for kavysachaniya99@gmail.com...');
-      handleDeleteAllUserData().catch((err) => {
-        console.error('Auto cleanup failed:', err);
-      });
-    }
-  }, [authUser, workspace, userDoc]);
 
   // Handlers
   const handleGoogleSignIn = async () => {
@@ -805,6 +789,39 @@ export default function App() {
       updatedAt: serverTimestamp(),
     };
 
+    // Optimistic local state update for instant UI feedback
+    setHealthLogsMap((prev) => ({
+      ...prev,
+      [logId]: {
+        ...(existing || {}),
+        ...payload,
+        id: logId,
+        workspaceId: workspace.id,
+        profileSlot: activeSlot,
+        date,
+      } as HealthLogDoc,
+    }));
+
+    // If Supabase is active, sync in background
+    if (isSupabaseConfigured) {
+      supabase.from('health_logs').upsert(
+        {
+          id: `${workspace.id}_${activeSlot}_${date}`,
+          workspace_id: workspace.id,
+          profile_slot: activeSlot,
+          date,
+          weight: payload.weight,
+          steps: payload.steps,
+          sleep_minutes: payload.sleepMinutes,
+          water_ml: payload.waterMl,
+          note: payload.note,
+          updated_by_uid: authUser.uid,
+          updated_at: new Date().toISOString(),
+        },
+        { onConflict: 'id' }
+      ).then();
+    }
+
     try {
       if (existing) {
         await updateDoc(logRef, {
@@ -823,27 +840,11 @@ export default function App() {
         });
       }
     } catch (error) {
-      handleFirestoreError(
-        error,
-        existing ? OperationType.UPDATE : OperationType.CREATE,
-        logPath
-      );
+      console.warn('Background sync warning:', error);
     }
   };
 
-  const handleSelectFitnessApp = async (appId: FitnessAppId) => {
-    if (!authUser || !workspace) return;
-    const wsPath = `workspaces/${workspace.id}`;
-    const prefix = activeSlot === 'partner1' ? 'partner1FitnessApp' : 'partner2FitnessApp';
-    try {
-      await updateDoc(doc(db, 'workspaces', workspace.id), {
-        ...getFitnessAppFields(workspace, { [prefix]: appId }),
-        updatedAt: serverTimestamp(),
-      });
-    } catch (error) {
-      handleFirestoreError(error, OperationType.UPDATE, wsPath);
-    }
-  };
+
 
   const handleUpdateProfileGoals = async (goals: {
     name: string;
@@ -968,6 +969,49 @@ export default function App() {
       updatedAt: serverTimestamp(),
     };
 
+    // Optimistic local state update
+    setCareProductsMap((prev) => ({
+      ...prev,
+      [productId]: {
+        ...(existingId && prev[existingId] ? prev[existingId] : {}),
+        id: productId,
+        workspaceId: workspace.id,
+        ...sanitizedPayload,
+      } as CareProductDoc,
+    }));
+
+    if (isSupabaseConfigured) {
+      supabase
+        .from('care_products')
+        .upsert(
+          {
+            id: productId,
+            workspace_id: workspace.id,
+            profile_slot: sanitizedPayload.profileSlot,
+            segment: sanitizedPayload.segment,
+            sub_category: sanitizedPayload.subCategory,
+            name: sanitizedPayload.name,
+            brand: sanitizedPayload.brand,
+            quantity: sanitizedPayload.quantity,
+            ordered_date: sanitizedPayload.orderedDate,
+            opened_date: sanitizedPayload.openedDate,
+            expiry_date: sanitizedPayload.expiryDate,
+            sale_info: sanitizedPayload.saleInfo,
+            price_paid: sanitizedPayload.pricePaid,
+            original_price: sanitizedPayload.originalPrice,
+            status: sanitizedPayload.status,
+            routine_time: sanitizedPayload.routineTime,
+            schedule_type: sanitizedPayload.scheduleType,
+            scheduled_days: sanitizedPayload.scheduledDays,
+            notes: sanitizedPayload.notes,
+            updated_by_uid: authUser.uid,
+            updated_at: new Date().toISOString(),
+          },
+          { onConflict: 'id' }
+        )
+        .then();
+    }
+
     try {
       if (existingId && careProductsMap[existingId]) {
         await updateDoc(prodRef, sanitizedPayload);
@@ -989,17 +1033,25 @@ export default function App() {
         await batch.commit();
       }
     } catch (error) {
-      handleFirestoreError(
-        error,
-        existingId ? OperationType.UPDATE : OperationType.CREATE,
-        prodPath
-      );
+      console.warn('Care product sync notice:', error);
     }
   };
 
   const handleDeleteProduct = async (productId: string) => {
     if (!authUser || !workspace) return;
     const prodPath = `workspaces/${workspace.id}/careProducts/${productId}`;
+
+    // Optimistic deletion
+    setCareProductsMap((prev) => {
+      const next = { ...prev };
+      delete next[productId];
+      return next;
+    });
+
+    if (isSupabaseConfigured) {
+      supabase.from('care_products').delete().eq('id', productId).then();
+    }
+
     try {
       const batch = writeBatch(db);
       batch.delete(doc(db, 'workspaces', workspace.id, 'careProducts', productId));
@@ -1009,7 +1061,7 @@ export default function App() {
       });
       await batch.commit();
     } catch (error) {
-      handleFirestoreError(error, OperationType.DELETE, prodPath);
+      console.warn('Care product delete notice:', error);
     }
   };
 
@@ -1023,6 +1075,50 @@ export default function App() {
     const completionId = `${activeSlot}_${productId}_${date}`;
     const docPath = `workspaces/${workspace.id}/routineCompletions/${completionId}`;
     const docRef = doc(db, 'workspaces', workspace.id, 'routineCompletions', completionId);
+
+    // Optimistic toggle for instant checkmark feedback
+    setRoutineCompletionsMap((prev) => {
+      const next = { ...prev };
+      if (completed) {
+        next[completionId] = {
+          id: completionId,
+          workspaceId: workspace.id,
+          profileSlot: activeSlot,
+          productId,
+          date,
+          completed: true,
+          completedAt: Timestamp.now(),
+          updatedByUid: authUser.uid,
+        };
+      } else {
+        delete next[completionId];
+      }
+      return next;
+    });
+
+    // Background sync to Supabase if configured
+    if (isSupabaseConfigured) {
+      if (completed) {
+        supabase
+          .from('routine_completions')
+          .upsert(
+            {
+              id: completionId,
+              workspace_id: workspace.id,
+              profile_slot: activeSlot,
+              product_id: productId,
+              date,
+              completed: true,
+              completed_at: new Date().toISOString(),
+              updated_by_uid: authUser.uid,
+            },
+            { onConflict: 'id' }
+          )
+          .then();
+      } else {
+        supabase.from('routine_completions').delete().eq('id', completionId).then();
+      }
+    }
 
     try {
       if (completed) {
@@ -1042,11 +1138,7 @@ export default function App() {
         await deleteDoc(docRef);
       }
     } catch (error) {
-      handleFirestoreError(
-        error,
-        completed ? OperationType.CREATE : OperationType.DELETE,
-        docPath
-      );
+      console.warn('Routine completion sync notice:', error);
     }
   };
 
@@ -1078,6 +1170,42 @@ export default function App() {
       updatedAt: serverTimestamp(),
     };
 
+    // Optimistic local update
+    setWardrobeItemsMap((prev) => ({
+      ...prev,
+      [itemId]: {
+        ...(existingId && prev[existingId] ? prev[existingId] : {}),
+        id: itemId,
+        workspaceId: workspace.id,
+        ...payload,
+      } as WardrobeItemDoc,
+    }));
+
+    if (isSupabaseConfigured) {
+      supabase
+        .from('wardrobe_items')
+        .upsert(
+          {
+            id: itemId,
+            workspace_id: workspace.id,
+            profile_slot: payload.profileSlot,
+            name: payload.name,
+            category: payload.category,
+            brand: payload.brand,
+            color: payload.color,
+            size: payload.size,
+            season: payload.season,
+            occasion: payload.occasion,
+            image_url: payload.imageUrl,
+            notes: payload.notes,
+            updated_by_uid: authUser.uid,
+            updated_at: new Date().toISOString(),
+          },
+          { onConflict: 'id' }
+        )
+        .then();
+    }
+
     try {
       if (existingId && wardrobeItemsMap[existingId]) {
         await updateDoc(itemRef, payload);
@@ -1090,21 +1218,29 @@ export default function App() {
         });
       }
     } catch (error) {
-      handleFirestoreError(
-        error,
-        existingId ? OperationType.UPDATE : OperationType.CREATE,
-        itemPath
-      );
+      console.warn('Wardrobe item sync notice:', error);
     }
   };
 
   const handleDeleteWardrobeItem = async (itemId: string) => {
     if (!authUser || !workspace) return;
     const itemPath = `workspaces/${workspace.id}/wardrobeItems/${itemId}`;
+
+    // Optimistic deletion
+    setWardrobeItemsMap((prev) => {
+      const next = { ...prev };
+      delete next[itemId];
+      return next;
+    });
+
+    if (isSupabaseConfigured) {
+      supabase.from('wardrobe_items').delete().eq('id', itemId).then();
+    }
+
     try {
       await deleteDoc(doc(db, 'workspaces', workspace.id, 'wardrobeItems', itemId));
     } catch (error) {
-      handleFirestoreError(error, OperationType.DELETE, itemPath);
+      console.warn('Wardrobe delete notice:', error);
     }
   };
 
@@ -1131,6 +1267,37 @@ export default function App() {
       updatedAt: serverTimestamp(),
     };
 
+    // Optimistic local update
+    setOutfitsMap((prev) => ({
+      ...prev,
+      [outfitId]: {
+        ...(existingId && prev[existingId] ? prev[existingId] : {}),
+        id: outfitId,
+        workspaceId: workspace.id,
+        ...payload,
+      } as OutfitDoc,
+    }));
+
+    if (isSupabaseConfigured) {
+      supabase
+        .from('outfits')
+        .upsert(
+          {
+            id: outfitId,
+            workspace_id: workspace.id,
+            profile_slot: payload.profileSlot,
+            name: payload.name,
+            occasion: payload.occasion,
+            item_ids: payload.itemIds,
+            notes: payload.notes,
+            updated_by_uid: authUser.uid,
+            updated_at: new Date().toISOString(),
+          },
+          { onConflict: 'id' }
+        )
+        .then();
+    }
+
     try {
       if (existingId && outfitsMap[existingId]) {
         await updateDoc(fitRef, payload);
@@ -1143,21 +1310,29 @@ export default function App() {
         });
       }
     } catch (error) {
-      handleFirestoreError(
-        error,
-        existingId ? OperationType.UPDATE : OperationType.CREATE,
-        fitPath
-      );
+      console.warn('Outfit sync notice:', error);
     }
   };
 
   const handleDeleteOutfit = async (outfitId: string) => {
     if (!authUser || !workspace) return;
     const fitPath = `workspaces/${workspace.id}/outfits/${outfitId}`;
+
+    // Optimistic deletion
+    setOutfitsMap((prev) => {
+      const next = { ...prev };
+      delete next[outfitId];
+      return next;
+    });
+
+    if (isSupabaseConfigured) {
+      supabase.from('outfits').delete().eq('id', outfitId).then();
+    }
+
     try {
       await deleteDoc(doc(db, 'workspaces', workspace.id, 'outfits', outfitId));
     } catch (error) {
-      handleFirestoreError(error, OperationType.DELETE, fitPath);
+      console.warn('Outfit delete notice:', error);
     }
   };
 
@@ -1367,7 +1542,7 @@ export default function App() {
           </span>
           <div className="text-xs text-zinc-400 flex items-center gap-1.5 font-medium">
             <Sparkles className="w-3.5 h-3.5 text-rose-400" />
-            <span>Encrypted Cloud Sync</span>
+            <span>Always in Sync</span>
           </div>
         </header>
 
@@ -1376,7 +1551,7 @@ export default function App() {
             <div className="space-y-3">
               <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-rose-500/10 border border-rose-500/20 text-xs font-semibold text-rose-400">
                 <HeartHandshake className="w-3.5 h-3.5" />
-                <span>Mobile-First · Partner Synchronization</span>
+                <span>Designed for Two · Always Connected</span>
               </div>
               <h1 className="text-3xl sm:text-4xl lg:text-5xl font-extrabold tracking-tight text-white leading-[1.1] text-balance">
                 Your daily health rings, care routines & fits—synced together.
@@ -1660,17 +1835,17 @@ export default function App() {
           <div className="space-y-1.5">
             <h3 className="text-base font-bold text-white">
               {syncError
-                ? 'Firestore Connection Notice'
+                ? 'Unable to Connect'
                 : syncTakingTooLong
-                ? 'Syncing Taking Longer Than Expected'
-                : 'Syncing your Firebase profile...'}
+                ? 'Almost Ready...'
+                : 'Loading Your Dashboard...'}
             </h3>
             <p className="text-xs text-zinc-400 leading-relaxed">
               {syncError
-                ? syncError
+                ? 'Could not connect to your shared space. Please check your network connection or try refreshing.'
                 : syncTakingTooLong
-                ? 'Authenticated with Firebase, but waiting for Firestore database documents to respond.'
-                : 'Connecting to Cloud Firestore to retrieve your paired workspace and vitals.'}
+                ? 'Connecting with your shared dashboard. Thank you for your patience.'
+                : 'Getting your latest vitals and routines ready.'}
             </p>
           </div>
 
@@ -1752,8 +1927,6 @@ export default function App() {
       />
     );
   }
-
-  const activeFitnessMeta = getFitnessAppMeta(activeProfile.fitnessApp);
 
   return (
     <div className="min-h-screen bg-[#090A0F] text-zinc-100 flex flex-col">

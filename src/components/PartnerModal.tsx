@@ -366,7 +366,7 @@ export const PartnerModal: React.FC<PartnerModalProps> = ({
               <div className="pt-4 border-t border-white/8 space-y-2">
                 <div className="text-xs font-semibold text-rose-400">Danger Zone</div>
                 <p className="text-[11px] text-zinc-400 leading-relaxed">
-                  Permanently delete all workspace data, vitals logs, routine completions, fits, and your user account from Firestore.
+                  Permanently delete all workspace data, vitals logs, routine completions, fits, and reset your account.
                 </p>
                 {deleteError && (
                   <div className="text-xs text-rose-400 bg-rose-500/10 p-2 rounded-lg border border-rose-500/20">
