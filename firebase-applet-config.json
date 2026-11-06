@@ -3,7 +3,7 @@
   "appId": "1:851418699296:web:e63cf520346d97ae914e45",
   "apiKey": "AIzaSyD36szx4Z-STKrWIXZ0Yhc6shsrW9fE0rU",
   "authDomain": "duosync-35b75.firebaseapp.com",
-  "firestoreDatabaseId": "ai-studio-afb08a88-fbc3-4c99-9213-cff9ec8861d3",
+  "firestoreDatabaseId": "(default)",
   "storageBucket": "duosync-35b75.firebasestorage.app",
   "messagingSenderId": "851418699296",
   "measurementId": "",
