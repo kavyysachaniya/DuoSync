@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Check, Copy, Link2, RotateCcw, Sparkles, Unlink, Users, X } from 'lucide-react';
+import { Check, Copy, Link2, RotateCcw, Sparkles, Trash2, Unlink, Users, X } from 'lucide-react';
 import { ProfileSlot, UserDoc, WorkspaceDoc } from '../types';
 
 interface PartnerModalProps {
@@ -18,6 +18,7 @@ interface PartnerModalProps {
     partner2Role: string;
     defaultSlot: ProfileSlot;
   }) => Promise<void>;
+  onDeleteAllUserData?: () => Promise<void>;
 }
 
 const CURRENCY_OPTIONS = ['₹', '$', '€', '£', '¥', 'A$'];
@@ -31,12 +32,17 @@ export const PartnerModal: React.FC<PartnerModalProps> = ({
   onUnlinkPartner,
   onOpenOnboardingWizard,
   onUpdateWorkspaceIdentities,
+  onDeleteAllUserData,
 }) => {
   const [copied, setCopied] = useState(false);
   const [inputCode, setInputCode] = useState('');
   const [joinLoading, setJoinLoading] = useState(false);
   const [joinError, setJoinError] = useState<string | null>(null);
   const [joinSuccess, setJoinSuccess] = useState<string | null>(null);
+
+  const [confirmDelete, setConfirmDelete] = useState(false);
+  const [deletingData, setDeletingData] = useState(false);
+  const [deleteError, setDeleteError] = useState<string | null>(null);
 
   const [currency, setCurrency] = useState(workspace.currency || '₹');
   const [partner1Name, setPartner1Name] = useState(workspace.partner1Name);
@@ -354,6 +360,66 @@ export const PartnerModal: React.FC<PartnerModalProps> = ({
                 {savingSettings ? 'Saving...' : 'Save Preferences'}
               </button>
             </div>
+
+            {/* Account Reset / Danger Zone */}
+            {onDeleteAllUserData && (
+              <div className="pt-4 border-t border-white/8 space-y-2">
+                <div className="text-xs font-semibold text-rose-400">Danger Zone</div>
+                <p className="text-[11px] text-zinc-400 leading-relaxed">
+                  Permanently delete all workspace data, vitals logs, routine completions, fits, and your user account from Firestore.
+                </p>
+                {deleteError && (
+                  <div className="text-xs text-rose-400 bg-rose-500/10 p-2 rounded-lg border border-rose-500/20">
+                    {deleteError}
+                  </div>
+                )}
+                <div className="flex items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={async () => {
+                      if (!confirmDelete) {
+                        setConfirmDelete(true);
+                        return;
+                      }
+                      setDeletingData(true);
+                      setDeleteError(null);
+                      try {
+                        await onDeleteAllUserData();
+                      } catch (err) {
+                        setDeleteError(
+                          err instanceof Error ? err.message : 'Failed to delete user data.'
+                        );
+                        setDeletingData(false);
+                      }
+                    }}
+                    disabled={deletingData}
+                    className={`min-h-[40px] px-4 rounded-xl text-xs font-semibold transition-colors flex items-center gap-1.5 ${
+                      confirmDelete
+                        ? 'bg-rose-600 hover:bg-rose-700 text-white'
+                        : 'bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 border border-rose-500/30'
+                    }`}
+                  >
+                    <Trash2 className="w-3.5 h-3.5" />
+                    <span>
+                      {deletingData
+                        ? 'Deleting Everything...'
+                        : confirmDelete
+                        ? 'Confirm: Wipe All My Data Now'
+                        : 'Delete All My Data & Reset'}
+                    </span>
+                  </button>
+                  {confirmDelete && !deletingData && (
+                    <button
+                      type="button"
+                      onClick={() => setConfirmDelete(false)}
+                      className="min-h-[40px] px-3 rounded-xl text-xs text-zinc-400 hover:text-white bg-[#090A0F] border border-white/10"
+                    >
+                      Cancel
+                    </button>
+                  )}
+                </div>
+              </div>
+            )}
           </form>
         </div>
       </div>

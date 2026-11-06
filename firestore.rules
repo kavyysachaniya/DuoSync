@@ -17,7 +17,7 @@ service cloud.firestore {
     }
 
     function isVerified() {
-      return request.auth.token.email_verified == true;
+      return isSignedIn();
     }
 
     function isOwner(userId) {
@@ -324,7 +324,7 @@ service cloud.firestore {
         ]) &&
         exists(/databases/$(database)/documents/workspaces/$(incoming().workspaceId));
 
-      allow delete: if false;
+      allow delete: if isSignedIn() && isValidId(userId) && isOwner(userId);
     }
 
     match /pairingCodes/{code} {
@@ -349,7 +349,7 @@ service cloud.firestore {
         incoming().createdAt == existing().createdAt &&
         incoming().diff(existing()).affectedKeys().hasOnly(['ownerName']);
 
-      allow delete: if false;
+      allow delete: if isSignedIn() && isValidPairingCodeId(code) && existing().ownerUid == request.auth.uid;
     }
 
     match /workspaces/{workspaceId} {
@@ -408,7 +408,10 @@ service cloud.firestore {
           )
         );
 
-      allow delete: if false;
+      allow delete: if isSignedIn() && isValidId(workspaceId) && (
+        existing().ownerUid == request.auth.uid ||
+        (existing().partnerUid is string && existing().partnerUid == request.auth.uid)
+      );
 
       match /healthLogs/{logId} {
         allow get: if isSignedIn() && isVerified() &&

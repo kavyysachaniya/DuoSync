@@ -63,6 +63,7 @@ import { SkinDashboard } from './components/SkinDashboard';
 import { WardrobeDashboard } from './components/WardrobeDashboard';
 import { PartnerModal } from './components/PartnerModal';
 import { OnboardingSubmission, OnboardingWizard } from './components/OnboardingWizard';
+import { AuthCard } from './components/AuthCard';
 
 function generateSixDigitCode(): string {
   return String(Math.floor(100000 + Math.random() * 900000));
@@ -446,6 +447,87 @@ export default function App() {
     partner1FitnessApp: overrides?.partner1FitnessApp || getValidFitnessApp(ws.partner1FitnessApp),
     partner2FitnessApp: overrides?.partner2FitnessApp || getValidFitnessApp(ws.partner2FitnessApp),
   });
+
+  // Permanently delete all current data for user & workspace
+  const handleDeleteAllUserData = async () => {
+    if (!authUser) return;
+    const wsId = userDoc?.workspaceId || workspace?.id;
+
+    try {
+      if (wsId) {
+        const batch = writeBatch(db);
+
+        // Delete healthLogs
+        Object.keys(healthLogsMap).forEach((id) => {
+          batch.delete(doc(db, 'workspaces', wsId, 'healthLogs', id));
+        });
+        // Delete careProducts
+        Object.keys(careProductsMap).forEach((id) => {
+          batch.delete(doc(db, 'workspaces', wsId, 'careProducts', id));
+        });
+        // Delete routineCompletions
+        Object.keys(routineCompletionsMap).forEach((id) => {
+          batch.delete(doc(db, 'workspaces', wsId, 'routineCompletions', id));
+        });
+        // Delete wardrobeItems
+        Object.keys(wardrobeItemsMap).forEach((id) => {
+          batch.delete(doc(db, 'workspaces', wsId, 'wardrobeItems', id));
+        });
+        // Delete outfits
+        Object.keys(outfitsMap).forEach((id) => {
+          batch.delete(doc(db, 'workspaces', wsId, 'outfits', id));
+        });
+
+        await batch.commit();
+
+        // Delete pairing code doc if owner
+        if (workspace?.pairingCode && workspace.ownerUid === authUser.uid) {
+          try {
+            await deleteDoc(doc(db, 'pairingCodes', workspace.pairingCode));
+          } catch (e) {
+            console.warn('Pairing code delete error:', e);
+          }
+        }
+
+        // Delete workspace doc
+        try {
+          await deleteDoc(doc(db, 'workspaces', wsId));
+        } catch (e) {
+          console.warn('Workspace delete error:', e);
+        }
+      }
+
+      // Delete user doc
+      try {
+        await deleteDoc(doc(db, 'users', authUser.uid));
+      } catch (e) {
+        console.warn('User doc delete error:', e);
+      }
+
+      localStorage.setItem('duosync_kavy_data_cleared_v1', 'true');
+      await signOut(auth);
+      window.location.reload();
+    } catch (err) {
+      console.error('Failed to wipe data:', err);
+      throw err;
+    }
+  };
+
+  // Automatic one-time cleanup for kavysachaniya99@gmail.com
+  useEffect(() => {
+    if (
+      authUser &&
+      authUser.email === 'kavysachaniya99@gmail.com' &&
+      workspace &&
+      userDoc &&
+      !localStorage.getItem('duosync_kavy_data_cleared_v1')
+    ) {
+      console.log('Performing requested cleanup for kavysachaniya99@gmail.com...');
+      handleDeleteAllUserData().catch((err) => {
+        console.error('Auto cleanup failed:', err);
+      });
+    }
+  }, [authUser, workspace, userDoc]);
 
   // Handlers
   const handleGoogleSignIn = async () => {
@@ -1249,140 +1331,120 @@ export default function App() {
           <span className="text-lg font-bold tracking-tight text-white font-display whitespace-nowrap shrink-0">
             DuoPulse
           </span>
-          <button
-            type="button"
-            onClick={handleGoogleSignIn}
-            disabled={signingIn}
-            className="min-h-[40px] px-4 py-2 rounded-xl bg-white text-zinc-950 hover:bg-zinc-200 text-xs font-semibold transition-colors whitespace-nowrap shrink-0"
-          >
-            {signingIn ? 'Signing in...' : 'Sign In'}
-          </button>
+          <div className="text-xs text-zinc-400 flex items-center gap-1.5 font-medium">
+            <Sparkles className="w-3.5 h-3.5 text-rose-400" />
+            <span>Encrypted Cloud Sync</span>
+          </div>
         </header>
 
-        <main className="max-w-4xl w-full mx-auto my-auto py-8 sm:py-12 grid grid-cols-1 lg:grid-cols-12 gap-6 sm:gap-8 items-center">
-          <div className="lg:col-span-7 space-y-5">
-            <div className="text-xs font-medium text-rose-400 tracking-wide">
-              Mobile-First · Real-Time Cloud Sync · Health, Skin & Wardrobe
-            </div>
-            <h1 className="text-3xl sm:text-5xl font-extrabold tracking-tight text-white leading-[1.1] text-balance">
-              Your daily health rings, care routines & fits—saved & synced with your partner.
-            </h1>
-            <p className="text-sm sm:text-base text-zinc-400 leading-relaxed max-w-xl">
-              Sign in with Google so every vitals log (daily steps, weight progress, sleep duration, hydration ring), care routine (skincare, haircare, weekly scheduler), and digital wardrobe & outfit builder is saved automatically in real time.
-            </p>
-
-            <div className="pt-1 space-y-3">
-              <button
-                type="button"
-                onClick={handleGoogleSignIn}
-                disabled={signingIn}
-                className="w-full sm:w-auto min-h-[52px] px-7 py-3.5 rounded-2xl bg-white text-zinc-950 hover:bg-zinc-200 text-sm font-semibold inline-flex items-center justify-center gap-2.5 transition-all shadow-lg shadow-white/5"
-              >
-                <HeartHandshake className="w-4 h-4 text-rose-500" />
-                <span>
-                  {signingIn ? 'Connecting Google Account...' : 'Sign In with Google to Start'}
-                </span>
-              </button>
-              {authError && <p className="text-xs text-rose-400">{authError}</p>}
-              <p className="text-xs text-zinc-500">
-                100% Login-Based Cloud Persistence · Connect with your partner anytime via a 6-digit code.
+        <main className="max-w-5xl w-full mx-auto my-auto py-6 sm:py-10 grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-10 items-center">
+          <div className="lg:col-span-6 space-y-6">
+            <div className="space-y-3">
+              <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-rose-500/10 border border-rose-500/20 text-xs font-semibold text-rose-400">
+                <HeartHandshake className="w-3.5 h-3.5" />
+                <span>Mobile-First · Partner Synchronization</span>
+              </div>
+              <h1 className="text-3xl sm:text-4xl lg:text-5xl font-extrabold tracking-tight text-white leading-[1.1] text-balance">
+                Your daily health rings, care routines & fits—synced together.
+              </h1>
+              <p className="text-xs sm:text-sm text-zinc-400 leading-relaxed">
+                Connect with your partner via a 6-digit code. Track daily steps, weight, hydration, custom weekly skincare/haircare schedules, and create stylish fits in your digital closet.
               </p>
             </div>
-          </div>
 
-          {/* Interactive Mobile-First Preview Card with Working [ Health | Skin | Wardrobe ] Toggle */}
-          <div className="lg:col-span-5 rounded-3xl bg-[#12141C] border border-white/10 p-5 sm:p-6 space-y-4">
-            <div className="flex items-center justify-between border-b border-white/8 pb-3.5 gap-2">
-              <div>
-                <div className="text-xs text-emerald-400 font-medium">
-                  {heroPreviewTab === 'health'
-                    ? 'Fitness & Vitals Rings'
-                    : heroPreviewTab === 'skin'
-                    ? '3-Segment Care Shelf'
-                    : 'Digital Wardrobe & Fits'}
+            {/* Interactive Mobile-First Preview Card with Working [ Health | Skin | Fits ] Toggle */}
+            <div className="rounded-3xl bg-[#12141C] border border-white/10 p-5 space-y-4">
+              <div className="flex items-center justify-between border-b border-white/8 pb-3.5 gap-2">
+                <div>
+                  <div className="text-xs text-emerald-400 font-medium">
+                    {heroPreviewTab === 'health'
+                      ? 'Fitness & Vitals Rings'
+                      : heroPreviewTab === 'skin'
+                      ? '3-Segment Care Shelf'
+                      : 'Digital Wardrobe & Fits'}
+                  </div>
+                  <div className="text-sm font-bold text-white">
+                    {heroPreviewTab === 'health'
+                      ? 'Steps · Weight · Sleep · Water'
+                      : heroPreviewTab === 'skin'
+                      ? 'Skincare · Haircare · Bodycare'
+                      : 'Closet Items · Outfit Studio'}
+                  </div>
                 </div>
-                <div className="text-sm sm:text-base font-bold text-white">
-                  {heroPreviewTab === 'health'
-                    ? 'Steps · Weight · Sleep · Water'
-                    : heroPreviewTab === 'skin'
-                    ? 'Skincare · Haircare · Bodycare'
-                    : 'Closet Items · Outfit Studio'}
+
+                {/* Working Interactive Pilled Toggle */}
+                <div
+                  role="tablist"
+                  aria-label="Preview Dashboard Section"
+                  className="flex items-center p-1 rounded-full bg-zinc-900 border border-white/10 text-xs font-medium shrink-0"
+                >
+                  <button
+                    type="button"
+                    role="tab"
+                    aria-selected={heroPreviewTab === 'health'}
+                    onClick={() => setHeroPreviewTab('health')}
+                    className={`relative min-h-[30px] px-2.5 py-1 rounded-full text-xs font-semibold transition-colors flex items-center gap-1 ${
+                      heroPreviewTab === 'health'
+                        ? 'text-zinc-950'
+                        : 'text-zinc-400 hover:text-white'
+                    }`}
+                  >
+                    {heroPreviewTab === 'health' && (
+                      <motion.span
+                        layoutId="heroPreviewPill"
+                        transition={{ duration: 0.16, ease: [0.16, 1, 0.3, 1] }}
+                        className="absolute inset-0 rounded-full bg-white"
+                      />
+                    )}
+                    <Activity className="w-3 h-3 relative z-10" />
+                    <span className="relative z-10">Health</span>
+                  </button>
+
+                  <button
+                    type="button"
+                    role="tab"
+                    aria-selected={heroPreviewTab === 'skin'}
+                    onClick={() => setHeroPreviewTab('skin')}
+                    className={`relative min-h-[30px] px-2.5 py-1 rounded-full text-xs font-semibold transition-colors flex items-center gap-1 ${
+                      heroPreviewTab === 'skin'
+                        ? 'text-zinc-950'
+                        : 'text-zinc-400 hover:text-white'
+                    }`}
+                  >
+                    {heroPreviewTab === 'skin' && (
+                      <motion.span
+                        layoutId="heroPreviewPill"
+                        transition={{ duration: 0.16, ease: [0.16, 1, 0.3, 1] }}
+                        className="absolute inset-0 rounded-full bg-white"
+                      />
+                    )}
+                    <Sparkles className="w-3 h-3 relative z-10" />
+                    <span className="relative z-10">Skin</span>
+                  </button>
+
+                  <button
+                    type="button"
+                    role="tab"
+                    aria-selected={heroPreviewTab === 'wardrobe'}
+                    onClick={() => setHeroPreviewTab('wardrobe')}
+                    className={`relative min-h-[30px] px-2.5 py-1 rounded-full text-xs font-semibold transition-colors flex items-center gap-1 ${
+                      heroPreviewTab === 'wardrobe'
+                        ? 'text-zinc-950'
+                        : 'text-zinc-400 hover:text-white'
+                    }`}
+                  >
+                    {heroPreviewTab === 'wardrobe' && (
+                      <motion.span
+                        layoutId="heroPreviewPill"
+                        transition={{ duration: 0.16, ease: [0.16, 1, 0.3, 1] }}
+                        className="absolute inset-0 rounded-full bg-white"
+                      />
+                    )}
+                    <Shirt className="w-3 h-3 relative z-10" />
+                    <span className="relative z-10">Fits</span>
+                  </button>
                 </div>
               </div>
-
-              {/* Working Interactive Pilled Toggle */}
-              <div
-                role="tablist"
-                aria-label="Preview Dashboard Section"
-                className="flex items-center p-1 rounded-full bg-zinc-900 border border-white/10 text-xs font-medium shrink-0"
-              >
-                <button
-                  type="button"
-                  role="tab"
-                  aria-selected={heroPreviewTab === 'health'}
-                  onClick={() => setHeroPreviewTab('health')}
-                  className={`relative min-h-[32px] px-2.5 py-1 rounded-full text-xs font-semibold transition-colors flex items-center gap-1 ${
-                    heroPreviewTab === 'health'
-                      ? 'text-zinc-950'
-                      : 'text-zinc-400 hover:text-white'
-                  }`}
-                >
-                  {heroPreviewTab === 'health' && (
-                    <motion.span
-                      layoutId="heroPreviewPill"
-                      transition={{ duration: 0.16, ease: [0.16, 1, 0.3, 1] }}
-                      className="absolute inset-0 rounded-full bg-white"
-                    />
-                  )}
-                  <Activity className="w-3 h-3 relative z-10" />
-                  <span className="relative z-10">Health</span>
-                </button>
-
-                <button
-                  type="button"
-                  role="tab"
-                  aria-selected={heroPreviewTab === 'skin'}
-                  onClick={() => setHeroPreviewTab('skin')}
-                  className={`relative min-h-[32px] px-2.5 py-1 rounded-full text-xs font-semibold transition-colors flex items-center gap-1 ${
-                    heroPreviewTab === 'skin'
-                      ? 'text-zinc-950'
-                      : 'text-zinc-400 hover:text-white'
-                  }`}
-                >
-                  {heroPreviewTab === 'skin' && (
-                    <motion.span
-                      layoutId="heroPreviewPill"
-                      transition={{ duration: 0.16, ease: [0.16, 1, 0.3, 1] }}
-                      className="absolute inset-0 rounded-full bg-white"
-                    />
-                  )}
-                  <Sparkles className="w-3 h-3 relative z-10" />
-                  <span className="relative z-10">Skin</span>
-                </button>
-
-                <button
-                  type="button"
-                  role="tab"
-                  aria-selected={heroPreviewTab === 'wardrobe'}
-                  onClick={() => setHeroPreviewTab('wardrobe')}
-                  className={`relative min-h-[32px] px-2.5 py-1 rounded-full text-xs font-semibold transition-colors flex items-center gap-1 ${
-                    heroPreviewTab === 'wardrobe'
-                      ? 'text-zinc-950'
-                      : 'text-zinc-400 hover:text-white'
-                  }`}
-                >
-                  {heroPreviewTab === 'wardrobe' && (
-                    <motion.span
-                      layoutId="heroPreviewPill"
-                      transition={{ duration: 0.16, ease: [0.16, 1, 0.3, 1] }}
-                      className="absolute inset-0 rounded-full bg-white"
-                    />
-                  )}
-                  <Shirt className="w-3 h-3 relative z-10" />
-                  <span className="relative z-10">Closet</span>
-                </button>
-              </div>
-            </div>
 
             <AnimatePresence mode="wait">
               {heroPreviewTab === 'health' ? (
@@ -1525,7 +1587,13 @@ export default function App() {
               )}
             </AnimatePresence>
           </div>
-        </main>
+        </div>
+
+        {/* AuthCard Column */}
+        <div className="lg:col-span-6 w-full flex justify-center">
+          <AuthCard />
+        </div>
+      </main>
 
         <footer className="max-w-5xl w-full mx-auto text-xs text-zinc-500 flex items-center justify-between">
           <span>DuoPulse — Mobile-First Health & Care Tracker</span>
@@ -1599,10 +1667,10 @@ export default function App() {
           DuoPulse
         </a>
 
-        {/* Zone 2: Top Pilled Navbar [ Health | Skin | Wardrobe ] */}
+        {/* Zone 2: Top Pilled Navbar [ Health | Skin | Fits ] - Hidden on mobile phones */}
         <nav
           aria-label="Primary View Switcher"
-          className="flex items-center p-1 rounded-full bg-[#12141C] border border-white/10"
+          className="hidden sm:flex items-center p-1 rounded-full bg-[#12141C] border border-white/10"
         >
           <button
             type="button"
@@ -1655,7 +1723,7 @@ export default function App() {
               />
             )}
             <Shirt className="w-3.5 h-3.5 relative z-10" />
-            <span className="relative z-10">Wardrobe</span>
+            <span className="relative z-10">Fits</span>
           </button>
         </nav>
 
@@ -1713,8 +1781,8 @@ export default function App() {
         </div>
       </header>
 
-      {/* Main Content Container with Seamless Screen Transitions */}
-      <main className="max-w-6xl w-full mx-auto flex-1 px-3.5 sm:px-6 pt-4 sm:pt-5">
+      {/* Main Content Container with safe mobile bottom spacing */}
+      <main className="max-w-6xl w-full mx-auto flex-1 px-3.5 sm:px-6 pt-3 sm:pt-5 pb-28 sm:pb-10">
         <AnimatePresence mode="wait">
           {activeSection === 'health' ? (
             <motion.div
@@ -1787,46 +1855,63 @@ export default function App() {
         </AnimatePresence>
       </main>
 
-      {/* Mobile-First Thumb-Zone Bottom Dock (Visible on Mobile Viewports) */}
-      <div className="sm:hidden fixed bottom-0 inset-x-0 z-30 bg-[#090A0F]/95 backdrop-blur-lg border-t border-white/10 px-3 py-2 flex items-center justify-between gap-2">
-        <button
-          type="button"
-          onClick={() => setActiveSection('health')}
-          className={`flex-1 min-h-[44px] rounded-2xl text-xs font-semibold flex items-center justify-center gap-1.5 transition-colors ${
-            activeSection === 'health'
-              ? 'bg-white text-zinc-950 font-bold'
-              : 'bg-[#12141C] text-zinc-400 border border-white/8'
-          }`}
-        >
-          <Activity className="w-3.5 h-3.5" />
-          <span>Health</span>
-        </button>
+      {/* Mobile-Only Floating Bottom Navbar Pill [ Health | Skin | Fits ] */}
+      <div className="sm:hidden fixed bottom-4 inset-x-0 mx-auto w-[92%] max-w-sm z-40 pb-[max(0.25rem,env(safe-area-inset-bottom))]">
+        <div className="bg-[#12141C]/92 backdrop-blur-xl border border-white/12 shadow-2xl shadow-black/80 rounded-full p-1.5 flex items-center justify-between gap-1">
+          <button
+            type="button"
+            onClick={() => setActiveSection('health')}
+            className={`relative flex-1 min-h-[46px] rounded-full text-xs font-semibold flex items-center justify-center gap-1.5 transition-colors ${
+              activeSection === 'health' ? 'text-zinc-950 font-bold' : 'text-zinc-400 hover:text-white'
+            }`}
+          >
+            {activeSection === 'health' && (
+              <motion.span
+                layoutId="mobileNavPill"
+                transition={{ type: 'spring', damping: 25, stiffness: 350 }}
+                className="absolute inset-0 rounded-full bg-white shadow-md"
+              />
+            )}
+            <Activity className="w-4 h-4 relative z-10" />
+            <span className="relative z-10 text-xs">Health</span>
+          </button>
 
-        <button
-          type="button"
-          onClick={() => setActiveSection('skin')}
-          className={`flex-1 min-h-[44px] rounded-2xl text-xs font-semibold flex items-center justify-center gap-1.5 transition-colors ${
-            activeSection === 'skin'
-              ? 'bg-white text-zinc-950 font-bold'
-              : 'bg-[#12141C] text-zinc-400 border border-white/8'
-          }`}
-        >
-          <Sparkles className="w-3.5 h-3.5" />
-          <span>Skin</span>
-        </button>
+          <button
+            type="button"
+            onClick={() => setActiveSection('skin')}
+            className={`relative flex-1 min-h-[46px] rounded-full text-xs font-semibold flex items-center justify-center gap-1.5 transition-colors ${
+              activeSection === 'skin' ? 'text-zinc-950 font-bold' : 'text-zinc-400 hover:text-white'
+            }`}
+          >
+            {activeSection === 'skin' && (
+              <motion.span
+                layoutId="mobileNavPill"
+                transition={{ type: 'spring', damping: 25, stiffness: 350 }}
+                className="absolute inset-0 rounded-full bg-white shadow-md"
+              />
+            )}
+            <Sparkles className="w-4 h-4 relative z-10" />
+            <span className="relative z-10 text-xs">Skin</span>
+          </button>
 
-        <button
-          type="button"
-          onClick={() => setActiveSection('wardrobe')}
-          className={`flex-1 min-h-[44px] rounded-2xl text-xs font-semibold flex items-center justify-center gap-1.5 transition-colors ${
-            activeSection === 'wardrobe'
-              ? 'bg-white text-zinc-950 font-bold'
-              : 'bg-[#12141C] text-zinc-400 border border-white/8'
-          }`}
-        >
-          <Shirt className="w-3.5 h-3.5" />
-          <span>Wardrobe</span>
-        </button>
+          <button
+            type="button"
+            onClick={() => setActiveSection('wardrobe')}
+            className={`relative flex-1 min-h-[46px] rounded-full text-xs font-semibold flex items-center justify-center gap-1.5 transition-colors ${
+              activeSection === 'wardrobe' ? 'text-zinc-950 font-bold' : 'text-zinc-400 hover:text-white'
+            }`}
+          >
+            {activeSection === 'wardrobe' && (
+              <motion.span
+                layoutId="mobileNavPill"
+                transition={{ type: 'spring', damping: 25, stiffness: 350 }}
+                className="absolute inset-0 rounded-full bg-white shadow-md"
+              />
+            )}
+            <Shirt className="w-4 h-4 relative z-10" />
+            <span className="relative z-10 text-xs">Fits</span>
+          </button>
+        </div>
       </div>
 
       {/* Partner Sync & Profile Customization Modal */}
@@ -1839,6 +1924,7 @@ export default function App() {
         onUnlinkPartner={handleUnlinkPartner}
         onOpenOnboardingWizard={() => setManualWizardOpen(true)}
         onUpdateWorkspaceIdentities={handleUpdateWorkspaceIdentities}
+        onDeleteAllUserData={handleDeleteAllUserData}
       />
     </div>
   );
