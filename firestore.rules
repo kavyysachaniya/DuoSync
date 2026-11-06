@@ -302,81 +302,67 @@ service cloud.firestore {
     // =========================================================================
 
     match /users/{userId} {
-      allow get: if isSignedIn() && isVerified() && isValidId(userId) && isOwner(userId);
+      allow get: if isSignedIn() && isValidId(userId) && isOwner(userId);
       allow list: if false;
 
-      allow create: if isSignedIn() && isVerified() &&
+      allow create: if isSignedIn() &&
         isValidId(userId) && isOwner(userId) &&
         isValidUser(incoming()) &&
-        incoming().uid == userId &&
-        incoming().createdAt == request.time &&
-        incoming().updatedAt == request.time &&
-        existsAfter(/databases/$(database)/documents/workspaces/$(incoming().workspaceId));
+        incoming().uid == userId;
 
-      allow update: if isSignedIn() && isVerified() &&
+      allow update: if isSignedIn() &&
         isValidUser(incoming()) &&
         isValidId(userId) && isOwner(userId) &&
         incoming().uid == existing().uid &&
-        incoming().createdAt == existing().createdAt &&
-        incoming().updatedAt == request.time &&
         incoming().diff(existing()).affectedKeys().hasOnly([
           'displayName', 'workspaceId', 'defaultSlot', 'onboardingCompleted', 'updatedAt'
-        ]) &&
-        exists(/databases/$(database)/documents/workspaces/$(incoming().workspaceId));
+        ]);
 
       allow delete: if isSignedIn() && isValidId(userId) && isOwner(userId);
     }
 
     match /pairingCodes/{code} {
-      allow get: if isSignedIn() && isVerified() && isValidPairingCodeId(code);
+      allow get: if isSignedIn() && isValidPairingCodeId(code);
       allow list: if false;
 
-      allow create: if isSignedIn() && isVerified() &&
+      allow create: if isSignedIn() &&
         isValidPairingCodeId(code) &&
         isValidPairingCode(incoming()) &&
         incoming().code == code &&
-        incoming().ownerUid == request.auth.uid &&
-        incoming().createdAt == request.time &&
-        existsAfter(/databases/$(database)/documents/workspaces/$(incoming().workspaceId));
+        incoming().ownerUid == request.auth.uid;
 
-      allow update: if isSignedIn() && isVerified() &&
+      allow update: if isSignedIn() &&
         isValidPairingCode(incoming()) &&
         isValidPairingCodeId(code) &&
         incoming().code == existing().code &&
         incoming().workspaceId == existing().workspaceId &&
         incoming().ownerUid == existing().ownerUid &&
         incoming().ownerUid == request.auth.uid &&
-        incoming().createdAt == existing().createdAt &&
         incoming().diff(existing()).affectedKeys().hasOnly(['ownerName']);
 
       allow delete: if isSignedIn() && isValidPairingCodeId(code) && existing().ownerUid == request.auth.uid;
     }
 
     match /workspaces/{workspaceId} {
-      allow get: if isSignedIn() && isVerified() && isValidId(workspaceId) && (
+      allow get: if isSignedIn() && isValidId(workspaceId) && (
         isExistingWorkspaceMember(existing()) ||
         (existing().partnerUid == "" && exists(/databases/$(database)/documents/pairingCodes/$(existing().pairingCode)))
       );
       allow list: if false;
 
-      allow create: if isSignedIn() && isVerified() &&
+      allow create: if isSignedIn() &&
         isValidId(workspaceId) &&
         isValidWorkspace(incoming()) &&
         incoming().id == workspaceId &&
         incoming().ownerUid == request.auth.uid &&
-        incoming().partnerUid == "" &&
-        incoming().createdAt == request.time &&
-        incoming().updatedAt == request.time &&
-        existsAfter(/databases/$(database)/documents/pairingCodes/$(incoming().pairingCode));
+        incoming().partnerUid == "";
 
-      allow update: if isSignedIn() && isVerified() &&
+      allow update: if isSignedIn() &&
         isValidWorkspace(incoming()) &&
         isValidId(workspaceId) &&
         incoming().id == existing().id &&
         incoming().ownerUid == existing().ownerUid &&
-        incoming().pairingCode == existing().pairingCode &&
-        incoming().createdAt == existing().createdAt &&
-        incoming().updatedAt == request.time && (
+        incoming().pairingCode == existing().pairingCode && (
           // Action 1: Partner 2 joins an unpaired workspace via pairing code
           (
             (existing().partnerUid == "" || existing().partnerUid == request.auth.uid) &&

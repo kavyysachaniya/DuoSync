@@ -339,3 +339,4 @@ export const AuthCard: React.FC<AuthCardProps> = ({ onSuccess }) => {
     </div>
   );
 };
+

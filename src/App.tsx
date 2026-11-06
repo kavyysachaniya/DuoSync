@@ -19,9 +19,11 @@ import {
 import { AnimatePresence, motion } from 'motion/react';
 import {
   Activity,
+  AlertCircle,
   Droplet,
   HeartHandshake,
   LogOut,
+  RotateCcw,
   Shirt,
   Sparkles,
   Users,
@@ -96,6 +98,9 @@ export default function App() {
   const [workspace, setWorkspace] = useState<WorkspaceDoc | null>(null);
   const [manualWizardOpen, setManualWizardOpen] = useState(false);
 
+  const [syncError, setSyncError] = useState<string | null>(null);
+  const [syncTakingTooLong, setSyncTakingTooLong] = useState(false);
+
   const isBootstrappingRef = useRef(false);
 
   // Navigation & Active Profile Slot
@@ -116,6 +121,102 @@ export default function App() {
   const [wardrobeItemsMap, setWardrobeItemsMap] = useState<Record<string, WardrobeItemDoc>>({});
   const [outfitsMap, setOutfitsMap] = useState<Record<string, OutfitDoc>>({});
 
+  // Monitor slow sync to offer instant recovery controls
+  useEffect(() => {
+    if (authUser && (!userDoc || !workspace)) {
+      const timer = setTimeout(() => {
+        setSyncTakingTooLong(true);
+      }, 4000);
+      return () => clearTimeout(timer);
+    } else {
+      setSyncTakingTooLong(false);
+      setSyncError(null);
+    }
+  }, [authUser, userDoc, workspace]);
+
+  // Resilient Workspace & User Initializer / Self-Healer
+  const bootstrapWorkspaceAndUser = async (uid: string, profileName: string) => {
+    if (isBootstrappingRef.current) return;
+    isBootstrappingRef.current = true;
+    setSyncError(null);
+
+    const userRef = doc(db, 'users', uid);
+
+    try {
+      const cleanUid = uid.replace(/[^a-zA-Z0-9_-]/g, '').slice(0, 24) || 'user';
+      const workspaceId = `ws_${cleanUid}_${Date.now()}`;
+      const code = generateSixDigitCode();
+
+      const cleanName = sanitizeString(
+        profileName || authUser?.displayName || authUser?.email?.split('@')[0] || 'My Profile',
+        VALIDATION_BOUNDS.MAX_DISPLAY_NAME,
+        'My Profile'
+      );
+
+      const batch = writeBatch(db);
+
+      batch.set(doc(db, 'workspaces', workspaceId), {
+        id: workspaceId,
+        ownerUid: uid,
+        partnerUid: '',
+        pairingCode: code,
+        onboardingCompleted: false,
+        currency: '₹',
+        partner1Name: cleanName,
+        partner1Role: `${cleanName}’s Dashboard`,
+        partner1WeightUnit: 'kg',
+        partner1TargetWeight: 62,
+        partner1StartWeight: 65,
+        partner1StepsGoal: 8500,
+        partner1SleepGoalMinutes: 480,
+        partner1WaterGoalMl: 2500,
+        partner1FitnessApp: 'manual',
+        partner2Name: 'Partner',
+        partner2Role: 'Partner’s Dashboard',
+        partner2WeightUnit: 'kg',
+        partner2TargetWeight: 55,
+        partner2StartWeight: 58,
+        partner2StepsGoal: 8500,
+        partner2SleepGoalMinutes: 480,
+        partner2WaterGoalMl: 2500,
+        partner2FitnessApp: 'manual',
+        skincareCategories: DEFAULT_SKINCARE_CATEGORIES,
+        haircareCategories: DEFAULT_HAIRCARE_CATEGORIES,
+        bodycareCategories: DEFAULT_BODYCARE_CATEGORIES,
+        productIds: [],
+        createdAt: serverTimestamp(),
+        updatedAt: serverTimestamp(),
+      });
+
+      batch.set(doc(db, 'pairingCodes', code), {
+        code,
+        workspaceId,
+        ownerUid: uid,
+        ownerName: cleanName,
+        createdAt: serverTimestamp(),
+      });
+
+      batch.set(userRef, {
+        uid,
+        displayName: cleanName,
+        workspaceId,
+        defaultSlot: 'partner1',
+        onboardingCompleted: false,
+        createdAt: serverTimestamp(),
+        updatedAt: serverTimestamp(),
+      });
+
+      await batch.commit();
+      console.log('Successfully bootstrapped workspace & user doc!');
+    } catch (error: unknown) {
+      console.error('Bootstrap failed:', error);
+      const msg = error instanceof Error ? error.message : String(error);
+      setSyncError(`Failed to initialize profile in Firestore: ${msg}`);
+    } finally {
+      isBootstrappingRef.current = false;
+    }
+  };
+
   // 1. Listen to Firebase Auth state
   useEffect(() => {
     const unsub = onAuthStateChanged(auth, (user) => {
@@ -130,6 +231,7 @@ export default function App() {
         setWardrobeItemsMap({});
         setOutfitsMap({});
         setHasInitializedSlot(false);
+        setSyncError(null);
       }
     });
     return () => unsub();
@@ -139,111 +241,37 @@ export default function App() {
   useEffect(() => {
     if (!authReady || !authUser) return;
 
-    const userPath = `users/${authUser.uid}`;
     const userRef = doc(db, 'users', authUser.uid);
 
     const unsub = onSnapshot(
       userRef,
-      async (snap) => {
+      (snap) => {
         if (snap.exists()) {
           const data = snap.data() as UserDoc;
           setUserDoc(data);
+          setSyncError(null);
           if (!hasInitializedSlot) {
             setActiveSlot(data.defaultSlot || 'partner1');
             setHasInitializedSlot(true);
           }
-        } else if (!isBootstrappingRef.current) {
-          isBootstrappingRef.current = true;
-          try {
-            const cleanUid = authUser.uid.replace(/[^a-zA-Z0-9_-]/g, '').slice(0, 24) || 'user';
-            const workspaceId = `ws_${cleanUid}_${Date.now()}`;
-            let code = generateSixDigitCode();
-
-            const existingCodeSnap = await getDoc(doc(db, 'pairingCodes', code));
-            if (existingCodeSnap.exists()) {
-              code = generateSixDigitCode();
-            }
-
-            const googleName = sanitizeString(
-              authUser.displayName || authUser.email?.split('@')[0] || 'My Profile',
-              VALIDATION_BOUNDS.MAX_DISPLAY_NAME,
-              'My Profile'
-            );
-
-            const batch = writeBatch(db);
-
-            batch.set(doc(db, 'workspaces', workspaceId), {
-              id: workspaceId,
-              ownerUid: authUser.uid,
-              partnerUid: '',
-              pairingCode: code,
-              onboardingCompleted: false,
-              currency: '₹',
-              partner1Name: googleName,
-              partner1Role: `${googleName}’s Dashboard`,
-              partner1WeightUnit: 'kg',
-              partner1TargetWeight: 62,
-              partner1StartWeight: 65,
-              partner1StepsGoal: 8500,
-              partner1SleepGoalMinutes: 480,
-              partner1WaterGoalMl: 2500,
-              partner1FitnessApp: 'manual',
-              partner2Name: 'Partner',
-              partner2Role: 'Partner’s Dashboard',
-              partner2WeightUnit: 'kg',
-              partner2TargetWeight: 55,
-              partner2StartWeight: 58,
-              partner2StepsGoal: 8500,
-              partner2SleepGoalMinutes: 480,
-              partner2WaterGoalMl: 2500,
-              partner2FitnessApp: 'manual',
-              skincareCategories: DEFAULT_SKINCARE_CATEGORIES,
-              haircareCategories: DEFAULT_HAIRCARE_CATEGORIES,
-              bodycareCategories: DEFAULT_BODYCARE_CATEGORIES,
-              productIds: [],
-              createdAt: serverTimestamp(),
-              updatedAt: serverTimestamp(),
-            });
-
-            batch.set(doc(db, 'pairingCodes', code), {
-              code,
-              workspaceId,
-              ownerUid: authUser.uid,
-              ownerName: googleName,
-              createdAt: serverTimestamp(),
-            });
-
-            batch.set(userRef, {
-              uid: authUser.uid,
-              displayName: googleName,
-              workspaceId,
-              defaultSlot: 'partner1',
-              onboardingCompleted: false,
-              createdAt: serverTimestamp(),
-              updatedAt: serverTimestamp(),
-            });
-
-            await batch.commit();
-          } catch (error) {
-            handleFirestoreError(error, OperationType.WRITE, userPath);
-          } finally {
-            isBootstrappingRef.current = false;
-          }
+        } else {
+          // User document doesn't exist yet, bootstrap fresh
+          bootstrapWorkspaceAndUser(authUser.uid, authUser.displayName || '');
         }
       },
       (error) => {
-        handleFirestoreError(error, OperationType.GET, userPath);
+        console.error('Error listening to user document:', error);
+        setSyncError(`User profile read error: ${error.message}. Please verify Firestore rules.`);
       }
     );
 
     return () => unsub();
   }, [authReady, authUser, hasInitializedSlot]);
 
-  // 3. Listen to active /workspaces/{workspaceId}
+  // 3. Listen to active /workspaces/{workspaceId} with self-healing
   useEffect(() => {
     if (!authReady || !authUser || !userDoc?.workspaceId) return;
 
-    const wsPath = `workspaces/${userDoc.workspaceId}`;
     const wsRef = doc(db, 'workspaces', userDoc.workspaceId);
 
     const unsub = onSnapshot(
@@ -251,10 +279,16 @@ export default function App() {
       (snap) => {
         if (snap.exists()) {
           setWorkspace(snap.data() as WorkspaceDoc);
+          setSyncError(null);
+        } else {
+          // Workspace document is missing or was deleted! Auto self-heal!
+          console.warn(`Workspace ${userDoc.workspaceId} was not found. Self-healing fresh workspace...`);
+          bootstrapWorkspaceAndUser(authUser.uid, userDoc.displayName || '');
         }
       },
       (error) => {
-        handleFirestoreError(error, OperationType.GET, wsPath);
+        console.error('Error listening to workspace document:', error);
+        setSyncError(`Workspace read error: ${error.message}. Please verify Firestore rules.`);
       }
     );
 
@@ -1613,14 +1647,84 @@ export default function App() {
     !partner2Profile
   ) {
     return (
-      <div className="min-h-screen bg-[#090A0F] flex items-center justify-center p-6">
-        <div className="text-center space-y-2">
-          <div className="w-10 h-10 rounded-2xl bg-white/5 border border-white/10 flex items-center justify-center mx-auto animate-pulse">
-            <Sparkles className="w-5 h-5 text-rose-400" />
+      <div className="min-h-screen bg-[#090A0F] text-zinc-100 flex items-center justify-center p-4 sm:p-6">
+        <div className="w-full max-w-md rounded-3xl bg-[#12141C] border border-white/10 p-6 sm:p-8 text-center space-y-5 shadow-2xl">
+          <div className="w-12 h-12 rounded-2xl bg-white/5 border border-white/10 flex items-center justify-center mx-auto">
+            {syncTakingTooLong || syncError ? (
+              <AlertCircle className="w-6 h-6 text-amber-400" />
+            ) : (
+              <Sparkles className="w-6 h-6 text-rose-400 animate-pulse" />
+            )}
           </div>
-          <p className="text-xs text-zinc-400 font-medium">
-            Syncing your Firebase profile...
-          </p>
+
+          <div className="space-y-1.5">
+            <h3 className="text-base font-bold text-white">
+              {syncError
+                ? 'Firestore Connection Notice'
+                : syncTakingTooLong
+                ? 'Syncing Taking Longer Than Expected'
+                : 'Syncing your Firebase profile...'}
+            </h3>
+            <p className="text-xs text-zinc-400 leading-relaxed">
+              {syncError
+                ? syncError
+                : syncTakingTooLong
+                ? 'Authenticated with Firebase, but waiting for Firestore database documents to respond.'
+                : 'Connecting to Cloud Firestore to retrieve your paired workspace and vitals.'}
+            </p>
+          </div>
+
+          {/* Diagnostic status */}
+          <div className="p-3 rounded-xl bg-[#090A0F] border border-white/8 text-left text-xs space-y-1.5 text-zinc-400 font-mono">
+            <div className="flex justify-between">
+              <span>Account:</span>
+              <span className="text-emerald-400 truncate max-w-[200px]">
+                {authUser.email || authUser.uid.slice(0, 10)}
+              </span>
+            </div>
+            <div className="flex justify-between">
+              <span>Profile Doc:</span>
+              <span className={userDoc ? 'text-emerald-400' : 'text-amber-400'}>
+                {userDoc ? 'Ready' : 'Waiting...'}
+              </span>
+            </div>
+            <div className="flex justify-between">
+              <span>Workspace:</span>
+              <span className={workspace ? 'text-emerald-400' : 'text-amber-400'}>
+                {workspace
+                  ? 'Ready'
+                  : userDoc?.workspaceId
+                  ? `Loading (${userDoc.workspaceId.slice(0, 10)}...)`
+                  : 'Bootstrapping...'}
+              </span>
+            </div>
+          </div>
+
+          {/* Action buttons if taking too long or error */}
+          {(syncTakingTooLong || syncError) && (
+            <div className="pt-2 space-y-2">
+              <button
+                type="button"
+                onClick={() => {
+                  setSyncError(null);
+                  bootstrapWorkspaceAndUser(authUser.uid, authUser.displayName || '');
+                }}
+                className="w-full min-h-[44px] rounded-xl bg-white text-zinc-950 hover:bg-zinc-200 text-xs font-semibold flex items-center justify-center gap-2 transition-colors"
+              >
+                <RotateCcw className="w-4 h-4" />
+                <span>Initialize / Repair Workspace</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => signOut(auth)}
+                className="w-full min-h-[40px] rounded-xl bg-[#090A0F] hover:bg-white/5 border border-white/10 text-xs font-medium text-zinc-400 hover:text-white flex items-center justify-center gap-1.5 transition-colors"
+              >
+                <LogOut className="w-3.5 h-3.5" />
+                <span>Sign Out</span>
+              </button>
+            </div>
+          )}
         </div>
       </div>
     );
