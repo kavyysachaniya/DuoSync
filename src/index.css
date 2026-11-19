@@ -43,11 +43,53 @@
   }
 }
 
-/* Hide scrollbars on horizontal date/category strips while keeping smooth scroll */
-.no-scrollbar::-webkit-scrollbar {
-  display: none;
+/* ==============================================================================
+   GLOBALLY HIDE EACH AND EVERY VISIBLE SCROLLBAR
+   Preserves 100% smooth scrolling (wheel, trackpad, drag, touch) with zero visible bars.
+   ============================================================================== */
+
+html,
+body,
+#root,
+*,
+*::before,
+*::after {
+  scrollbar-width: none !important;
+  -ms-overflow-style: none !important;
 }
-.no-scrollbar {
-  -ms-overflow-style: none;
-  scrollbar-width: none;
+
+*::-webkit-scrollbar,
+html::-webkit-scrollbar,
+body::-webkit-scrollbar,
+#root::-webkit-scrollbar,
+div::-webkit-scrollbar,
+main::-webkit-scrollbar,
+nav::-webkit-scrollbar,
+aside::-webkit-scrollbar,
+section::-webkit-scrollbar {
+  display: none !important;
+  width: 0px !important;
+  height: 0px !important;
+  background: transparent !important;
+}
+
+*::-webkit-scrollbar-thumb,
+*::-webkit-scrollbar-track {
+  background: transparent !important;
+  display: none !important;
+}
+
+/* Explicit utility classes support */
+.no-scrollbar,
+.scrollbar-none {
+  scrollbar-width: none !important;
+  -ms-overflow-style: none !important;
+}
+
+.no-scrollbar::-webkit-scrollbar,
+.scrollbar-none::-webkit-scrollbar {
+  display: none !important;
+  width: 0px !important;
+  height: 0px !important;
+  background: transparent !important;
 }
