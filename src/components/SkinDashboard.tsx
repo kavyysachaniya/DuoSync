@@ -290,7 +290,13 @@ export const SkinDashboard: React.FC<SkinDashboardProps> = ({
 
       setIsProductModalOpen(false);
       setActiveSegment(formSegment);
-      showToast(editingProductId ? 'Product updated' : 'Product added to inventory');
+      if (formProfileSlot === partnerProfile.slot) {
+        showToast(`Saved to ${partnerProfile.name}’s shelf`);
+      } else if (formProfileSlot === 'shared') {
+        showToast('Saved to Shared Essentials');
+      } else {
+        showToast(editingProductId ? 'Product updated' : 'Product added to your shelf');
+      }
     } finally {
       setProductSaving(false);
     }
@@ -330,7 +336,11 @@ export const SkinDashboard: React.FC<SkinDashboardProps> = ({
     };
 
     for (const p of products) {
-      if (ownerFilter === 'active_profile' && p.profileSlot !== profile.slot && p.profileSlot !== 'shared') {
+      // Unshared products belonging to the other partner must NEVER appear in this profile's stats
+      if (p.profileSlot !== profile.slot && p.profileSlot !== 'shared') {
+        continue;
+      }
+      if (ownerFilter === 'active_profile' && p.profileSlot !== profile.slot) {
         continue;
       }
       if (ownerFilter === 'shared' && p.profileSlot !== 'shared') {
@@ -351,13 +361,22 @@ export const SkinDashboard: React.FC<SkinDashboardProps> = ({
     return map;
   }, [products, ownerFilter, profile.slot]);
 
+  // Total products accessible to the active profile (personal + shared)
+  const profileAccessibleProducts = useMemo(() => {
+    return products.filter((p) => p.profileSlot === profile.slot || p.profileSlot === 'shared');
+  }, [products, profile.slot]);
+
   // Filtered products for the active segment
   const filteredProducts = useMemo(() => {
     return products
       .filter((p) => p.segment === activeSegment)
       .filter((p) => {
+        // Enforce strict personal boundary: never show unshared items belonging to partner
+        if (p.profileSlot !== profile.slot && p.profileSlot !== 'shared') {
+          return false;
+        }
         if (ownerFilter === 'active_profile') {
-          return p.profileSlot === profile.slot || p.profileSlot === 'shared';
+          return p.profileSlot === profile.slot;
         }
         if (ownerFilter === 'shared') {
           return p.profileSlot === 'shared';
@@ -477,7 +496,7 @@ export const SkinDashboard: React.FC<SkinDashboardProps> = ({
                   : 'text-zinc-400 hover:text-white'
               }`}
             >
-              All ({products.length})
+              All ({profileAccessibleProducts.length})
             </button>
             <button
               type="button"
@@ -836,7 +855,10 @@ export const SkinDashboard: React.FC<SkinDashboardProps> = ({
 
           {activeCategories.map((cat) => {
             const countInCat = products.filter(
-              (p) => p.segment === activeSegment && p.subCategory === cat
+              (p) =>
+                p.segment === activeSegment &&
+                p.subCategory === cat &&
+                (p.profileSlot === profile.slot || p.profileSlot === 'shared')
             ).length;
             const isSelected = selectedSubCategory === cat;
             return (

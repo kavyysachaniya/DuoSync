@@ -179,6 +179,9 @@ export const WardrobeDashboard: React.FC<WardrobeDashboardProps> = ({
         if (item.profileSlot !== partnerProfile.slot) return false;
       } else if (ownerFilter === 'shared') {
         if (item.profileSlot !== 'shared') return false;
+      } else {
+        // 'all' in active profile's view shows this profile's items + shared items
+        if (item.profileSlot !== profile.slot && item.profileSlot !== 'shared') return false;
       }
 
       if (searchQuery.trim()) {
@@ -202,6 +205,9 @@ export const WardrobeDashboard: React.FC<WardrobeDashboardProps> = ({
         if (outfit.profileSlot !== partnerProfile.slot) return false;
       } else if (ownerFilter === 'shared') {
         if (outfit.profileSlot !== 'shared') return false;
+      } else {
+        // 'all' in active profile's view shows this profile's outfits + shared outfits
+        if (outfit.profileSlot !== profile.slot && outfit.profileSlot !== 'shared') return false;
       }
       return true;
     });
@@ -326,7 +332,13 @@ export const WardrobeDashboard: React.FC<WardrobeDashboardProps> = ({
         editingItemId || undefined
       );
       setIsItemModalOpen(false);
-      showToast(editingItemId ? 'Item updated in wardrobe' : 'Item added to wardrobe!');
+      if (formOwnerSlot === partnerProfile.slot) {
+        showToast(`Saved to ${partnerProfile.name}’s closet`);
+      } else if (formOwnerSlot === 'shared') {
+        showToast('Saved as Shared Piece');
+      } else {
+        showToast(editingItemId ? 'Item updated in wardrobe' : 'Item added to your wardrobe!');
+      }
     } catch (err) {
       console.error(err);
       showToast('Error saving item. Please try again.');
@@ -391,7 +403,13 @@ export const WardrobeDashboard: React.FC<WardrobeDashboardProps> = ({
         },
         editingOutfitId || undefined
       );
-      showToast(editingOutfitId ? 'Outfit updated!' : 'New fit saved to closet!');
+      if (outfitOwnerSlot === partnerProfile.slot) {
+        showToast(`Saved to ${partnerProfile.name}’s fits`);
+      } else if (outfitOwnerSlot === 'shared') {
+        showToast('Saved as Shared Fit');
+      } else {
+        showToast(editingOutfitId ? 'Outfit updated!' : 'New fit saved to your closet!');
+      }
       setActiveTab('fits');
     } catch (err) {
       console.error(err);
