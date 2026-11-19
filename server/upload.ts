@@ -1,6 +1,6 @@
 import { Router, Response } from 'express';
 import { createClient } from '@supabase/supabase-js';
-import { AuthenticatedRequest, requireAuth } from './auth';
+import { AuthenticatedRequest, requireAuth } from './auth.js';
 
 export const uploadRouter = Router();
 

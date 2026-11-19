@@ -1,7 +1,7 @@
 import { Router, Request, Response, NextFunction } from 'express';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
-import { getDb, isDbConfigured, JWT_SECRET } from './db';
+import { getDb, isDbConfigured, JWT_SECRET } from './db.js';
 
 export const authRouter = Router();
 
@@ -70,7 +70,7 @@ authRouter.post('/register', async (req: Request, res: Response) => {
 
     const sql = getDb();
 
-    // Check existing
+    // Check existing user
     const existing = await sql`SELECT id FROM public.users WHERE email = ${cleanEmail} LIMIT 1`;
     if (existing.length > 0) {
       res.status(409).json({ error: 'This email is already registered. Please sign in instead.' });
@@ -228,7 +228,7 @@ authRouter.post('/login', async (req: Request, res: Response) => {
   }
 });
 
-// 3. ME (SESSION VALIDATION)
+// 3. ME (SESSION RESTORATION)
 authRouter.get('/me', requireAuth, async (req: AuthenticatedRequest, res: Response) => {
   try {
     if (!isDbConfigured) {
@@ -277,4 +277,3 @@ authRouter.get('/me', requireAuth, async (req: AuthenticatedRequest, res: Respon
     res.status(500).json({ error: msg });
   }
 });
-

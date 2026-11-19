@@ -11,7 +11,7 @@ function apiDevMiddleware(): Plugin {
         if (req.url && req.url.startsWith('/api')) {
           try {
             const mod = await server.ssrLoadModule('./api/index.ts');
-            const app = mod.default || mod.app;
+            const app = mod.app || mod.default;
             return app(req, res, next);
           } catch (err) {
             console.error('API dev server execution error:', err);

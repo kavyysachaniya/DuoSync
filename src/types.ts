@@ -1,4 +1,5 @@
-import { Timestamp } from 'firebase/firestore';
+export type AppTimestamp = string | Date | number | { seconds: number; nanoseconds: number };
+export type Timestamp = AppTimestamp;
 
 export type ProfileSlot = 'partner1' | 'partner2';
 export type ProductOwnerSlot = 'partner1' | 'partner2' | 'shared';

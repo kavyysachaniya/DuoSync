@@ -1,6 +1,6 @@
 import { Router, Response } from 'express';
-import { getDb, isDbConfigured } from './db';
-import { AuthenticatedRequest, requireAuth } from './auth';
+import { getDb, isDbConfigured } from './db.js';
+import { AuthenticatedRequest, requireAuth } from './auth.js';
 
 export const syncRouter = Router();
 
@@ -108,4 +108,3 @@ syncRouter.get('/all', requireAuth, async (req: AuthenticatedRequest, res: Respo
     res.status(500).json({ error: msg });
   }
 });
-

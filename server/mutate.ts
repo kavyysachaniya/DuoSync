@@ -1,6 +1,6 @@
 import { Router, Response } from 'express';
-import { getDb, isDbConfigured } from './db';
-import { AuthenticatedRequest, requireAuth } from './auth';
+import { getDb, isDbConfigured } from './db.js';
+import { AuthenticatedRequest, requireAuth } from './auth.js';
 
 export const mutateRouter = Router();
 

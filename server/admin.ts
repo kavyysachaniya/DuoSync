@@ -1,5 +1,5 @@
 import { Router, Request, Response } from 'express';
-import { getDb, isDbConfigured } from './db';
+import { getDb, isDbConfigured } from './db.js';
 
 export const adminRouter = Router();
 
