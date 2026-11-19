@@ -254,3 +254,4 @@ Once deployed or running locally, verify your setup using these direct endpoints
 ### Issue 4: Partner Mutations Don't Update Automatically
 - **Root Cause**: Network offline or tab sleeping.
   - **Solution**: DuoSync features a background heartbeat poll every 3 seconds (`GET /api/sync/poll`). It also attaches listeners to `visibilitychange` and `focus`, fetching fresh updates the moment a partner opens or switches back to the app.
+

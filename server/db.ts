@@ -34,3 +34,4 @@ export function getDb(): NeonQueryFunction<false, false> {
 }
 
 export const JWT_SECRET = process.env.JWT_SECRET || 'duosync-jwt-token-secret-production-salt-2026';
+
