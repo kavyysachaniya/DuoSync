@@ -40,7 +40,7 @@ mutateRouter.post('/health-log', requireAuth, async (req: AuthenticatedRequest, 
       return;
     }
 
-    const logId = `${profileSlot}_${date}`;
+    const logId = `${targetWsId}_${profileSlot}_${date}`;
     const sql = getDb();
 
     await sql`
@@ -582,7 +582,7 @@ mutateRouter.post('/pair', requireAuth, async (req: AuthenticatedRequest, res: R
     // Log baseline weight if provided
     if (submission?.currentWeight) {
       const today = new Date().toISOString().split('T')[0];
-      const logId = `partner2_${today}`;
+      const logId = `${targetWsId}_partner2_${today}`;
       await sql`
         INSERT INTO public.health_logs (
           id, workspace_id, profile_slot, date, weight, note, updated_by_id, updated_at
@@ -633,9 +633,11 @@ mutateRouter.post('/onboarding', requireAuth, async (req: AuthenticatedRequest, 
     }
 
     const sql = getDb();
-    const myName = submission?.partnerName?.trim() || 'My Profile';
+    const myName = (submission?.myName || submission?.name || '').trim() || 'Partner 1';
+    const partnerName = (submission?.partnerName || '').trim() || 'Partner 2';
+    const currency = submission?.currency || '₹';
 
-    // Update member record
+    // 1. Update active member record
     await sql`
       UPDATE public.workspace_members
       SET
@@ -650,7 +652,18 @@ mutateRouter.post('/onboarding', requireAuth, async (req: AuthenticatedRequest, 
       WHERE workspace_id = ${targetWsId} AND slot = ${slot}
     `;
 
-    // Mark user and workspace onboarding complete
+    // 2. If partner1, also update partner2 member record name and role
+    if (slot === 'partner1' && partnerName) {
+      await sql`
+        UPDATE public.workspace_members
+        SET
+          name = ${partnerName},
+          role = ${partnerName + '’s Dashboard'}
+        WHERE workspace_id = ${targetWsId} AND slot = 'partner2'
+      `;
+    }
+
+    // 3. Mark user onboarding complete
     await sql`
       UPDATE public.users
       SET
@@ -661,30 +674,65 @@ mutateRouter.post('/onboarding', requireAuth, async (req: AuthenticatedRequest, 
       WHERE id = ${userId}
     `;
 
+    // 4. Update workspace categories and currency
+    const skincareCats = submission?.skincareCategories || null;
+    const haircareCats = submission?.haircareCategories || null;
+    const bodycareCats = submission?.bodycareCategories || null;
+
     await sql`
       UPDATE public.workspaces
-      SET onboarding_completed = true, updated_at = now()
+      SET
+        currency = ${currency},
+        skincare_categories = COALESCE(${skincareCats}, skincare_categories),
+        haircare_categories = COALESCE(${haircareCats}, haircare_categories),
+        bodycare_categories = COALESCE(${bodycareCats}, bodycare_categories),
+        onboarding_completed = true,
+        updated_at = now()
       WHERE id = ${targetWsId}
     `;
 
-    // Save baseline log
+    // 5. Save baseline health log with workspace-prefixed unique ID
     if (submission?.currentWeight) {
       const today = new Date().toISOString().split('T')[0];
-      const logId = `${slot}_${today}`;
+      const logId = `${targetWsId}_${slot}_${today}`;
       await sql`
         INSERT INTO public.health_logs (
-          id, workspace_id, profile_slot, date, weight, note, updated_by_id, updated_at
+          id, workspace_id, profile_slot, date, weight, steps, sleep_minutes, water_ml, note, updated_by_id, updated_at
         ) VALUES (
           ${logId}, ${targetWsId}, ${slot}, ${today}, ${Number(submission.currentWeight)},
+          ${Math.round(Number(submission.stepsGoal) || 0)},
+          ${Math.round(Number(submission.sleepGoalMinutes) || 0)},
+          ${Math.round(Number(submission.waterGoalMl) || 0)},
           'Initial baseline logged during onboarding', ${userId}, now()
         )
         ON CONFLICT (workspace_id, profile_slot, date)
-        DO UPDATE SET weight = EXCLUDED.weight, updated_at = now()
+        DO UPDATE SET
+          weight = EXCLUDED.weight,
+          steps = EXCLUDED.steps,
+          sleep_minutes = EXCLUDED.sleep_minutes,
+          water_ml = EXCLUDED.water_ml,
+          updated_at = now()
       `;
     }
 
     const newTimestamp = await bumpWorkspaceSync(sql, targetWsId);
-    res.json({ success: true, timestamp: newTimestamp });
+
+    // Fetch updated workspace and members
+    const [updatedWorkspace] = await sql`SELECT * FROM public.workspaces WHERE id = ${targetWsId} LIMIT 1`;
+    const updatedMembers = await sql`SELECT * FROM public.workspace_members WHERE workspace_id = ${targetWsId} ORDER BY slot ASC`;
+
+    res.json({
+      success: true,
+      timestamp: newTimestamp,
+      workspace: updatedWorkspace,
+      members: updatedMembers,
+      user: {
+        id: userId,
+        display_name: myName,
+        default_slot: slot,
+        onboarding_completed: true,
+      },
+    });
   } catch (error: unknown) {
     console.error('Onboarding completion error:', error);
     const msg = error instanceof Error ? error.message : 'Onboarding completion failed.';

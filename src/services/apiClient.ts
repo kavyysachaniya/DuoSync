@@ -220,7 +220,13 @@ export const api = {
       }),
 
     completeOnboarding: (workspaceId: string, slot: string, submission: any) =>
-      request<{ success: boolean; timestamp: number }>('/api/mutate/onboarding', {
+      request<{
+        success: boolean;
+        timestamp: number;
+        workspace?: Record<string, unknown>;
+        members?: Record<string, unknown>[];
+        user?: Record<string, unknown>;
+      }>('/api/mutate/onboarding', {
         method: 'POST',
         data: { workspaceId, slot, submission },
       }),

@@ -190,11 +190,12 @@ export default function App() {
       // Map health logs
       const hlMap: Record<string, HealthLogDoc> = {};
       data.healthLogs?.forEach((row: any) => {
-        hlMap[row.id] = {
+        const docDate = String(row.date).slice(0, 10);
+        const doc: HealthLogDoc = {
           id: row.id,
           workspaceId: row.workspace_id,
           profileSlot: row.profile_slot,
-          date: String(row.date).slice(0, 10),
+          date: docDate,
           weight: Number(row.weight) || 0,
           steps: Number(row.steps) || 0,
           sleepMinutes: Number(row.sleep_minutes) || 0,
@@ -204,6 +205,8 @@ export default function App() {
           createdAt: row.created_at,
           updatedAt: row.updated_at,
         };
+        hlMap[row.id] = doc;
+        hlMap[`${row.profile_slot}_${docDate}`] = doc;
       });
       setHealthLogsMap(hlMap);
 
@@ -790,8 +793,10 @@ export default function App() {
       if (res.workspace) {
         const wsDoc = mapToWorkspaceDoc(res.workspace, res.members, submission.partnerCodeToJoin);
         setWorkspace(wsDoc);
+        setUserDoc((prev) => (prev ? { ...prev, onboardingCompleted: true } : null));
+        setAuthUser((prev) => (prev ? { ...prev, onboardingCompleted: true } : null));
         setActiveSlot('partner2');
-        fetchFullWorkspaceState(wsDoc.id);
+        await fetchFullWorkspaceState(wsDoc.id);
       }
       setManualWizardOpen(false);
       return;
@@ -802,11 +807,36 @@ export default function App() {
       const res = await api.mutate.completeOnboarding(workspace.id, activeSlot, submission);
       lastSyncTimestampRef.current = res.timestamp;
 
-      // Update local state
-      setUserDoc((prev) => (prev ? { ...prev, onboardingCompleted: true } : null));
-      setWorkspace((prev) => (prev ? { ...prev, onboardingCompleted: true } : null));
+      // Update local state immediately so dashboard renders without manual page refresh
+      const newName = submission.myName || userDoc?.displayName || 'Partner 1';
+      setUserDoc((prev) =>
+        prev
+          ? {
+              ...prev,
+              displayName: newName,
+              onboardingCompleted: true,
+            }
+          : null
+      );
+      setAuthUser((prev) =>
+        prev
+          ? {
+              ...prev,
+              displayName: newName,
+              onboardingCompleted: true,
+            }
+          : null
+      );
+
+      if (res.workspace && res.members) {
+        const wsDoc = mapToWorkspaceDoc(res.workspace, res.members, workspace.pairingCode);
+        setWorkspace(wsDoc);
+      } else {
+        setWorkspace((prev) => (prev ? { ...prev, onboardingCompleted: true } : null));
+      }
+
       setManualWizardOpen(false);
-      fetchFullWorkspaceState(workspace.id);
+      await fetchFullWorkspaceState(workspace.id);
     } catch (err) {
       console.error('Onboarding complete error:', err);
     }
