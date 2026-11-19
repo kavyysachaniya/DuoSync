@@ -23,15 +23,15 @@ app.use((req, res, next) => {
   next();
 });
 
-// Mount modular API routers
-app.use('/api/auth', authRouter);
-app.use('/api/sync', syncRouter);
-app.use('/api/mutate', mutateRouter);
-app.use('/api/upload', uploadRouter);
-app.use('/api/admin', adminRouter);
+// Mount routes with and without /api prefix for maximum Vercel & local proxy compatibility
+app.use(['/api/auth', '/auth'], authRouter);
+app.use(['/api/sync', '/sync'], syncRouter);
+app.use(['/api/mutate', '/mutate'], mutateRouter);
+app.use(['/api/upload', '/upload'], uploadRouter);
+app.use(['/api/admin', '/admin'], adminRouter);
 
 // Root API status endpoint
-app.get('/api', (_req, res) => {
+app.get(['/api', '/api/index', '/'], (_req, res) => {
   res.json({
     app: 'DuoSync API',
     status: 'online',
@@ -41,5 +41,7 @@ app.get('/api', (_req, res) => {
 });
 
 export { app };
-export default app;
 
+export default function handler(req: any, res: any) {
+  return app(req, res);
+}
