@@ -21,8 +21,10 @@ import {
   User,
   Users,
   X,
+  Loader2,
 } from 'lucide-react';
 import { AnimatePresence, motion } from 'motion/react';
+import { api } from '../services/apiClient';
 import {
   OutfitDoc,
   PartnerProfileView,
@@ -138,6 +140,8 @@ export const WardrobeDashboard: React.FC<WardrobeDashboardProps> = ({
   const [formSeason, setFormSeason] = useState<WardrobeSeason>('All Season');
   const [formOccasion, setFormOccasion] = useState<WardrobeOccasion>('Casual');
   const [formImageUrl, setFormImageUrl] = useState('');
+  const [formThumbnailUrl, setFormThumbnailUrl] = useState('');
+  const [isUploadingPhoto, setIsUploadingPhoto] = useState(false);
   const [formNotes, setFormNotes] = useState('');
   const [formOwnerSlot, setFormOwnerSlot] = useState<ProductOwnerSlot>(profile.slot);
   const [itemSaving, setItemSaving] = useState(false);
@@ -210,7 +214,7 @@ export const WardrobeDashboard: React.FC<WardrobeDashboardProps> = ({
     return map;
   }, [items]);
 
-  // Handle client-side image compression to base64 data URL
+  // Handle client-side image compression and cloud object storage upload
   const handleImageFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -223,9 +227,9 @@ export const WardrobeDashboard: React.FC<WardrobeDashboardProps> = ({
     const reader = new FileReader();
     reader.onload = (loadEvent) => {
       const img = new Image();
-      img.onload = () => {
+      img.onload = async () => {
         const canvas = document.createElement('canvas');
-        const maxDim = 500;
+        const maxDim = 800;
         let width = img.width;
         let height = img.height;
 
@@ -242,8 +246,22 @@ export const WardrobeDashboard: React.FC<WardrobeDashboardProps> = ({
         const ctx = canvas.getContext('2d');
         if (ctx) {
           ctx.drawImage(img, 0, 0, width, height);
-          const dataUrl = canvas.toDataURL('image/jpeg', 0.82);
+          const dataUrl = canvas.toDataURL('image/jpeg', 0.85);
+          // Show instant local preview
           setFormImageUrl(dataUrl);
+          setIsUploadingPhoto(true);
+
+          try {
+            const wsId = items[0]?.workspaceId || 'shared';
+            const uploadRes = await api.upload.uploadImage(dataUrl, file.name, wsId);
+            setFormImageUrl(uploadRes.imageUrl);
+            setFormThumbnailUrl(uploadRes.thumbnailUrl);
+            showToast('Photo uploaded to cloud storage!');
+          } catch (uploadErr) {
+            console.warn('Cloud upload notice:', uploadErr);
+          } finally {
+            setIsUploadingPhoto(false);
+          }
         }
       };
       img.src = loadEvent.target?.result as string;
@@ -261,6 +279,7 @@ export const WardrobeDashboard: React.FC<WardrobeDashboardProps> = ({
     setFormSeason('All Season');
     setFormOccasion('Casual');
     setFormImageUrl('');
+    setFormThumbnailUrl('');
     setFormNotes('');
     setFormOwnerSlot(profile.slot);
     setIsItemModalOpen(true);
@@ -276,6 +295,7 @@ export const WardrobeDashboard: React.FC<WardrobeDashboardProps> = ({
     setFormSeason(item.season as WardrobeSeason);
     setFormOccasion(item.occasion as WardrobeOccasion);
     setFormImageUrl(item.imageUrl || '');
+    setFormThumbnailUrl(item.thumbnailUrl || item.imageUrl || '');
     setFormNotes(item.notes || '');
     setFormOwnerSlot(item.profileSlot);
     setIsItemModalOpen(true);
@@ -299,6 +319,7 @@ export const WardrobeDashboard: React.FC<WardrobeDashboardProps> = ({
           season: formSeason,
           occasion: formOccasion,
           imageUrl: formImageUrl,
+          thumbnailUrl: formThumbnailUrl || formImageUrl,
           notes: formNotes.trim().slice(0, 500),
           profileSlot: formOwnerSlot,
         },
@@ -649,8 +670,10 @@ export const WardrobeDashboard: React.FC<WardrobeDashboardProps> = ({
                     <div className="relative aspect-[4/3] w-full bg-zinc-900 overflow-hidden flex items-center justify-center">
                       {item.imageUrl ? (
                         <img
-                          src={item.imageUrl}
+                          src={item.thumbnailUrl || item.imageUrl}
                           alt={item.name}
+                          loading="lazy"
+                          decoding="async"
                           className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                         />
                       ) : (
@@ -837,8 +860,10 @@ export const WardrobeDashboard: React.FC<WardrobeDashboardProps> = ({
                           >
                             {piece.imageUrl ? (
                               <img
-                                src={piece.imageUrl}
+                                src={piece.thumbnailUrl || piece.imageUrl}
                                 alt={piece.name}
+                                loading="lazy"
+                                decoding="async"
                                 className="w-full h-full object-cover"
                               />
                             ) : (
@@ -1029,8 +1054,10 @@ export const WardrobeDashboard: React.FC<WardrobeDashboardProps> = ({
                         <div className="flex items-center gap-2 truncate">
                           {piece.imageUrl ? (
                             <img
-                              src={piece.imageUrl}
+                              src={piece.thumbnailUrl || piece.imageUrl}
                               alt={piece.name}
+                              loading="lazy"
+                              decoding="async"
                               className="w-6 h-6 rounded-lg object-cover"
                             />
                           ) : (
@@ -1096,8 +1123,10 @@ export const WardrobeDashboard: React.FC<WardrobeDashboardProps> = ({
                         <div className="aspect-[4/3] w-full rounded-xl bg-zinc-950 overflow-hidden mb-2 relative">
                           {item.imageUrl ? (
                             <img
-                              src={item.imageUrl}
+                              src={item.thumbnailUrl || item.imageUrl}
                               alt={item.name}
+                              loading="lazy"
+                              decoding="async"
                               className="w-full h-full object-cover"
                             />
                           ) : (
@@ -1331,10 +1360,20 @@ export const WardrobeDashboard: React.FC<WardrobeDashboardProps> = ({
                       <button
                         type="button"
                         onClick={() => fileInputRef.current?.click()}
-                        className="w-full min-h-[38px] px-3 rounded-xl bg-zinc-900 hover:bg-zinc-800 border border-white/10 text-xs font-semibold text-zinc-200 flex items-center justify-center gap-2 transition-colors"
+                        disabled={isUploadingPhoto}
+                        className="w-full min-h-[38px] px-3 rounded-xl bg-zinc-900 hover:bg-zinc-800 border border-white/10 text-xs font-semibold text-zinc-200 flex items-center justify-center gap-2 transition-colors disabled:opacity-50"
                       >
-                        <Upload className="w-3.5 h-3.5" />
-                        <span>Upload Photo from Device</span>
+                        {isUploadingPhoto ? (
+                          <>
+                            <Loader2 className="w-3.5 h-3.5 animate-spin text-rose-400" />
+                            <span>Uploading to Cloud Storage...</span>
+                          </>
+                        ) : (
+                          <>
+                            <Upload className="w-3.5 h-3.5" />
+                            <span>Upload Photo from Device</span>
+                          </>
+                        )}
                       </button>
 
                       <input

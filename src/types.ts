@@ -249,6 +249,7 @@ export interface WardrobeItemDoc {
   season: string;
   occasion: string;
   imageUrl: string;
+  thumbnailUrl?: string;
   notes: string;
   updatedByUid: string;
   createdAt?: Timestamp;

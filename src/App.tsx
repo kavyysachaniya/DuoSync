@@ -1,22 +1,4 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
-import {
-  onAuthStateChanged,
-  signInWithPopup,
-  signOut,
-  User as FirebaseUser,
-} from 'firebase/auth';
-import {
-  collection,
-  deleteDoc,
-  doc,
-  getDoc,
-  onSnapshot,
-  serverTimestamp,
-  setDoc,
-  Timestamp,
-  updateDoc,
-  writeBatch,
-} from 'firebase/firestore';
 import { AnimatePresence, motion } from 'motion/react';
 import {
   Activity,
@@ -31,16 +13,6 @@ import {
   Wind,
 } from 'lucide-react';
 import {
-  auth,
-  clampNumber,
-  db,
-  googleProvider,
-  handleFirestoreError,
-  OperationType,
-  sanitizeString,
-  VALIDATION_BOUNDS,
-} from './firebase';
-import {
   CareProductDoc,
   CareSegment,
   DEFAULT_BODYCARE_CATEGORIES,
@@ -48,10 +20,8 @@ import {
   DEFAULT_SKINCARE_CATEGORIES,
   FitnessAppId,
   formatLocalDate,
-  getLastNDates,
   HealthLogDoc,
   OutfitDoc,
-  PairingCodeDoc,
   PartnerProfileView,
   ProfileSlot,
   RoutineCompletionDoc,
@@ -66,35 +36,76 @@ import { WardrobeDashboard } from './components/WardrobeDashboard';
 import { PartnerModal } from './components/PartnerModal';
 import { OnboardingSubmission, OnboardingWizard } from './components/OnboardingWizard';
 import { AuthCard } from './components/AuthCard';
-import { isSupabaseConfigured, supabase } from './supabase';
+import { api, AuthResponse, setStoredToken } from './services/apiClient';
 
-function generateSixDigitCode(): string {
-  return String(Math.floor(100000 + Math.random() * 900000));
+interface AppUser {
+  id: string;
+  email: string;
+  displayName: string;
+  workspaceId: string;
+  defaultSlot: ProfileSlot;
+  onboardingCompleted: boolean;
 }
 
-function getValidFitnessApp(_val?: unknown): FitnessAppId {
-  return 'manual';
+function mapToWorkspaceDoc(ws: any, members: any[], pairingCode: string): WorkspaceDoc {
+  const m1 = members?.find((m: any) => m.slot === 'partner1') || {};
+  const m2 = members?.find((m: any) => m.slot === 'partner2') || {};
+
+  return {
+    id: ws.id,
+    ownerUid: ws.owner_id || '',
+    partnerUid: m2.user_id || '',
+    pairingCode: pairingCode || '',
+    onboardingCompleted: Boolean(ws.onboarding_completed),
+    currency: ws.currency || '₹',
+    partner1Name: m1.name || 'Partner 1',
+    partner1Role: m1.role || 'Partner 1’s Dashboard',
+    partner1WeightUnit: m1.weight_unit || 'kg',
+    partner1TargetWeight: Number(m1.target_weight) || 62,
+    partner1StartWeight: Number(m1.start_weight) || 65,
+    partner1StepsGoal: Number(m1.steps_goal) || 8500,
+    partner1SleepGoalMinutes: Number(m1.sleep_goal_minutes) || 480,
+    partner1WaterGoalMl: Number(m1.water_goal_ml) || 2500,
+    partner1FitnessApp: 'manual',
+    partner2Name: m2.name || 'Partner 2',
+    partner2Role: m2.role || 'Partner 2’s Dashboard',
+    partner2WeightUnit: m2.weight_unit || 'kg',
+    partner2TargetWeight: Number(m2.target_weight) || 55,
+    partner2StartWeight: Number(m2.start_weight) || 58,
+    partner2StepsGoal: Number(m2.steps_goal) || 8500,
+    partner2SleepGoalMinutes: Number(m2.sleep_goal_minutes) || 480,
+    partner2WaterGoalMl: Number(m2.water_goal_ml) || 2500,
+    partner2FitnessApp: 'manual',
+    skincareCategories: ws.skincare_categories || DEFAULT_SKINCARE_CATEGORIES,
+    haircareCategories: ws.haircare_categories || DEFAULT_HAIRCARE_CATEGORIES,
+    bodycareCategories: ws.bodycare_categories || DEFAULT_BODYCARE_CATEGORIES,
+    productIds: ws.product_ids || [],
+    createdAt: ws.created_at as any,
+    updatedAt: ws.updated_at as any,
+  };
 }
 
 export default function App() {
   const todayDate = useMemo(() => formatLocalDate(new Date()), []);
 
-  const [authUser, setAuthUser] = useState<FirebaseUser | null>(null);
+  // Authentication State
+  const [authUser, setAuthUser] = useState<AppUser | null>(null);
   const [authReady, setAuthReady] = useState(false);
-  const [signingIn, setSigningIn] = useState(false);
-  const [authError, setAuthError] = useState<string | null>(null);
 
-  // Interactive toggle for the Onboarding / Login Hero preview card
+  // Hero Preview Card Toggle on Login Screen
   const [heroPreviewTab, setHeroPreviewTab] = useState<TopNavSection>('health');
 
+  // Workspace & Profile Documents
   const [userDoc, setUserDoc] = useState<UserDoc | null>(null);
   const [workspace, setWorkspace] = useState<WorkspaceDoc | null>(null);
   const [manualWizardOpen, setManualWizardOpen] = useState(false);
 
+  // Sync Diagnostics & Error Handling
   const [syncError, setSyncError] = useState<string | null>(null);
   const [syncTakingTooLong, setSyncTakingTooLong] = useState(false);
 
-  const isBootstrappingRef = useRef(false);
+  const lastSyncTimestampRef = useRef<number>(0);
+  const isSyncingRef = useRef<boolean>(false);
 
   // Navigation & Active Profile Slot
   const [activeSection, setActiveSection] = useState<TopNavSection>('health');
@@ -104,314 +115,282 @@ export default function App() {
   // Modals
   const [isPartnerModalOpen, setIsPartnerModalOpen] = useState(false);
 
-  // Date state for Health Dashboard
+  // Date State for Health Dashboard
   const [selectedDate, setSelectedDate] = useState<string>(todayDate);
 
-  // Real-time maps of HealthLogs, CareProducts, RoutineCompletions, WardrobeItems and Outfits
+  // Real-time In-Memory State Maps
   const [healthLogsMap, setHealthLogsMap] = useState<Record<string, HealthLogDoc>>({});
   const [careProductsMap, setCareProductsMap] = useState<Record<string, CareProductDoc>>({});
   const [routineCompletionsMap, setRoutineCompletionsMap] = useState<Record<string, RoutineCompletionDoc>>({});
   const [wardrobeItemsMap, setWardrobeItemsMap] = useState<Record<string, WardrobeItemDoc>>({});
   const [outfitsMap, setOutfitsMap] = useState<Record<string, OutfitDoc>>({});
 
-  // Monitor slow sync to offer instant recovery controls
+  // 1. Initial Session Restoration (Persistent Token in localStorage)
   useEffect(() => {
-    if (authUser && (!userDoc || !workspace)) {
-      const timer = setTimeout(() => {
-        setSyncTakingTooLong(true);
-      }, 4000);
-      return () => clearTimeout(timer);
-    } else {
-      setSyncTakingTooLong(false);
-      setSyncError(null);
-    }
-  }, [authUser, userDoc, workspace]);
-
-  // Resilient Workspace & User Initializer / Self-Healer
-  const bootstrapWorkspaceAndUser = async (uid: string, profileName: string) => {
-    if (isBootstrappingRef.current) return;
-    isBootstrappingRef.current = true;
-    setSyncError(null);
-
-    const userRef = doc(db, 'users', uid);
-
-    try {
-      // Guard against race conditions: verify document truly does not exist
-      const existingSnap = await getDoc(userRef);
-      if (existingSnap.exists()) {
-        setUserDoc(existingSnap.data() as UserDoc);
-        isBootstrappingRef.current = false;
+    async function restoreSession() {
+      if (!api.auth.hasToken()) {
+        setAuthReady(true);
         return;
       }
 
-      const cleanUid = uid.replace(/[^a-zA-Z0-9_-]/g, '').slice(0, 24) || 'user';
-      const workspaceId = `ws_${cleanUid}_${Date.now()}`;
-      const code = generateSixDigitCode();
+      try {
+        const res = await api.auth.getMe();
+        const u = res.user;
+        const mappedUser: UserDoc = {
+          uid: u.id,
+          displayName: u.display_name,
+          workspaceId: u.workspace_id || '',
+          defaultSlot: (u.default_slot as ProfileSlot) || 'partner1',
+          onboardingCompleted: Boolean(u.onboarding_completed),
+          createdAt: new Date() as any,
+          updatedAt: new Date() as any,
+        };
 
-      const cleanName = sanitizeString(
-        profileName || authUser?.displayName || authUser?.email?.split('@')[0] || 'My Profile',
-        VALIDATION_BOUNDS.MAX_DISPLAY_NAME,
-        'My Profile'
-      );
+        setUserDoc(mappedUser);
+        setAuthUser({
+          id: u.id,
+          email: u.email,
+          displayName: u.display_name,
+          workspaceId: u.workspace_id || '',
+          defaultSlot: mappedUser.defaultSlot,
+          onboardingCompleted: mappedUser.onboardingCompleted,
+        });
 
-      const batch = writeBatch(db);
+        if (res.workspace) {
+          const wsDoc = mapToWorkspaceDoc(res.workspace, res.members, res.pairingCode);
+          setWorkspace(wsDoc);
+          if (!hasInitializedSlot) {
+            setActiveSlot(mappedUser.defaultSlot || 'partner1');
+            setHasInitializedSlot(true);
+          }
+        }
+      } catch (err) {
+        console.warn('Session restoration failed:', err);
+        api.auth.logout();
+        setAuthUser(null);
+        setUserDoc(null);
+        setWorkspace(null);
+      } finally {
+        setAuthReady(true);
+      }
+    }
 
-      batch.set(doc(db, 'workspaces', workspaceId), {
-        id: workspaceId,
-        ownerUid: uid,
-        partnerUid: '',
-        pairingCode: code,
-        onboardingCompleted: false,
-        currency: '₹',
-        partner1Name: cleanName,
-        partner1Role: `${cleanName}’s Dashboard`,
-        partner1WeightUnit: 'kg',
-        partner1TargetWeight: 62,
-        partner1StartWeight: 65,
-        partner1StepsGoal: 8500,
-        partner1SleepGoalMinutes: 480,
-        partner1WaterGoalMl: 2500,
-        partner1FitnessApp: 'manual',
-        partner2Name: 'Partner',
-        partner2Role: 'Partner’s Dashboard',
-        partner2WeightUnit: 'kg',
-        partner2TargetWeight: 55,
-        partner2StartWeight: 58,
-        partner2StepsGoal: 8500,
-        partner2SleepGoalMinutes: 480,
-        partner2WaterGoalMl: 2500,
-        partner2FitnessApp: 'manual',
-        skincareCategories: DEFAULT_SKINCARE_CATEGORIES,
-        haircareCategories: DEFAULT_HAIRCARE_CATEGORIES,
-        bodycareCategories: DEFAULT_BODYCARE_CATEGORIES,
-        productIds: [],
-        createdAt: serverTimestamp(),
-        updatedAt: serverTimestamp(),
+    restoreSession();
+  }, []);
+
+  // 2. Fetch Full Workspace State from Neon
+  const fetchFullWorkspaceState = async (workspaceId: string) => {
+    if (!workspaceId) return;
+    try {
+      const data = await api.sync.getAll(workspaceId);
+      const wsDoc = mapToWorkspaceDoc(data.workspace, data.members, data.pairingCode);
+      setWorkspace(wsDoc);
+      lastSyncTimestampRef.current = data.timestamp;
+
+      // Map health logs
+      const hlMap: Record<string, HealthLogDoc> = {};
+      data.healthLogs?.forEach((row: any) => {
+        hlMap[row.id] = {
+          id: row.id,
+          workspaceId: row.workspace_id,
+          profileSlot: row.profile_slot,
+          date: String(row.date).slice(0, 10),
+          weight: Number(row.weight) || 0,
+          steps: Number(row.steps) || 0,
+          sleepMinutes: Number(row.sleep_minutes) || 0,
+          waterMl: Number(row.water_ml) || 0,
+          note: row.note || '',
+          updatedByUid: row.updated_by_id || '',
+          createdAt: row.created_at,
+          updatedAt: row.updated_at,
+        };
       });
+      setHealthLogsMap(hlMap);
 
-      batch.set(doc(db, 'pairingCodes', code), {
-        code,
-        workspaceId,
-        ownerUid: uid,
-        ownerName: cleanName,
-        createdAt: serverTimestamp(),
+      // Map care products
+      const cpMap: Record<string, CareProductDoc> = {};
+      data.careProducts?.forEach((row: any) => {
+        cpMap[row.id] = {
+          id: row.id,
+          workspaceId: row.workspace_id,
+          profileSlot: row.profile_slot,
+          segment: row.segment,
+          subCategory: row.sub_category,
+          name: row.name,
+          brand: row.brand || '',
+          quantity: Number(row.quantity) || 1,
+          orderedDate: row.ordered_date || '',
+          openedDate: row.opened_date || '',
+          expiryDate: row.expiry_date || '',
+          saleInfo: row.sale_info || '',
+          pricePaid: Number(row.price_paid) || 0,
+          originalPrice: Number(row.original_price) || 0,
+          status: row.status,
+          routineTime: row.routine_time,
+          scheduleType: row.schedule_type || 'daily',
+          scheduledDays: row.scheduled_days || [],
+          notes: row.notes || '',
+          updatedByUid: row.updated_by_id || '',
+          createdAt: row.created_at,
+          updatedAt: row.updated_at,
+        };
       });
+      setCareProductsMap(cpMap);
 
-      batch.set(userRef, {
-        uid,
-        displayName: cleanName,
-        workspaceId,
-        defaultSlot: 'partner1',
-        onboardingCompleted: false,
-        createdAt: serverTimestamp(),
-        updatedAt: serverTimestamp(),
+      // Map routine completions
+      const rcMap: Record<string, RoutineCompletionDoc> = {};
+      data.routineCompletions?.forEach((row: any) => {
+        rcMap[row.id] = {
+          id: row.id,
+          workspaceId: row.workspace_id,
+          profileSlot: row.profile_slot,
+          productId: row.product_id,
+          date: String(row.date).slice(0, 10),
+          completed: Boolean(row.completed),
+          completedAt: row.completed_at,
+          updatedByUid: row.updated_by_id || '',
+          createdAt: row.created_at,
+          updatedAt: row.updated_at,
+        };
       });
+      setRoutineCompletionsMap(rcMap);
 
-      await batch.commit();
-      console.log('Successfully bootstrapped workspace & user doc!');
-    } catch (error: unknown) {
-      console.error('Bootstrap failed:', error);
-      const msg = error instanceof Error ? error.message : String(error);
-      setSyncError(`Failed to initialize profile in Firestore: ${msg}`);
-    } finally {
-      isBootstrappingRef.current = false;
+      // Map wardrobe items
+      const wiMap: Record<string, WardrobeItemDoc> = {};
+      data.wardrobeItems?.forEach((row: any) => {
+        wiMap[row.id] = {
+          id: row.id,
+          workspaceId: row.workspace_id,
+          profileSlot: row.profile_slot,
+          name: row.name,
+          category: row.category,
+          brand: row.brand || '',
+          color: row.color || '',
+          size: row.size || '',
+          season: row.season || 'All Season',
+          occasion: row.occasion || 'Casual',
+          imageUrl: row.image_url || '',
+          thumbnailUrl: row.thumbnail_url || row.image_url || '',
+          notes: row.notes || '',
+          updatedByUid: row.updated_by_id || '',
+          createdAt: row.created_at,
+          updatedAt: row.updated_at,
+        };
+      });
+      setWardrobeItemsMap(wiMap);
+
+      // Map outfits
+      const ofMap: Record<string, OutfitDoc> = {};
+      data.outfits?.forEach((row: any) => {
+        ofMap[row.id] = {
+          id: row.id,
+          workspaceId: row.workspace_id,
+          profileSlot: row.profile_slot,
+          name: row.name,
+          occasion: row.occasion || 'Casual',
+          itemIds: row.item_ids || [],
+          notes: row.notes || '',
+          updatedByUid: row.updated_by_id || '',
+          createdAt: row.created_at,
+          updatedAt: row.updated_at,
+        };
+      });
+      setOutfitsMap(ofMap);
+
+      setSyncError(null);
+    } catch (err) {
+      console.error('Fetch workspace state error:', err);
     }
   };
 
-  // 1. Listen to Firebase Auth state
+  // 3. Partner Synchronization (Bi-directional polling heartbeat every 3s)
   useEffect(() => {
-    const unsub = onAuthStateChanged(auth, (user) => {
-      setAuthUser(user);
-      setAuthReady(true);
-      if (!user) {
-        setUserDoc(null);
-        setWorkspace(null);
-        setHealthLogsMap({});
-        setCareProductsMap({});
-        setRoutineCompletionsMap({});
-        setWardrobeItemsMap({});
-        setOutfitsMap({});
-        setHasInitializedSlot(false);
-        setSyncError(null);
+    if (!authUser || !workspace?.id) return;
+
+    // Load full workspace state on start
+    fetchFullWorkspaceState(workspace.id);
+
+    // Heartbeat check for partner mutations
+    const interval = setInterval(async () => {
+      if (document.hidden || isSyncingRef.current) return;
+      try {
+        const poll = await api.sync.poll(workspace.id, lastSyncTimestampRef.current);
+        if (poll.changed) {
+          isSyncingRef.current = true;
+          await fetchFullWorkspaceState(workspace.id);
+          isSyncingRef.current = false;
+        }
+      } catch (err) {
+        // Tolerates brief network drops silently
       }
+    }, 3000);
+
+    // Immediate sync on tab switch / window focus
+    const handleVisibility = () => {
+      if (document.visibilityState === 'visible' && workspace?.id) {
+        api.sync.poll(workspace.id, lastSyncTimestampRef.current).then((res) => {
+          if (res.changed) fetchFullWorkspaceState(workspace.id);
+        }).catch(() => {});
+      }
+    };
+
+    document.addEventListener('visibilitychange', handleVisibility);
+    window.addEventListener('focus', handleVisibility);
+
+    return () => {
+      clearInterval(interval);
+      document.removeEventListener('visibilitychange', handleVisibility);
+      window.removeEventListener('focus', handleVisibility);
+    };
+  }, [authUser?.id, workspace?.id]);
+
+  // Handle successful login or register from AuthCard
+  const handleAuthSuccess = (res: AuthResponse) => {
+    setStoredToken(res.token);
+    const u = res.user;
+    const mappedUser: UserDoc = {
+      uid: u.id,
+      displayName: u.display_name,
+      workspaceId: u.workspace_id || '',
+      defaultSlot: (u.default_slot as ProfileSlot) || 'partner1',
+      onboardingCompleted: Boolean(u.onboarding_completed),
+      createdAt: new Date() as any,
+      updatedAt: new Date() as any,
+    };
+
+    setUserDoc(mappedUser);
+    setAuthUser({
+      id: u.id,
+      email: u.email,
+      displayName: u.display_name,
+      workspaceId: u.workspace_id || '',
+      defaultSlot: mappedUser.defaultSlot,
+      onboardingCompleted: mappedUser.onboardingCompleted,
     });
-    return () => unsub();
-  }, []);
 
-  // 2. Listen to /users/{uid} and bootstrap initial workspace if first login
-  useEffect(() => {
-    if (!authReady || !authUser) return;
+    if (res.workspace) {
+      const wsDoc = mapToWorkspaceDoc(res.workspace, res.members, res.pairingCode);
+      setWorkspace(wsDoc);
+      setActiveSlot(mappedUser.defaultSlot || 'partner1');
+      fetchFullWorkspaceState(wsDoc.id);
+    }
+  };
 
-    const userRef = doc(db, 'users', authUser.uid);
+  // Sign out handler
+  const handleSignOut = () => {
+    api.auth.logout();
+    setAuthUser(null);
+    setUserDoc(null);
+    setWorkspace(null);
+    setHealthLogsMap({});
+    setCareProductsMap({});
+    setRoutineCompletionsMap({});
+    setWardrobeItemsMap({});
+    setOutfitsMap({});
+    setHasInitializedSlot(false);
+  };
 
-    const unsub = onSnapshot(
-      userRef,
-      (snap) => {
-        if (snap.exists()) {
-          const data = snap.data() as UserDoc;
-          setUserDoc(data);
-          setSyncError(null);
-          if (!hasInitializedSlot) {
-            setActiveSlot(data.defaultSlot || 'partner1');
-            setHasInitializedSlot(true);
-          }
-        } else {
-          // User document doesn't exist yet, bootstrap fresh
-          bootstrapWorkspaceAndUser(authUser.uid, authUser.displayName || '');
-        }
-      },
-      (error) => {
-        console.error('Error listening to user document:', error);
-        setSyncError(`User profile read error: ${error.message}. Please verify Firestore rules.`);
-      }
-    );
-
-    return () => unsub();
-  }, [authReady, authUser, hasInitializedSlot]);
-
-  // 3. Listen to active /workspaces/{workspaceId} with self-healing
-  useEffect(() => {
-    if (!authReady || !authUser || !userDoc?.workspaceId) return;
-
-    const wsRef = doc(db, 'workspaces', userDoc.workspaceId);
-
-    const unsub = onSnapshot(
-      wsRef,
-      (snap) => {
-        if (snap.exists()) {
-          setWorkspace(snap.data() as WorkspaceDoc);
-          setSyncError(null);
-        } else {
-          // Workspace document is missing or was deleted! Auto self-heal!
-          console.warn(`Workspace ${userDoc.workspaceId} was not found. Self-healing fresh workspace...`);
-          bootstrapWorkspaceAndUser(authUser.uid, userDoc.displayName || '');
-        }
-      },
-      (error) => {
-        console.error('Error listening to workspace document:', error);
-        setSyncError(`Workspace read error: ${error.message}. Please verify Firestore rules.`);
-      }
-    );
-
-    return () => unsub();
-  }, [authReady, authUser, userDoc?.workspaceId]);
-
-  // 4. Listen to HealthLog collection in real-time
-  useEffect(() => {
-    if (!authReady || !authUser || !workspace?.id) return;
-    const collPath = `workspaces/${workspace.id}/healthLogs`;
-    const collRef = collection(db, 'workspaces', workspace.id, 'healthLogs');
-
-    const unsub = onSnapshot(
-      collRef,
-      (snapshot) => {
-        const nextLogs: Record<string, HealthLogDoc> = {};
-        snapshot.docs.forEach((docSnap) => {
-          nextLogs[docSnap.id] = docSnap.data() as HealthLogDoc;
-        });
-        setHealthLogsMap(nextLogs);
-      },
-      (error) => {
-        handleFirestoreError(error, OperationType.LIST, collPath);
-      }
-    );
-
-    return () => unsub();
-  }, [authReady, authUser, workspace?.id]);
-
-  // 5. Listen to CareProduct collection in real-time
-  useEffect(() => {
-    if (!authReady || !authUser || !workspace?.id) return;
-    const collPath = `workspaces/${workspace.id}/careProducts`;
-    const collRef = collection(db, 'workspaces', workspace.id, 'careProducts');
-
-    const unsub = onSnapshot(
-      collRef,
-      (snapshot) => {
-        const nextProds: Record<string, CareProductDoc> = {};
-        snapshot.docs.forEach((docSnap) => {
-          nextProds[docSnap.id] = docSnap.data() as CareProductDoc;
-        });
-        setCareProductsMap(nextProds);
-      },
-      (error) => {
-        handleFirestoreError(error, OperationType.LIST, collPath);
-      }
-    );
-
-    return () => unsub();
-  }, [authReady, authUser, workspace?.id]);
-
-  // 6. Listen to RoutineCompletions collection in real-time
-  useEffect(() => {
-    if (!authReady || !authUser || !workspace?.id) return;
-    const collPath = `workspaces/${workspace.id}/routineCompletions`;
-    const collRef = collection(db, 'workspaces', workspace.id, 'routineCompletions');
-
-    const unsub = onSnapshot(
-      collRef,
-      (snapshot) => {
-        const nextCompletions: Record<string, RoutineCompletionDoc> = {};
-        snapshot.docs.forEach((docSnap) => {
-          nextCompletions[docSnap.id] = docSnap.data() as RoutineCompletionDoc;
-        });
-        setRoutineCompletionsMap(nextCompletions);
-      },
-      (error) => {
-        handleFirestoreError(error, OperationType.LIST, collPath);
-      }
-    );
-
-    return () => unsub();
-  }, [authReady, authUser, workspace?.id]);
-
-  // 7. Listen to WardrobeItems collection in real-time
-  useEffect(() => {
-    if (!authReady || !authUser || !workspace?.id) return;
-    const collPath = `workspaces/${workspace.id}/wardrobeItems`;
-    const collRef = collection(db, 'workspaces', workspace.id, 'wardrobeItems');
-
-    const unsub = onSnapshot(
-      collRef,
-      (snapshot) => {
-        const nextItems: Record<string, WardrobeItemDoc> = {};
-        snapshot.docs.forEach((docSnap) => {
-          nextItems[docSnap.id] = docSnap.data() as WardrobeItemDoc;
-        });
-        setWardrobeItemsMap(nextItems);
-      },
-      (error) => {
-        handleFirestoreError(error, OperationType.LIST, collPath);
-      }
-    );
-
-    return () => unsub();
-  }, [authReady, authUser, workspace?.id]);
-
-  // 8. Listen to Outfits collection in real-time
-  useEffect(() => {
-    if (!authReady || !authUser || !workspace?.id) return;
-    const collPath = `workspaces/${workspace.id}/outfits`;
-    const collRef = collection(db, 'workspaces', workspace.id, 'outfits');
-
-    const unsub = onSnapshot(
-      collRef,
-      (snapshot) => {
-        const nextOutfits: Record<string, OutfitDoc> = {};
-        snapshot.docs.forEach((docSnap) => {
-          nextOutfits[docSnap.id] = docSnap.data() as OutfitDoc;
-        });
-        setOutfitsMap(nextOutfits);
-      },
-      (error) => {
-        handleFirestoreError(error, OperationType.LIST, collPath);
-      }
-    );
-
-    return () => unsub();
-  }, [authReady, authUser, workspace?.id]);
-
-  // Derived profile views
+  // Derived Profile Views
   const partner1Profile: PartnerProfileView | null = useMemo(() => {
     if (!workspace) return null;
     return {
@@ -424,7 +403,7 @@ export default function App() {
       stepsGoal: workspace.partner1StepsGoal,
       sleepGoalMinutes: workspace.partner1SleepGoalMinutes,
       waterGoalMl: workspace.partner1WaterGoalMl,
-      fitnessApp: getValidFitnessApp(workspace.partner1FitnessApp),
+      fitnessApp: 'manual',
     };
   }, [workspace]);
 
@@ -440,412 +419,81 @@ export default function App() {
       stepsGoal: workspace.partner2StepsGoal,
       sleepGoalMinutes: workspace.partner2SleepGoalMinutes,
       waterGoalMl: workspace.partner2WaterGoalMl,
-      fitnessApp: getValidFitnessApp(workspace.partner2FitnessApp),
+      fitnessApp: 'manual',
     };
   }, [workspace]);
 
   const activeProfile = activeSlot === 'partner2' ? partner2Profile : partner1Profile;
   const otherProfile = activeSlot === 'partner2' ? partner1Profile : partner2Profile;
 
-  // Map logs by date for the currently active profile
+  // Active Profile's Logs
   const activeProfileLogsByDate = useMemo(() => {
-    const result: Record<string, HealthLogDoc> = {};
-    for (const [key, log] of Object.entries(healthLogsMap)) {
-      if (key.startsWith(`${activeSlot}_`)) {
-        result[log.date] = log;
+    const map: Record<string, HealthLogDoc> = {};
+    Object.values(healthLogsMap).forEach((log) => {
+      if (log.profileSlot === activeSlot) {
+        map[log.date] = log;
       }
-    }
-    return result;
+    });
+    return map;
   }, [healthLogsMap, activeSlot]);
 
   const otherProfileTodayLog = useMemo(() => {
-    if (!otherProfile) return undefined;
-    return healthLogsMap[`${otherProfile.slot}_${todayDate}`];
-  }, [healthLogsMap, otherProfile, todayDate]);
+    const otherSlot = activeSlot === 'partner2' ? 'partner1' : 'partner2';
+    const logId = `${otherSlot}_${todayDate}`;
+    return healthLogsMap[logId] || null;
+  }, [healthLogsMap, activeSlot, todayDate]);
 
   const orderedProductsList = useMemo(() => {
-    const list = Object.values(careProductsMap);
-    if (!workspace?.productIds || workspace.productIds.length === 0) return list;
-    const ordered = workspace.productIds
-      .map((id) => careProductsMap[id])
-      .filter((p): p is CareProductDoc => Boolean(p));
-    const orderedIdSet = new Set(ordered.map((p) => p.id));
-    const unindexed = list.filter((p) => !orderedIdSet.has(p.id));
-    return [...ordered, ...unindexed];
-  }, [workspace?.productIds, careProductsMap]);
+    return Object.values(careProductsMap).sort((a, b) => {
+      return (b.name || '').localeCompare(a.name || '');
+    });
+  }, [careProductsMap]);
 
-  // Helper to ensure partner1FitnessApp & partner2FitnessApp are always included in workspace updates
-  const getFitnessAppFields = (
-    ws: WorkspaceDoc,
-    overrides?: Partial<Record<'partner1FitnessApp' | 'partner2FitnessApp', FitnessAppId>>
-  ) => ({
-    partner1FitnessApp: overrides?.partner1FitnessApp || getValidFitnessApp(ws.partner1FitnessApp),
-    partner2FitnessApp: overrides?.partner2FitnessApp || getValidFitnessApp(ws.partner2FitnessApp),
-  });
+  // MUTATIONS
 
-  // Permanently delete all current data for user & workspace
-  const handleDeleteAllUserData = async () => {
-    if (!authUser) return;
-    const wsId = userDoc?.workspaceId || workspace?.id;
-
-    try {
-      if (wsId) {
-        const batch = writeBatch(db);
-
-        // Delete healthLogs
-        Object.keys(healthLogsMap).forEach((id) => {
-          batch.delete(doc(db, 'workspaces', wsId, 'healthLogs', id));
-        });
-        // Delete careProducts
-        Object.keys(careProductsMap).forEach((id) => {
-          batch.delete(doc(db, 'workspaces', wsId, 'careProducts', id));
-        });
-        // Delete routineCompletions
-        Object.keys(routineCompletionsMap).forEach((id) => {
-          batch.delete(doc(db, 'workspaces', wsId, 'routineCompletions', id));
-        });
-        // Delete wardrobeItems
-        Object.keys(wardrobeItemsMap).forEach((id) => {
-          batch.delete(doc(db, 'workspaces', wsId, 'wardrobeItems', id));
-        });
-        // Delete outfits
-        Object.keys(outfitsMap).forEach((id) => {
-          batch.delete(doc(db, 'workspaces', wsId, 'outfits', id));
-        });
-
-        await batch.commit();
-
-        // Delete pairing code doc if owner
-        if (workspace?.pairingCode && workspace.ownerUid === authUser.uid) {
-          try {
-            await deleteDoc(doc(db, 'pairingCodes', workspace.pairingCode));
-          } catch (e) {
-            console.warn('Pairing code delete error:', e);
-          }
-        }
-
-        // Delete workspace doc
-        try {
-          await deleteDoc(doc(db, 'workspaces', wsId));
-        } catch (e) {
-          console.warn('Workspace delete error:', e);
-        }
-      }
-
-      // Delete user doc
-      try {
-        await deleteDoc(doc(db, 'users', authUser.uid));
-      } catch (e) {
-        console.warn('User doc delete error:', e);
-      }
-
-      await signOut(auth);
-      window.location.reload();
-    } catch (err) {
-      console.error('Failed to wipe data:', err);
-      throw err;
-    }
-  };
-
-  // Handlers
-  const handleGoogleSignIn = async () => {
-    setSigningIn(true);
-    setAuthError(null);
-    try {
-      await signInWithPopup(auth, googleProvider);
-    } catch (err) {
-      setAuthError(err instanceof Error ? err.message : 'Sign-in was cancelled or failed.');
-    } finally {
-      setSigningIn(false);
-    }
-  };
-
-  // Complete the 4-Step Onboarding Questionnaire and sync name + fitness app + goals to Firebase
-  const handleOnboardingComplete = async (submission: OnboardingSubmission) => {
-    if (!authUser || !userDoc || !workspace) return;
-
-    const cleanMyName = sanitizeString(
-      submission.myName,
-      VALIDATION_BOUNDS.MAX_DISPLAY_NAME,
-      'Me'
-    );
-    const cleanPartnerName = sanitizeString(
-      submission.partnerName,
-      VALIDATION_BOUNDS.MAX_DISPLAY_NAME,
-      'Partner'
-    );
-
-    if (submission.mode === 'join_partner_code' && submission.partnerCodeToJoin) {
-      const code = submission.partnerCodeToJoin;
-      const codeSnap = await getDoc(doc(db, 'pairingCodes', code));
-      if (!codeSnap.exists()) {
-        throw new Error('No workspace found for that 6-digit partner code.');
-      }
-      const pairingData = codeSnap.data() as PairingCodeDoc;
-      const targetWsId = pairingData.workspaceId;
-      const targetWsRef = doc(db, 'workspaces', targetWsId);
-      const targetWsSnap = await getDoc(targetWsRef);
-      if (!targetWsSnap.exists()) {
-        throw new Error('Target partner workspace could not be found.');
-      }
-      const targetWs = targetWsSnap.data() as WorkspaceDoc;
-      if (
-        targetWs.partnerUid &&
-        targetWs.partnerUid !== '' &&
-        targetWs.partnerUid !== authUser.uid &&
-        targetWs.ownerUid !== authUser.uid
-      ) {
-        throw new Error('That workspace is already connected to another partner account.');
-      }
-
-      const assignedSlot: ProfileSlot = targetWs.ownerUid === authUser.uid ? 'partner1' : 'partner2';
-
-      if (assignedSlot === 'partner2') {
-        await updateDoc(targetWsRef, {
-          ...getFitnessAppFields(targetWs, { partner2FitnessApp: submission.fitnessApp }),
-          partnerUid: authUser.uid,
-          partner2Name: cleanMyName,
-          partner2Role: `${cleanMyName}’s Dashboard`,
-          partner2WeightUnit: submission.weightUnit,
-          partner2StartWeight: clampNumber(
-            submission.currentWeight,
-            0,
-            VALIDATION_BOUNDS.MAX_WEIGHT,
-            60
-          ),
-          partner2TargetWeight: clampNumber(
-            submission.targetWeight,
-            0,
-            VALIDATION_BOUNDS.MAX_WEIGHT,
-            58
-          ),
-          partner2StepsGoal: clampNumber(submission.stepsGoal, 100, 100000, 8500),
-          partner2SleepGoalMinutes: clampNumber(submission.sleepGoalMinutes, 60, 1440, 480),
-          partner2WaterGoalMl: clampNumber(submission.waterGoalMl, 250, 15000, 2500),
-          onboardingCompleted: true,
-          updatedAt: serverTimestamp(),
-        });
-      }
-
-      await updateDoc(doc(db, 'users', authUser.uid), {
-        displayName: cleanMyName,
-        workspaceId: targetWsId,
-        defaultSlot: assignedSlot,
-        onboardingCompleted: true,
-        updatedAt: serverTimestamp(),
-      });
-
-      const initLogId = `${assignedSlot}_${todayDate}`;
-      await setDoc(doc(db, 'workspaces', targetWsId, 'healthLogs', initLogId), {
-        id: initLogId,
-        workspaceId: targetWsId,
-        profileSlot: assignedSlot,
-        date: todayDate,
-        weight: clampNumber(submission.currentWeight, 0, VALIDATION_BOUNDS.MAX_WEIGHT, 0),
-        steps: 0,
-        sleepMinutes: 0,
-        waterMl: 0,
-        note: 'Initial baseline logged during onboarding',
-        updatedByUid: authUser.uid,
-        createdAt: serverTimestamp(),
-        updatedAt: serverTimestamp(),
-      });
-
-      setActiveSlot(assignedSlot);
-      setManualWizardOpen(false);
-      return;
-    }
-
-    // Standard mode: Update user's own workspace (or current slot) in Firebase
-    const isPartner2Creator = workspace.partnerUid === authUser.uid;
-    const mySlot: ProfileSlot = isPartner2Creator ? 'partner2' : 'partner1';
-    const prefix = mySlot === 'partner2' ? 'partner2' : 'partner1';
-
-    const wsPath = `workspaces/${workspace.id}`;
-    try {
-      const wsUpdates: Record<string, unknown> = {
-        ...getFitnessAppFields(workspace, {
-          [`${prefix}FitnessApp`]: submission.fitnessApp,
-        }),
-        onboardingCompleted: true,
-        currency: sanitizeString(submission.currency, VALIDATION_BOUNDS.MAX_CURRENCY, '₹'),
-        [`${prefix}Name`]: cleanMyName,
-        [`${prefix}Role`]: `${cleanMyName}’s Dashboard`,
-        [`${prefix}WeightUnit`]: submission.weightUnit,
-        [`${prefix}StartWeight`]: clampNumber(
-          submission.currentWeight,
-          0,
-          VALIDATION_BOUNDS.MAX_WEIGHT,
-          65
-        ),
-        [`${prefix}TargetWeight`]: clampNumber(
-          submission.targetWeight,
-          0,
-          VALIDATION_BOUNDS.MAX_WEIGHT,
-          62
-        ),
-        [`${prefix}StepsGoal`]: clampNumber(submission.stepsGoal, 100, 100000, 8500),
-        [`${prefix}SleepGoalMinutes`]: clampNumber(submission.sleepGoalMinutes, 60, 1440, 480),
-        [`${prefix}WaterGoalMl`]: clampNumber(submission.waterGoalMl, 250, 15000, 2500),
-        skincareCategories: submission.skincareCategories.slice(0, 30),
-        haircareCategories: submission.haircareCategories.slice(0, 30),
-        bodycareCategories: submission.bodycareCategories.slice(0, 30),
-        updatedAt: serverTimestamp(),
-      };
-
-      if (mySlot === 'partner1') {
-        wsUpdates.partner2Name = cleanPartnerName;
-        wsUpdates.partner2Role = `${cleanPartnerName}’s Dashboard`;
-      }
-
-      await updateDoc(doc(db, 'workspaces', workspace.id), wsUpdates);
-
-      await updateDoc(doc(db, 'users', authUser.uid), {
-        displayName: cleanMyName,
-        defaultSlot: mySlot,
-        onboardingCompleted: true,
-        updatedAt: serverTimestamp(),
-      });
-
-      if (workspace.ownerUid === authUser.uid && workspace.pairingCode) {
-        await updateDoc(doc(db, 'pairingCodes', workspace.pairingCode), {
-          ownerName: cleanMyName,
-        });
-      }
-
-      const todayLogId = `${mySlot}_${todayDate}`;
-      const existingTodayLog = healthLogsMap[todayLogId];
-      const todayLogRef = doc(db, 'workspaces', workspace.id, 'healthLogs', todayLogId);
-      if (existingTodayLog) {
-        await updateDoc(todayLogRef, {
-          weight: clampNumber(submission.currentWeight, 0, VALIDATION_BOUNDS.MAX_WEIGHT, 0),
-          updatedByUid: authUser.uid,
-          updatedAt: serverTimestamp(),
-        });
-      } else {
-        await setDoc(todayLogRef, {
-          id: todayLogId,
-          workspaceId: workspace.id,
-          profileSlot: mySlot,
-          date: todayDate,
-          weight: clampNumber(submission.currentWeight, 0, VALIDATION_BOUNDS.MAX_WEIGHT, 0),
-          steps: 0,
-          sleepMinutes: 0,
-          waterMl: 0,
-          note: 'Initial baseline logged during setup',
-          updatedByUid: authUser.uid,
-          createdAt: serverTimestamp(),
-          updatedAt: serverTimestamp(),
-        });
-      }
-
-      setActiveSlot(mySlot);
-      setManualWizardOpen(false);
-    } catch (error) {
-      handleFirestoreError(error, OperationType.UPDATE, wsPath);
-    }
-  };
-
+  // 1. Save Health Log (Optimistic + Neon Mutation)
   const handleSaveHealthLog = async (
     date: string,
     updates: Partial<Pick<HealthLogDoc, 'weight' | 'steps' | 'sleepMinutes' | 'waterMl' | 'note'>>
   ) => {
     if (!authUser || !workspace) return;
     const logId = `${activeSlot}_${date}`;
-    const logPath = `workspaces/${workspace.id}/healthLogs/${logId}`;
-    const logRef = doc(db, 'workspaces', workspace.id, 'healthLogs', logId);
     const existing = healthLogsMap[logId];
 
-    const payload = {
+    const newLog: HealthLogDoc = {
       id: logId,
       workspaceId: workspace.id,
       profileSlot: activeSlot,
       date,
-      weight: clampNumber(
-        updates.weight !== undefined ? updates.weight : existing?.weight ?? 0,
-        0,
-        VALIDATION_BOUNDS.MAX_WEIGHT
-      ),
-      steps: clampNumber(
-        updates.steps !== undefined ? updates.steps : existing?.steps ?? 0,
-        0,
-        VALIDATION_BOUNDS.MAX_STEPS
-      ),
-      sleepMinutes: clampNumber(
-        updates.sleepMinutes !== undefined ? updates.sleepMinutes : existing?.sleepMinutes ?? 0,
-        0,
-        VALIDATION_BOUNDS.MAX_SLEEP_MINUTES
-      ),
-      waterMl: clampNumber(
-        updates.waterMl !== undefined ? updates.waterMl : existing?.waterMl ?? 0,
-        0,
-        VALIDATION_BOUNDS.MAX_WATER_ML
-      ),
-      note: sanitizeString(
-        updates.note !== undefined ? updates.note : existing?.note ?? '',
-        VALIDATION_BOUNDS.MAX_NOTE
-      ),
-      updatedByUid: authUser.uid,
-      updatedAt: serverTimestamp(),
+      weight: updates.weight !== undefined ? updates.weight : existing?.weight ?? 0,
+      steps: updates.steps !== undefined ? updates.steps : existing?.steps ?? 0,
+      sleepMinutes: updates.sleepMinutes !== undefined ? updates.sleepMinutes : existing?.sleepMinutes ?? 0,
+      waterMl: updates.waterMl !== undefined ? updates.waterMl : existing?.waterMl ?? 0,
+      note: updates.note !== undefined ? updates.note : existing?.note ?? '',
+      updatedByUid: authUser.id,
     };
 
-    // Optimistic local state update for instant UI feedback
-    setHealthLogsMap((prev) => ({
-      ...prev,
-      [logId]: {
-        ...(existing || {}),
-        ...payload,
-        id: logId,
+    // Instant optimistic update
+    setHealthLogsMap((prev) => ({ ...prev, [logId]: newLog }));
+
+    try {
+      const res = await api.mutate.saveHealthLog({
         workspaceId: workspace.id,
         profileSlot: activeSlot,
         date,
-      } as HealthLogDoc,
-    }));
-
-    // If Supabase is active, sync in background
-    if (isSupabaseConfigured) {
-      supabase.from('health_logs').upsert(
-        {
-          id: `${workspace.id}_${activeSlot}_${date}`,
-          workspace_id: workspace.id,
-          profile_slot: activeSlot,
-          date,
-          weight: payload.weight,
-          steps: payload.steps,
-          sleep_minutes: payload.sleepMinutes,
-          water_ml: payload.waterMl,
-          note: payload.note,
-          updated_by_uid: authUser.uid,
-          updated_at: new Date().toISOString(),
-        },
-        { onConflict: 'id' }
-      ).then();
-    }
-
-    try {
-      if (existing) {
-        await updateDoc(logRef, {
-          weight: payload.weight,
-          steps: payload.steps,
-          sleepMinutes: payload.sleepMinutes,
-          waterMl: payload.waterMl,
-          note: payload.note,
-          updatedByUid: payload.updatedByUid,
-          updatedAt: serverTimestamp(),
-        });
-      } else {
-        await setDoc(logRef, {
-          ...payload,
-          createdAt: serverTimestamp(),
-        });
-      }
-    } catch (error) {
-      console.warn('Background sync warning:', error);
+        weight: newLog.weight,
+        steps: newLog.steps,
+        sleepMinutes: newLog.sleepMinutes,
+        waterMl: newLog.waterMl,
+        note: newLog.note,
+      });
+      lastSyncTimestampRef.current = res.timestamp;
+    } catch (err) {
+      console.warn('Health log save error:', err);
     }
   };
 
-
-
+  // 2. Update Profile Goals
   const handleUpdateProfileGoals = async (goals: {
     name: string;
     role: string;
@@ -858,188 +506,75 @@ export default function App() {
     fitnessApp: FitnessAppId;
   }) => {
     if (!authUser || !workspace) return;
-    const wsPath = `workspaces/${workspace.id}`;
-    const wsRef = doc(db, 'workspaces', workspace.id);
-
     const prefix = activeSlot === 'partner1' ? 'partner1' : 'partner2';
-    const cleanName = sanitizeString(
-      goals.name,
-      VALIDATION_BOUNDS.MAX_DISPLAY_NAME,
-      activeSlot === 'partner1' ? 'Me' : 'Partner'
-    );
+
+    // Optimistic workspace update
+    setWorkspace((prev) => {
+      if (!prev) return null;
+      return {
+        ...prev,
+        [`${prefix}Name`]: goals.name,
+        [`${prefix}Role`]: goals.role,
+        [`${prefix}WeightUnit`]: goals.weightUnit,
+        [`${prefix}TargetWeight`]: goals.targetWeight,
+        [`${prefix}StartWeight`]: goals.startWeight,
+        [`${prefix}StepsGoal`]: goals.stepsGoal,
+        [`${prefix}SleepGoalMinutes`]: goals.sleepGoalMinutes,
+        [`${prefix}WaterGoalMl`]: goals.waterGoalMl,
+      };
+    });
 
     try {
-      await updateDoc(wsRef, {
-        ...getFitnessAppFields(workspace, {
-          [`${prefix}FitnessApp`]: goals.fitnessApp,
-        }),
-        [`${prefix}Name`]: cleanName,
-        [`${prefix}Role`]: sanitizeString(
-          goals.role,
-          VALIDATION_BOUNDS.MAX_ROLE_LABEL,
-          `${cleanName}’s Dashboard`
-        ),
-        [`${prefix}WeightUnit`]: goals.weightUnit,
-        [`${prefix}TargetWeight`]: clampNumber(
-          goals.targetWeight,
-          0,
-          VALIDATION_BOUNDS.MAX_WEIGHT,
-          60
-        ),
-        [`${prefix}StartWeight`]: clampNumber(
-          goals.startWeight,
-          0,
-          VALIDATION_BOUNDS.MAX_WEIGHT,
-          60
-        ),
-        [`${prefix}StepsGoal`]: clampNumber(goals.stepsGoal, 100, 100000, 8500),
-        [`${prefix}SleepGoalMinutes`]: clampNumber(
-          goals.sleepGoalMinutes,
-          60,
-          VALIDATION_BOUNDS.MAX_SLEEP_MINUTES,
-          480
-        ),
-        [`${prefix}WaterGoalMl`]: clampNumber(goals.waterGoalMl, 250, 15000, 2500),
-        updatedAt: serverTimestamp(),
+      const res = await api.mutate.updatePartnerGoals({
+        workspaceId: workspace.id,
+        slot: activeSlot,
+        name: goals.name,
+        role: goals.role,
+        weightUnit: goals.weightUnit,
+        targetWeight: goals.targetWeight,
+        startWeight: goals.startWeight,
+        stepsGoal: goals.stepsGoal,
+        sleepGoalMinutes: goals.sleepGoalMinutes,
+        waterGoalMl: goals.waterGoalMl,
       });
-
-      if (
-        (activeSlot === 'partner1' && workspace.ownerUid === authUser.uid) ||
-        (activeSlot === 'partner2' && workspace.partnerUid === authUser.uid)
-      ) {
-        await updateDoc(doc(db, 'users', authUser.uid), {
-          displayName: cleanName,
-          updatedAt: serverTimestamp(),
-        });
-      }
-    } catch (error) {
-      handleFirestoreError(error, OperationType.UPDATE, wsPath);
+      lastSyncTimestampRef.current = res.timestamp;
+    } catch (err) {
+      console.warn('Update goals error:', err);
     }
   };
 
+  // 3. Save Care Product
   const handleSaveProduct = async (
-    productInput: Omit<
-      CareProductDoc,
-      'id' | 'workspaceId' | 'updatedByUid' | 'createdAt' | 'updatedAt'
-    >,
+    productInput: Omit<CareProductDoc, 'id' | 'workspaceId' | 'updatedByUid' | 'createdAt' | 'updatedAt'>,
     existingId?: string
   ) => {
     if (!authUser || !workspace) return;
-
     const productId = existingId || `prod_${Date.now()}_${Math.floor(Math.random() * 1000)}`;
-    const prodPath = `workspaces/${workspace.id}/careProducts/${productId}`;
-    const prodRef = doc(db, 'workspaces', workspace.id, 'careProducts', productId);
 
-    const sanitizedPayload = {
-      profileSlot: productInput.profileSlot,
-      segment: productInput.segment,
-      subCategory: sanitizeString(
-        productInput.subCategory,
-        VALIDATION_BOUNDS.MAX_CATEGORY_NAME,
-        'Essentials'
-      ),
-      name: sanitizeString(
-        productInput.name,
-        VALIDATION_BOUNDS.MAX_PRODUCT_NAME,
-        'Care Product'
-      ),
-      brand: sanitizeString(
-        productInput.brand,
-        VALIDATION_BOUNDS.MAX_BRAND_NAME,
-        'Brand'
-      ),
-      quantity: clampNumber(
-        Math.round(productInput.quantity || 1),
-        1,
-        VALIDATION_BOUNDS.MAX_QUANTITY,
-        1
-      ),
-      orderedDate: sanitizeString(productInput.orderedDate, VALIDATION_BOUNDS.MAX_DATE_STR),
-      openedDate: sanitizeString(productInput.openedDate, VALIDATION_BOUNDS.MAX_DATE_STR),
-      expiryDate: sanitizeString(productInput.expiryDate, VALIDATION_BOUNDS.MAX_DATE_STR),
-      saleInfo: sanitizeString(productInput.saleInfo, VALIDATION_BOUNDS.MAX_SALE_INFO),
-      pricePaid: clampNumber(productInput.pricePaid, 0, VALIDATION_BOUNDS.MAX_PRICE),
-      originalPrice: clampNumber(productInput.originalPrice, 0, VALIDATION_BOUNDS.MAX_PRICE),
-      status: productInput.status,
-      routineTime: productInput.routineTime,
-      scheduleType: productInput.scheduleType || 'daily',
-      scheduledDays: productInput.scheduledDays || [],
-      notes: sanitizeString(productInput.notes, VALIDATION_BOUNDS.MAX_NOTE),
-      updatedByUid: authUser.uid,
-      updatedAt: serverTimestamp(),
+    const newProd: CareProductDoc = {
+      id: productId,
+      workspaceId: workspace.id,
+      ...productInput,
+      updatedByUid: authUser.id,
     };
 
-    // Optimistic local state update
-    setCareProductsMap((prev) => ({
-      ...prev,
-      [productId]: {
-        ...(existingId && prev[existingId] ? prev[existingId] : {}),
-        id: productId,
-        workspaceId: workspace.id,
-        ...sanitizedPayload,
-      } as CareProductDoc,
-    }));
-
-    if (isSupabaseConfigured) {
-      supabase
-        .from('care_products')
-        .upsert(
-          {
-            id: productId,
-            workspace_id: workspace.id,
-            profile_slot: sanitizedPayload.profileSlot,
-            segment: sanitizedPayload.segment,
-            sub_category: sanitizedPayload.subCategory,
-            name: sanitizedPayload.name,
-            brand: sanitizedPayload.brand,
-            quantity: sanitizedPayload.quantity,
-            ordered_date: sanitizedPayload.orderedDate,
-            opened_date: sanitizedPayload.openedDate,
-            expiry_date: sanitizedPayload.expiryDate,
-            sale_info: sanitizedPayload.saleInfo,
-            price_paid: sanitizedPayload.pricePaid,
-            original_price: sanitizedPayload.originalPrice,
-            status: sanitizedPayload.status,
-            routine_time: sanitizedPayload.routineTime,
-            schedule_type: sanitizedPayload.scheduleType,
-            scheduled_days: sanitizedPayload.scheduledDays,
-            notes: sanitizedPayload.notes,
-            updated_by_uid: authUser.uid,
-            updated_at: new Date().toISOString(),
-          },
-          { onConflict: 'id' }
-        )
-        .then();
-    }
+    // Optimistic update
+    setCareProductsMap((prev) => ({ ...prev, [productId]: newProd }));
 
     try {
-      if (existingId && careProductsMap[existingId]) {
-        await updateDoc(prodRef, sanitizedPayload);
-      } else {
-        if (workspace.productIds.length >= VALIDATION_BOUNDS.MAX_PRODUCTS_PER_WORKSPACE) {
-          throw new Error('Maximum of 100 products reached in this workspace.');
-        }
-        const batch = writeBatch(db);
-        batch.set(prodRef, {
-          id: productId,
-          workspaceId: workspace.id,
-          ...sanitizedPayload,
-          createdAt: serverTimestamp(),
-        });
-        batch.update(doc(db, 'workspaces', workspace.id), {
-          productIds: [...workspace.productIds, productId],
-          updatedAt: serverTimestamp(),
-        });
-        await batch.commit();
-      }
-    } catch (error) {
-      console.warn('Care product sync notice:', error);
+      const res = await api.mutate.saveCareProduct({
+        ...newProd,
+        workspaceId: workspace.id,
+      });
+      lastSyncTimestampRef.current = res.timestamp;
+    } catch (err) {
+      console.warn('Save care product error:', err);
     }
   };
 
+  // 4. Delete Care Product
   const handleDeleteProduct = async (productId: string) => {
     if (!authUser || !workspace) return;
-    const prodPath = `workspaces/${workspace.id}/careProducts/${productId}`;
 
     // Optimistic deletion
     setCareProductsMap((prev) => {
@@ -1048,35 +583,20 @@ export default function App() {
       return next;
     });
 
-    if (isSupabaseConfigured) {
-      supabase.from('care_products').delete().eq('id', productId).then();
-    }
-
     try {
-      const batch = writeBatch(db);
-      batch.delete(doc(db, 'workspaces', workspace.id, 'careProducts', productId));
-      batch.update(doc(db, 'workspaces', workspace.id), {
-        productIds: workspace.productIds.filter((id) => id !== productId),
-        updatedAt: serverTimestamp(),
-      });
-      await batch.commit();
-    } catch (error) {
-      console.warn('Care product delete notice:', error);
+      const res = await api.mutate.deleteCareProduct(productId, workspace.id);
+      lastSyncTimestampRef.current = res.timestamp;
+    } catch (err) {
+      console.warn('Delete care product error:', err);
     }
   };
 
-  // Toggle routine completion for deterministic date-based persistence in Firestore
-  const handleToggleRoutineCompletion = async (
-    productId: string,
-    date: string,
-    completed: boolean
-  ) => {
+  // 5. Toggle Routine Completion
+  const handleToggleRoutineCompletion = async (productId: string, date: string, completed: boolean) => {
     if (!authUser || !workspace) return;
     const completionId = `${activeSlot}_${productId}_${date}`;
-    const docPath = `workspaces/${workspace.id}/routineCompletions/${completionId}`;
-    const docRef = doc(db, 'workspaces', workspace.id, 'routineCompletions', completionId);
 
-    // Optimistic toggle for instant checkmark feedback
+    // Optimistic toggle
     setRoutineCompletionsMap((prev) => {
       const next = { ...prev };
       if (completed) {
@@ -1087,8 +607,8 @@ export default function App() {
           productId,
           date,
           completed: true,
-          completedAt: Timestamp.now(),
-          updatedByUid: authUser.uid,
+          completedAt: new Date() as any,
+          updatedByUid: authUser.id,
         };
       } else {
         delete next[completionId];
@@ -1096,135 +616,52 @@ export default function App() {
       return next;
     });
 
-    // Background sync to Supabase if configured
-    if (isSupabaseConfigured) {
-      if (completed) {
-        supabase
-          .from('routine_completions')
-          .upsert(
-            {
-              id: completionId,
-              workspace_id: workspace.id,
-              profile_slot: activeSlot,
-              product_id: productId,
-              date,
-              completed: true,
-              completed_at: new Date().toISOString(),
-              updated_by_uid: authUser.uid,
-            },
-            { onConflict: 'id' }
-          )
-          .then();
-      } else {
-        supabase.from('routine_completions').delete().eq('id', completionId).then();
-      }
-    }
-
     try {
-      if (completed) {
-        await setDoc(docRef, {
-          id: completionId,
-          workspaceId: workspace.id,
-          profileSlot: activeSlot,
-          productId,
-          date,
-          completed: true,
-          completedAt: serverTimestamp(),
-          updatedByUid: authUser.uid,
-          createdAt: serverTimestamp(),
-          updatedAt: serverTimestamp(),
-        });
-      } else {
-        await deleteDoc(docRef);
-      }
-    } catch (error) {
-      console.warn('Routine completion sync notice:', error);
+      const res = await api.mutate.toggleRoutineCompletion({
+        workspaceId: workspace.id,
+        profileSlot: activeSlot,
+        productId,
+        date,
+        completed,
+      });
+      lastSyncTimestampRef.current = res.timestamp;
+    } catch (err) {
+      console.warn('Toggle routine error:', err);
     }
   };
 
-  // Wardrobe Items CRUD
+  // 6. Save Wardrobe Item
   const handleSaveWardrobeItem = async (
-    itemInput: Omit<
-      WardrobeItemDoc,
-      'id' | 'workspaceId' | 'updatedByUid' | 'createdAt' | 'updatedAt'
-    >,
+    itemInput: Omit<WardrobeItemDoc, 'id' | 'workspaceId' | 'updatedByUid' | 'createdAt' | 'updatedAt'>,
     existingId?: string
   ) => {
     if (!authUser || !workspace) return;
-    const itemId = existingId || `cloth_${Date.now()}_${Math.floor(Math.random() * 1000)}`;
-    const itemPath = `workspaces/${workspace.id}/wardrobeItems/${itemId}`;
-    const itemRef = doc(db, 'workspaces', workspace.id, 'wardrobeItems', itemId);
+    const itemId = existingId || `item_${Date.now()}_${Math.floor(Math.random() * 1000)}`;
 
-    const payload = {
-      profileSlot: itemInput.profileSlot,
-      name: sanitizeString(itemInput.name, 100, 'Clothing Item'),
-      category: itemInput.category,
-      brand: sanitizeString(itemInput.brand, 80, ''),
-      color: sanitizeString(itemInput.color, 40, ''),
-      size: sanitizeString(itemInput.size, 20, ''),
-      season: itemInput.season,
-      occasion: itemInput.occasion,
-      imageUrl: itemInput.imageUrl || '',
-      notes: sanitizeString(itemInput.notes, 500, ''),
-      updatedByUid: authUser.uid,
-      updatedAt: serverTimestamp(),
+    const newItem: WardrobeItemDoc = {
+      id: itemId,
+      workspaceId: workspace.id,
+      ...itemInput,
+      updatedByUid: authUser.id,
     };
 
-    // Optimistic local update
-    setWardrobeItemsMap((prev) => ({
-      ...prev,
-      [itemId]: {
-        ...(existingId && prev[existingId] ? prev[existingId] : {}),
-        id: itemId,
-        workspaceId: workspace.id,
-        ...payload,
-      } as WardrobeItemDoc,
-    }));
-
-    if (isSupabaseConfigured) {
-      supabase
-        .from('wardrobe_items')
-        .upsert(
-          {
-            id: itemId,
-            workspace_id: workspace.id,
-            profile_slot: payload.profileSlot,
-            name: payload.name,
-            category: payload.category,
-            brand: payload.brand,
-            color: payload.color,
-            size: payload.size,
-            season: payload.season,
-            occasion: payload.occasion,
-            image_url: payload.imageUrl,
-            notes: payload.notes,
-            updated_by_uid: authUser.uid,
-            updated_at: new Date().toISOString(),
-          },
-          { onConflict: 'id' }
-        )
-        .then();
-    }
+    // Optimistic update
+    setWardrobeItemsMap((prev) => ({ ...prev, [itemId]: newItem }));
 
     try {
-      if (existingId && wardrobeItemsMap[existingId]) {
-        await updateDoc(itemRef, payload);
-      } else {
-        await setDoc(itemRef, {
-          id: itemId,
-          workspaceId: workspace.id,
-          ...payload,
-          createdAt: serverTimestamp(),
-        });
-      }
-    } catch (error) {
-      console.warn('Wardrobe item sync notice:', error);
+      const res = await api.mutate.saveWardrobeItem({
+        ...newItem,
+        workspaceId: workspace.id,
+      });
+      lastSyncTimestampRef.current = res.timestamp;
+    } catch (err) {
+      console.warn('Save wardrobe item error:', err);
     }
   };
 
+  // 7. Delete Wardrobe Item
   const handleDeleteWardrobeItem = async (itemId: string) => {
     if (!authUser || !workspace) return;
-    const itemPath = `workspaces/${workspace.id}/wardrobeItems/${itemId}`;
 
     // Optimistic deletion
     setWardrobeItemsMap((prev) => {
@@ -1233,90 +670,46 @@ export default function App() {
       return next;
     });
 
-    if (isSupabaseConfigured) {
-      supabase.from('wardrobe_items').delete().eq('id', itemId).then();
-    }
-
     try {
-      await deleteDoc(doc(db, 'workspaces', workspace.id, 'wardrobeItems', itemId));
-    } catch (error) {
-      console.warn('Wardrobe delete notice:', error);
+      const res = await api.mutate.deleteWardrobeItem(itemId, workspace.id);
+      lastSyncTimestampRef.current = res.timestamp;
+    } catch (err) {
+      console.warn('Delete wardrobe item error:', err);
     }
   };
 
-  // Outfits CRUD
+  // 8. Save Outfit
   const handleSaveOutfit = async (
-    outfitInput: Omit<
-      OutfitDoc,
-      'id' | 'workspaceId' | 'updatedByUid' | 'createdAt' | 'updatedAt'
-    >,
+    outfitInput: Omit<OutfitDoc, 'id' | 'workspaceId' | 'updatedByUid' | 'createdAt' | 'updatedAt'>,
     existingId?: string
   ) => {
     if (!authUser || !workspace) return;
     const outfitId = existingId || `fit_${Date.now()}_${Math.floor(Math.random() * 1000)}`;
-    const fitPath = `workspaces/${workspace.id}/outfits/${outfitId}`;
-    const fitRef = doc(db, 'workspaces', workspace.id, 'outfits', outfitId);
 
-    const payload = {
-      profileSlot: outfitInput.profileSlot,
-      name: sanitizeString(outfitInput.name, 100, 'My Outfit'),
-      occasion: outfitInput.occasion,
-      itemIds: outfitInput.itemIds.slice(0, 30),
-      notes: sanitizeString(outfitInput.notes, 500, ''),
-      updatedByUid: authUser.uid,
-      updatedAt: serverTimestamp(),
+    const newFit: OutfitDoc = {
+      id: outfitId,
+      workspaceId: workspace.id,
+      ...outfitInput,
+      updatedByUid: authUser.id,
     };
 
-    // Optimistic local update
-    setOutfitsMap((prev) => ({
-      ...prev,
-      [outfitId]: {
-        ...(existingId && prev[existingId] ? prev[existingId] : {}),
-        id: outfitId,
-        workspaceId: workspace.id,
-        ...payload,
-      } as OutfitDoc,
-    }));
-
-    if (isSupabaseConfigured) {
-      supabase
-        .from('outfits')
-        .upsert(
-          {
-            id: outfitId,
-            workspace_id: workspace.id,
-            profile_slot: payload.profileSlot,
-            name: payload.name,
-            occasion: payload.occasion,
-            item_ids: payload.itemIds,
-            notes: payload.notes,
-            updated_by_uid: authUser.uid,
-            updated_at: new Date().toISOString(),
-          },
-          { onConflict: 'id' }
-        )
-        .then();
-    }
+    // Optimistic update
+    setOutfitsMap((prev) => ({ ...prev, [outfitId]: newFit }));
 
     try {
-      if (existingId && outfitsMap[existingId]) {
-        await updateDoc(fitRef, payload);
-      } else {
-        await setDoc(fitRef, {
-          id: outfitId,
-          workspaceId: workspace.id,
-          ...payload,
-          createdAt: serverTimestamp(),
-        });
-      }
-    } catch (error) {
-      console.warn('Outfit sync notice:', error);
+      const res = await api.mutate.saveOutfit({
+        ...newFit,
+        workspaceId: workspace.id,
+      });
+      lastSyncTimestampRef.current = res.timestamp;
+    } catch (err) {
+      console.warn('Save outfit error:', err);
     }
   };
 
+  // 9. Delete Outfit
   const handleDeleteOutfit = async (outfitId: string) => {
     if (!authUser || !workspace) return;
-    const fitPath = `workspaces/${workspace.id}/outfits/${outfitId}`;
 
     // Optimistic deletion
     setOutfitsMap((prev) => {
@@ -1325,21 +718,18 @@ export default function App() {
       return next;
     });
 
-    if (isSupabaseConfigured) {
-      supabase.from('outfits').delete().eq('id', outfitId).then();
-    }
-
     try {
-      await deleteDoc(doc(db, 'workspaces', workspace.id, 'outfits', outfitId));
-    } catch (error) {
-      console.warn('Outfit delete notice:', error);
+      const res = await api.mutate.deleteOutfit(outfitId, workspace.id);
+      lastSyncTimestampRef.current = res.timestamp;
+    } catch (err) {
+      console.warn('Delete outfit error:', err);
     }
   };
 
+  // 10. Add / Remove Care Sub-Categories
   const handleAddSubCategory = async (segment: CareSegment, categoryName: string) => {
-    if (!authUser || !workspace) return;
-    const clean = sanitizeString(categoryName, VALIDATION_BOUNDS.MAX_CATEGORY_NAME);
-    if (!clean) return;
+    if (!authUser || !workspace || !categoryName.trim()) return;
+    const clean = categoryName.trim();
 
     const fieldName =
       segment === 'skincare'
@@ -1349,21 +739,19 @@ export default function App() {
         : 'bodycareCategories';
 
     const currentList = workspace[fieldName] || [];
-    if (
-      currentList.includes(clean) ||
-      currentList.length >= VALIDATION_BOUNDS.MAX_CATEGORIES_PER_SEGMENT
-    ) {
-      return;
-    }
+    if (currentList.includes(clean)) return;
 
-    const wsPath = `workspaces/${workspace.id}`;
+    const updatedList = [...currentList, clean];
+    setWorkspace((prev) => (prev ? { ...prev, [fieldName]: updatedList } : null));
+
     try {
-      await updateDoc(doc(db, 'workspaces', workspace.id), {
-        [fieldName]: [...currentList, clean],
-        updatedAt: serverTimestamp(),
+      const res = await api.mutate.updateCategories({
+        workspaceId: workspace.id,
+        [fieldName]: updatedList,
       });
-    } catch (error) {
-      handleFirestoreError(error, OperationType.UPDATE, wsPath);
+      lastSyncTimestampRef.current = res.timestamp;
+    } catch (err) {
+      console.warn('Update categories error:', err);
     }
   };
 
@@ -1379,92 +767,64 @@ export default function App() {
     const currentList = workspace[fieldName] || [];
     if (currentList.length <= 1) return;
 
-    const updated = currentList.filter((c) => c !== categoryName);
-    if (updated.length === 0) return;
+    const updatedList = currentList.filter((c) => c !== categoryName);
+    setWorkspace((prev) => (prev ? { ...prev, [fieldName]: updatedList } : null));
 
-    const wsPath = `workspaces/${workspace.id}`;
     try {
-      await updateDoc(doc(db, 'workspaces', workspace.id), {
-        [fieldName]: updated,
-        updatedAt: serverTimestamp(),
+      const res = await api.mutate.updateCategories({
+        workspaceId: workspace.id,
+        [fieldName]: updatedList,
       });
-    } catch (error) {
-      handleFirestoreError(error, OperationType.UPDATE, wsPath);
+      lastSyncTimestampRef.current = res.timestamp;
+    } catch (err) {
+      console.warn('Remove category error:', err);
     }
   };
 
-  const handleJoinByCode = async (code: string) => {
-    if (!authUser || !userDoc) return;
-    const codePath = `pairingCodes/${code}`;
-    let pairingData: PairingCodeDoc;
-
-    try {
-      const codeSnap = await getDoc(doc(db, 'pairingCodes', code));
-      if (!codeSnap.exists()) {
-        throw new Error('No workspace found for that 6-digit code.');
-      }
-      pairingData = codeSnap.data() as PairingCodeDoc;
-    } catch (error) {
-      if (error instanceof Error && error.message.includes('No workspace')) {
-        throw error;
-      }
-      handleFirestoreError(error, OperationType.GET, codePath);
-    }
-
-    const targetWsId = pairingData.workspaceId;
-    const targetWsPath = `workspaces/${targetWsId}`;
-    try {
-      const targetWsRef = doc(db, 'workspaces', targetWsId);
-      const targetWsSnap = await getDoc(targetWsRef);
-      if (!targetWsSnap.exists()) {
-        throw new Error('Target workspace does not exist.');
-      }
-      const targetWs = targetWsSnap.data() as WorkspaceDoc;
-      if (
-        targetWs.partnerUid &&
-        targetWs.partnerUid !== '' &&
-        targetWs.partnerUid !== authUser.uid &&
-        targetWs.ownerUid !== authUser.uid
-      ) {
-        throw new Error('That workspace is already paired with another account.');
-      }
-
-      if (targetWs.ownerUid !== authUser.uid) {
-        await updateDoc(targetWsRef, {
-          partnerUid: authUser.uid,
-          partner2Name: userDoc.displayName || 'Partner',
-          partner2Role: `${userDoc.displayName || 'Partner'}’s Dashboard`,
-          updatedAt: serverTimestamp(),
-        });
-      }
-
-      await updateDoc(doc(db, 'users', authUser.uid), {
-        workspaceId: targetWsId,
-        defaultSlot: targetWs.ownerUid === authUser.uid ? 'partner1' : 'partner2',
-        onboardingCompleted: true,
-        updatedAt: serverTimestamp(),
-      });
-    } catch (error) {
-      if (error instanceof Error && error.message.includes('already paired')) {
-        throw error;
-      }
-      handleFirestoreError(error, OperationType.UPDATE, targetWsPath);
-    }
-  };
-
-  const handleUnlinkPartner = async () => {
+  // 11. Complete Onboarding Questionnaire
+  const handleOnboardingComplete = async (submission: OnboardingSubmission) => {
     if (!authUser || !workspace) return;
-    const wsPath = `workspaces/${workspace.id}`;
+
+    if (submission.mode === 'join_partner_code' && submission.partnerCodeToJoin) {
+      const res = await api.mutate.pairWithPartner(submission.partnerCodeToJoin, submission);
+      if (res.workspace) {
+        const wsDoc = mapToWorkspaceDoc(res.workspace, res.members, submission.partnerCodeToJoin);
+        setWorkspace(wsDoc);
+        setActiveSlot('partner2');
+        fetchFullWorkspaceState(wsDoc.id);
+      }
+      setManualWizardOpen(false);
+      return;
+    }
+
+    // Standard mode: update own workspace goals
     try {
-      await updateDoc(doc(db, 'workspaces', workspace.id), {
-        partnerUid: '',
-        updatedAt: serverTimestamp(),
-      });
-    } catch (error) {
-      handleFirestoreError(error, OperationType.UPDATE, wsPath);
+      const res = await api.mutate.completeOnboarding(workspace.id, activeSlot, submission);
+      lastSyncTimestampRef.current = res.timestamp;
+
+      // Update local state
+      setUserDoc((prev) => (prev ? { ...prev, onboardingCompleted: true } : null));
+      setWorkspace((prev) => (prev ? { ...prev, onboardingCompleted: true } : null));
+      setManualWizardOpen(false);
+      fetchFullWorkspaceState(workspace.id);
+    } catch (err) {
+      console.error('Onboarding complete error:', err);
     }
   };
 
+  // 12. Connect via 6-digit partner code in PartnerModal
+  const handleJoinByCode = async (code: string) => {
+    if (!authUser) return;
+    const res = await api.mutate.pairWithPartner(code, {});
+    if (res.workspace) {
+      const wsDoc = mapToWorkspaceDoc(res.workspace, res.members, code);
+      setWorkspace(wsDoc);
+      setActiveSlot('partner2');
+      fetchFullWorkspaceState(wsDoc.id);
+    }
+  };
+
+  // 13. Update Workspace Identities
   const handleUpdateWorkspaceIdentities = async (updates: {
     currency: string;
     partner1Name: string;
@@ -1473,52 +833,60 @@ export default function App() {
     partner2Role: string;
     defaultSlot: ProfileSlot;
   }) => {
-    if (!authUser || !workspace || !userDoc) return;
-    const wsPath = `workspaces/${workspace.id}`;
-    const cleanP1 = sanitizeString(updates.partner1Name, VALIDATION_BOUNDS.MAX_DISPLAY_NAME, 'Me');
-    const cleanP2 = sanitizeString(
-      updates.partner2Name,
-      VALIDATION_BOUNDS.MAX_DISPLAY_NAME,
-      'Partner'
+    if (!authUser || !workspace) return;
+
+    setWorkspace((prev) =>
+      prev
+        ? {
+            ...prev,
+            currency: updates.currency,
+            partner1Name: updates.partner1Name,
+            partner1Role: updates.partner1Role,
+            partner2Name: updates.partner2Name,
+            partner2Role: updates.partner2Role,
+          }
+        : null
     );
 
     try {
-      await updateDoc(doc(db, 'workspaces', workspace.id), {
-        ...getFitnessAppFields(workspace),
-        currency: sanitizeString(updates.currency, VALIDATION_BOUNDS.MAX_CURRENCY, '₹'),
-        partner1Name: cleanP1,
-        partner1Role: sanitizeString(
-          updates.partner1Role,
-          VALIDATION_BOUNDS.MAX_ROLE_LABEL,
-          `${cleanP1}’s Dashboard`
-        ),
-        partner2Name: cleanP2,
-        partner2Role: sanitizeString(
-          updates.partner2Role,
-          VALIDATION_BOUNDS.MAX_ROLE_LABEL,
-          `${cleanP2}’s Dashboard`
-        ),
-        updatedAt: serverTimestamp(),
+      await api.mutate.updatePartnerGoals({
+        workspaceId: workspace.id,
+        slot: 'partner1',
+        name: updates.partner1Name,
+        role: updates.partner1Role,
       });
-
-      const myNameInWs = workspace.ownerUid === authUser.uid ? cleanP1 : cleanP2;
-      await updateDoc(doc(db, 'users', authUser.uid), {
-        displayName: myNameInWs,
-        defaultSlot: updates.defaultSlot,
-        updatedAt: serverTimestamp(),
+      await api.mutate.updatePartnerGoals({
+        workspaceId: workspace.id,
+        slot: 'partner2',
+        name: updates.partner2Name,
+        role: updates.partner2Role,
       });
-
-      if (workspace.ownerUid === authUser.uid && workspace.pairingCode) {
-        await updateDoc(doc(db, 'pairingCodes', workspace.pairingCode), {
-          ownerName: cleanP1,
-        });
-      }
-    } catch (error) {
-      handleFirestoreError(error, OperationType.UPDATE, wsPath);
+      setActiveSlot(updates.defaultSlot);
+    } catch (err) {
+      console.warn('Update identities error:', err);
     }
   };
 
-  // Initial Auth Loading
+  const handleUnlinkPartner = async () => {
+    if (!workspace) return;
+    setWorkspace((prev) => (prev ? { ...prev, partnerUid: '' } : null));
+  };
+
+  // 14. Fresh Start Database Wipe
+  const handleDeleteAllUserData = async () => {
+    try {
+      await fetch('/api/admin/reset', {
+        method: 'POST',
+        headers: { 'x-admin-key': 'duosync-reset-2026' },
+      });
+      handleSignOut();
+      window.location.reload();
+    } catch (err) {
+      console.error('Reset error:', err);
+    }
+  };
+
+  // Initial Loading Screen while checking JWT token
   if (!authReady) {
     return (
       <div className="min-h-screen bg-[#090A0F] flex items-center justify-center p-6">
@@ -1532,7 +900,7 @@ export default function App() {
     );
   }
 
-  // Step 0: Strictly Login-Based Mobile-First Entry Screen
+  // Not Logged In: Mobile-First Hero & Simple Password-Based Auth
   if (!authUser) {
     return (
       <div className="min-h-screen bg-[#090A0F] text-zinc-100 flex flex-col justify-between p-4 sm:p-10">
@@ -1561,7 +929,7 @@ export default function App() {
               </p>
             </div>
 
-            {/* Interactive Mobile-First Preview Card with Working [ Health | Skin | Fits ] Toggle */}
+            {/* Interactive Mobile-First Preview Card */}
             <div className="rounded-3xl bg-[#12141C] border border-white/10 p-5 space-y-4">
               <div className="flex items-center justify-between border-b border-white/8 pb-3.5 gap-2">
                 <div>
@@ -1581,21 +949,15 @@ export default function App() {
                   </div>
                 </div>
 
-                {/* Working Interactive Pilled Toggle */}
                 <div
                   role="tablist"
-                  aria-label="Preview Dashboard Section"
                   className="flex items-center p-1 rounded-full bg-zinc-900 border border-white/10 text-xs font-medium shrink-0"
                 >
                   <button
                     type="button"
-                    role="tab"
-                    aria-selected={heroPreviewTab === 'health'}
                     onClick={() => setHeroPreviewTab('health')}
                     className={`relative min-h-[30px] px-2.5 py-1 rounded-full text-xs font-semibold transition-colors flex items-center gap-1 ${
-                      heroPreviewTab === 'health'
-                        ? 'text-zinc-950'
-                        : 'text-zinc-400 hover:text-white'
+                      heroPreviewTab === 'health' ? 'text-zinc-950' : 'text-zinc-400 hover:text-white'
                     }`}
                   >
                     {heroPreviewTab === 'health' && (
@@ -1611,13 +973,9 @@ export default function App() {
 
                   <button
                     type="button"
-                    role="tab"
-                    aria-selected={heroPreviewTab === 'skin'}
                     onClick={() => setHeroPreviewTab('skin')}
                     className={`relative min-h-[30px] px-2.5 py-1 rounded-full text-xs font-semibold transition-colors flex items-center gap-1 ${
-                      heroPreviewTab === 'skin'
-                        ? 'text-zinc-950'
-                        : 'text-zinc-400 hover:text-white'
+                      heroPreviewTab === 'skin' ? 'text-zinc-950' : 'text-zinc-400 hover:text-white'
                     }`}
                   >
                     {heroPreviewTab === 'skin' && (
@@ -1633,13 +991,9 @@ export default function App() {
 
                   <button
                     type="button"
-                    role="tab"
-                    aria-selected={heroPreviewTab === 'wardrobe'}
                     onClick={() => setHeroPreviewTab('wardrobe')}
                     className={`relative min-h-[30px] px-2.5 py-1 rounded-full text-xs font-semibold transition-colors flex items-center gap-1 ${
-                      heroPreviewTab === 'wardrobe'
-                        ? 'text-zinc-950'
-                        : 'text-zinc-400 hover:text-white'
+                      heroPreviewTab === 'wardrobe' ? 'text-zinc-950' : 'text-zinc-400 hover:text-white'
                     }`}
                   >
                     {heroPreviewTab === 'wardrobe' && (
@@ -1655,123 +1009,86 @@ export default function App() {
                 </div>
               </div>
 
-            <AnimatePresence mode="wait">
-              {heroPreviewTab === 'health' ? (
-                <motion.div
-                  key="hero-health-preview"
-                  initial={{ opacity: 0, y: 4 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: -4 }}
-                  transition={{ duration: 0.15 }}
-                  className="space-y-3"
-                >
-                  <div className="grid grid-cols-2 gap-2.5">
+              <AnimatePresence mode="wait">
+                {heroPreviewTab === 'health' ? (
+                  <motion.div
+                    key="hero-health"
+                    initial={{ opacity: 0, y: 4 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -4 }}
+                    transition={{ duration: 0.15 }}
+                    className="grid grid-cols-2 gap-2.5"
+                  >
                     <div className="rounded-2xl bg-zinc-900/90 border border-white/6 p-3 space-y-1">
                       <div className="text-xs text-rose-400 font-medium">Daily Weight</div>
-                      <div className="text-base font-mono font-bold text-white tabular-nums">
-                        Start → Goal
-                      </div>
+                      <div className="text-base font-mono font-bold text-white tabular-nums">Start → Goal</div>
                       <div className="text-[11px] text-zinc-400">Circular ring + 7d curve</div>
                     </div>
                     <div className="rounded-2xl bg-zinc-900/90 border border-white/6 p-3 space-y-1">
                       <div className="text-xs text-emerald-400 font-medium">Daily Steps</div>
-                      <div className="text-base font-mono font-bold text-white tabular-nums">
-                        Step Ring
-                      </div>
+                      <div className="text-base font-mono font-bold text-white tabular-nums">Step Ring</div>
                       <div className="text-[11px] text-zinc-400">Target progress & streaks</div>
                     </div>
                     <div className="rounded-2xl bg-zinc-900/90 border border-white/6 p-3 space-y-1">
                       <div className="text-xs text-indigo-400 font-medium">Total Sleep</div>
-                      <div className="text-base font-mono font-bold text-white tabular-nums">
-                        Hrs & Mins
-                      </div>
+                      <div className="text-base font-mono font-bold text-white tabular-nums">Hrs & Mins</div>
                       <div className="text-[11px] text-zinc-400">Duration ring tracker</div>
                     </div>
                     <div className="rounded-2xl bg-zinc-900/90 border border-white/6 p-3 space-y-1">
                       <div className="text-xs text-sky-400 font-medium">Water Intake</div>
-                      <div className="text-base font-mono font-bold text-white tabular-nums">
-                        Daily ml / L
-                      </div>
+                      <div className="text-base font-mono font-bold text-white tabular-nums">Daily ml / L</div>
                       <div className="text-[11px] text-zinc-400">Hydration progress ring</div>
                     </div>
-                  </div>
-
-                  <div className="rounded-2xl bg-zinc-900/90 border border-white/6 p-3.5 space-y-1">
-                    <div className="text-xs text-emerald-400 font-medium">
-                      Real-Time Partner Account Switcher
+                  </motion.div>
+                ) : heroPreviewTab === 'skin' ? (
+                  <motion.div
+                    key="hero-skin"
+                    initial={{ opacity: 0, y: 4 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -4 }}
+                    transition={{ duration: 0.15 }}
+                    className="space-y-2.5"
+                  >
+                    <div className="rounded-2xl bg-zinc-900/90 border border-white/6 p-3 flex items-center justify-between">
+                      <div className="space-y-0.5">
+                        <div className="text-xs font-semibold text-rose-400 flex items-center gap-1.5">
+                          <Sparkles className="w-3.5 h-3.5" />
+                          <span>1. Skincare Essentials</span>
+                        </div>
+                        <div className="text-[11px] text-zinc-400">Cleanser · Serum · Moisturizer · Sunscreen</div>
+                      </div>
+                      <span className="text-xs font-mono font-semibold text-white">Qty 2+</span>
                     </div>
-                    <p className="text-xs text-zinc-400 leading-relaxed">
-                      Switch between your dashboard and your partner’s dashboard anytime to view or log daily vitals.
-                    </p>
-                  </div>
-                </motion.div>
-              ) : heroPreviewTab === 'skin' ? (
-                <motion.div
-                  key="hero-skin-preview"
-                  initial={{ opacity: 0, y: 4 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: -4 }}
-                  transition={{ duration: 0.15 }}
-                  className="space-y-2.5"
-                >
-                  <div className="rounded-2xl bg-zinc-900/90 border border-white/6 p-3 flex items-center justify-between">
-                    <div className="space-y-0.5">
-                      <div className="text-xs font-semibold text-rose-400 flex items-center gap-1.5">
-                        <Sparkles className="w-3.5 h-3.5" />
-                        <span>1. Skincare Essentials</span>
+                    <div className="rounded-2xl bg-zinc-900/90 border border-white/6 p-3 flex items-center justify-between">
+                      <div className="space-y-0.5">
+                        <div className="text-xs font-semibold text-amber-400 flex items-center gap-1.5">
+                          <Wind className="w-3.5 h-3.5" />
+                          <span>2. Haircare Essentials</span>
+                        </div>
+                        <div className="text-[11px] text-zinc-400">Shampoo · Conditioner · Mask · Scalp Oil</div>
                       </div>
-                      <div className="text-[11px] text-zinc-400">
-                        Cleanser · Serum · Moisturizer · Sunscreen
-                      </div>
+                      <span className="text-xs font-mono font-semibold text-emerald-400">Sale %</span>
                     </div>
-                    <span className="text-xs font-mono font-semibold text-white">Qty 2+</span>
-                  </div>
-
-                  <div className="rounded-2xl bg-zinc-900/90 border border-white/6 p-3 flex items-center justify-between">
-                    <div className="space-y-0.5">
-                      <div className="text-xs font-semibold text-amber-400 flex items-center gap-1.5">
-                        <Wind className="w-3.5 h-3.5" />
-                        <span>2. Haircare Essentials</span>
+                    <div className="rounded-2xl bg-zinc-900/90 border border-white/6 p-3 flex items-center justify-between">
+                      <div className="space-y-0.5">
+                        <div className="text-xs font-semibold text-sky-400 flex items-center gap-1.5">
+                          <Droplet className="w-3.5 h-3.5" />
+                          <span>3. Bodycare Essentials</span>
+                        </div>
+                        <div className="text-[11px] text-zinc-400">Body Wash · Lotion · Scrub · Deodorant</div>
                       </div>
-                      <div className="text-[11px] text-zinc-400">
-                        Shampoo · Conditioner · Mask · Scalp Oil
-                      </div>
+                      <span className="text-xs font-mono font-semibold text-zinc-300">Dates</span>
                     </div>
-                    <span className="text-xs font-mono font-semibold text-emerald-400">Sale %</span>
-                  </div>
-
-                  <div className="rounded-2xl bg-zinc-900/90 border border-white/6 p-3 flex items-center justify-between">
-                    <div className="space-y-0.5">
-                      <div className="text-xs font-semibold text-sky-400 flex items-center gap-1.5">
-                        <Droplet className="w-3.5 h-3.5" />
-                        <span>3. Bodycare Essentials</span>
-                      </div>
-                      <div className="text-[11px] text-zinc-400">
-                        Body Wash · Lotion · Scrub · Deodorant
-                      </div>
-                    </div>
-                    <span className="text-xs font-mono font-semibold text-zinc-300">Dates</span>
-                  </div>
-
-                  <div className="rounded-2xl bg-zinc-900/90 border border-white/6 p-3 space-y-1">
-                    <div className="text-xs text-amber-400 font-medium">
-                      Custom Weekly Routine Checklist
-                    </div>
-                    <p className="text-[11px] text-zinc-400 leading-relaxed">
-                      Schedule products for specific days of the week (e.g. Shampoo on Sun/Wed/Fri) with date-based check-off tracking.
-                    </p>
-                  </div>
-                </motion.div>
-              ) : (
-                <motion.div
-                  key="hero-wardrobe-preview"
-                  initial={{ opacity: 0, y: 4 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: -4 }}
-                  transition={{ duration: 0.15 }}
-                  className="space-y-2.5"
-                >
-                  <div className="grid grid-cols-2 gap-2.5">
+                  </motion.div>
+                ) : (
+                  <motion.div
+                    key="hero-fits"
+                    initial={{ opacity: 0, y: 4 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -4 }}
+                    transition={{ duration: 0.15 }}
+                    className="grid grid-cols-2 gap-2.5"
+                  >
                     <div className="rounded-2xl bg-zinc-900/90 border border-white/6 p-3 space-y-1">
                       <div className="text-xs text-rose-400 font-medium">Digital Closet</div>
                       <div className="text-base font-bold text-white">Visual Pieces</div>
@@ -1779,53 +1096,36 @@ export default function App() {
                     </div>
                     <div className="rounded-2xl bg-zinc-900/90 border border-white/6 p-3 space-y-1">
                       <div className="text-xs text-amber-400 font-medium">Outfit Studio</div>
-                      <div className="text-base font-bold text-white">Create Your Fits</div>
+                      <div className="text-base font-bold text-white">Create Fits</div>
                       <div className="text-[11px] text-zinc-400">Combine pieces for date night & work</div>
                     </div>
-                  </div>
-
-                  <div className="rounded-2xl bg-zinc-900/90 border border-white/6 p-3.5 space-y-1">
-                    <div className="text-xs text-emerald-400 font-medium">
-                      Shared Partner Wardrobe
-                    </div>
-                    <p className="text-xs text-zinc-400 leading-relaxed">
-                      Toggle between your items, your partner’s items, or shared apparel with custom tags and photos.
-                    </p>
-                  </div>
-                </motion.div>
-              )}
-            </AnimatePresence>
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </div>
           </div>
-        </div>
 
-        {/* AuthCard Column */}
-        <div className="lg:col-span-6 w-full flex justify-center">
-          <AuthCard />
-        </div>
-      </main>
+          {/* Simple Password-Based Authentication Card */}
+          <div className="lg:col-span-6 w-full flex justify-center">
+            <AuthCard onSuccess={handleAuthSuccess} />
+          </div>
+        </main>
 
         <footer className="max-w-5xl w-full mx-auto text-xs text-zinc-500 flex items-center justify-between">
           <span>DuoPulse — Mobile-First Health & Care Tracker</span>
-          <span>Real-Time Cloud Sync</span>
+          <span>Powered by Neon Serverless PostgreSQL</span>
         </footer>
       </div>
     );
   }
 
-  // Wait for userDoc & workspace from Firestore
-  if (
-    !workspace ||
-    !userDoc ||
-    !activeProfile ||
-    !otherProfile ||
-    !partner1Profile ||
-    !partner2Profile
-  ) {
+  // Loading Dashboard State
+  if (!workspace || !userDoc || !activeProfile || !otherProfile || !partner1Profile || !partner2Profile) {
     return (
       <div className="min-h-screen bg-[#090A0F] text-zinc-100 flex items-center justify-center p-4 sm:p-6">
         <div className="w-full max-w-md rounded-3xl bg-[#12141C] border border-white/10 p-6 sm:p-8 text-center space-y-5 shadow-2xl">
           <div className="w-12 h-12 rounded-2xl bg-white/5 border border-white/10 flex items-center justify-center mx-auto">
-            {syncTakingTooLong || syncError ? (
+            {syncError ? (
               <AlertCircle className="w-6 h-6 text-amber-400" />
             ) : (
               <Sparkles className="w-6 h-6 text-rose-400 animate-pulse" />
@@ -1834,107 +1134,49 @@ export default function App() {
 
           <div className="space-y-1.5">
             <h3 className="text-base font-bold text-white">
-              {syncError
-                ? 'Unable to Connect'
-                : syncTakingTooLong
-                ? 'Almost Ready...'
-                : 'Loading Your Dashboard...'}
+              {syncError ? 'Unable to Load Workspace' : 'Loading Your Dashboard...'}
             </h3>
             <p className="text-xs text-zinc-400 leading-relaxed">
-              {syncError
-                ? 'Could not connect to your shared space. Please check your network connection or try refreshing.'
-                : syncTakingTooLong
-                ? 'Connecting with your shared dashboard. Thank you for your patience.'
-                : 'Getting your latest vitals and routines ready.'}
+              {syncError || 'Synchronizing your vitals and care routines with Neon PostgreSQL.'}
             </p>
           </div>
 
-          {/* Diagnostic status */}
-          <div className="p-3 rounded-xl bg-[#090A0F] border border-white/8 text-left text-xs space-y-1.5 text-zinc-400 font-mono">
-            <div className="flex justify-between">
-              <span>Account:</span>
-              <span className="text-emerald-400 truncate max-w-[200px]">
-                {authUser.email || authUser.uid.slice(0, 10)}
-              </span>
-            </div>
-            <div className="flex justify-between">
-              <span>Profile Doc:</span>
-              <span className={userDoc ? 'text-emerald-400' : 'text-amber-400'}>
-                {userDoc ? 'Ready' : 'Waiting...'}
-              </span>
-            </div>
-            <div className="flex justify-between">
-              <span>Workspace:</span>
-              <span className={workspace ? 'text-emerald-400' : 'text-amber-400'}>
-                {workspace
-                  ? 'Ready'
-                  : userDoc?.workspaceId
-                  ? `Loading (${userDoc.workspaceId.slice(0, 10)}...)`
-                  : 'Bootstrapping...'}
-              </span>
-            </div>
-          </div>
-
-          {/* Action buttons if taking too long or error */}
-          {(syncTakingTooLong || syncError) && (
-            <div className="pt-2 space-y-2">
-              <button
-                type="button"
-                onClick={() => {
-                  setSyncError(null);
-                  bootstrapWorkspaceAndUser(authUser.uid, authUser.displayName || '');
-                }}
-                className="w-full min-h-[44px] rounded-xl bg-white text-zinc-950 hover:bg-zinc-200 text-xs font-semibold flex items-center justify-center gap-2 transition-colors"
-              >
-                <RotateCcw className="w-4 h-4" />
-                <span>Initialize / Repair Workspace</span>
-              </button>
-
-              <button
-                type="button"
-                onClick={() => signOut(auth)}
-                className="w-full min-h-[40px] rounded-xl bg-[#090A0F] hover:bg-white/5 border border-white/10 text-xs font-medium text-zinc-400 hover:text-white flex items-center justify-center gap-1.5 transition-colors"
-              >
-                <LogOut className="w-3.5 h-3.5" />
-                <span>Sign Out</span>
-              </button>
-            </div>
-          )}
+          <button
+            type="button"
+            onClick={handleSignOut}
+            className="w-full min-h-[40px] rounded-xl bg-[#090A0F] hover:bg-white/5 border border-white/10 text-xs font-medium text-zinc-400 hover:text-white flex items-center justify-center gap-1.5 transition-colors"
+          >
+            <LogOut className="w-3.5 h-3.5" />
+            <span>Sign Out</span>
+          </button>
         </div>
       </div>
     );
   }
 
-  // Show Step-by-Step Onboarding Questionnaire if onboarding is not completed yet (or manually opened)
+  // Onboarding Wizard for New Accounts (or Manually Triggered)
   if (!userDoc.onboardingCompleted || !workspace.onboardingCompleted || manualWizardOpen) {
     return (
       <OnboardingWizard
-        initialName={
-          userDoc.displayName ||
-          authUser.displayName?.split(' ')[0] ||
-          workspace.partner1Name
-        }
+        initialName={userDoc.displayName || workspace.partner1Name}
         initialPartnerName={workspace.partner2Name}
         initialCurrency={workspace.currency}
-        initialFitnessApp={activeProfile.fitnessApp}
+        initialFitnessApp="manual"
         pairingCode={workspace.pairingCode}
         onComplete={handleOnboardingComplete}
-        onCancel={
-          userDoc.onboardingCompleted && workspace.onboardingCompleted
-            ? () => setManualWizardOpen(false)
-            : undefined
-        }
+        onCancel={() => setManualWizardOpen(false)}
       />
     );
   }
 
+  // Active Main Dashboard
   return (
-    <div className="min-h-screen bg-[#090A0F] text-zinc-100 flex flex-col">
-      {/* Sticky Compact Top Navigation Bar (Strictly <= 15% mobile viewport height) */}
-      <header className="sticky top-0 z-30 h-14 sm:h-16 bg-[#090A0F]/90 backdrop-blur-md border-b border-white/8 px-3 sm:px-6 flex items-center justify-between gap-2 sm:gap-6">
-        {/* Zone 1: Brand Wordmark */}
+    <div className="min-h-screen bg-[#090A0F] text-zinc-100 flex flex-col font-sans selection:bg-rose-500 selection:text-white pb-20 sm:pb-8">
+      {/* Top Header */}
+      <header className="sticky top-0 z-40 bg-[#090A0F]/85 backdrop-blur-xl border-b border-white/8 px-4 sm:px-8 py-3 flex items-center justify-between gap-3">
+        {/* Brand */}
         <a
-          href="#top"
+          href="#dashboard"
           onClick={(e) => {
             e.preventDefault();
             window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -1944,7 +1186,7 @@ export default function App() {
           DuoPulse
         </a>
 
-        {/* Zone 2: Top Pilled Navbar [ Health | Skin | Fits ] - Hidden on mobile phones */}
+        {/* Top Navbar Pill: Hidden on mobile, visible on tablet/desktop */}
         <nav
           aria-label="Primary View Switcher"
           className="hidden sm:flex items-center p-1 rounded-full bg-[#12141C] border border-white/10"
@@ -2004,9 +1246,8 @@ export default function App() {
           </button>
         </nav>
 
-        {/* Zone 3: Connected Account Switcher & Actions */}
-        <div className="flex items-center gap-1 sm:gap-2 shrink-0">
-          {/* Connected Account Switcher */}
+        {/* Partner Switcher & Actions */}
+        <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
           <div className="flex items-center p-0.5 rounded-full bg-[#12141C] border border-white/10">
             <button
               type="button"
@@ -2038,17 +1279,15 @@ export default function App() {
             type="button"
             onClick={() => setIsPartnerModalOpen(true)}
             className="min-w-[36px] min-h-[36px] sm:px-3 rounded-full bg-[#12141C] hover:bg-white/10 border border-white/10 flex items-center justify-center gap-1.5 text-xs font-medium text-zinc-200 transition-colors shrink-0"
-            title="Partner Invite Code & Profile Settings"
+            title="Partner Pairing & Profile Settings"
           >
             <Users className="w-3.5 h-3.5 text-rose-400" />
-            <span className="hidden md:inline font-mono tabular-nums">
-              {workspace.pairingCode}
-            </span>
+            <span className="hidden md:inline font-mono tabular-nums">{workspace.pairingCode}</span>
           </button>
 
           <button
             type="button"
-            onClick={() => signOut(auth)}
+            onClick={handleSignOut}
             className="min-w-[36px] min-h-[36px] rounded-full bg-[#12141C] hover:bg-white/10 border border-white/10 flex items-center justify-center text-zinc-400 hover:text-white transition-colors shrink-0"
             title="Sign Out"
             aria-label="Sign Out"
@@ -2058,7 +1297,7 @@ export default function App() {
         </div>
       </header>
 
-      {/* Main Content Container with safe mobile bottom spacing */}
+      {/* Main Content Area */}
       <main className="max-w-6xl w-full mx-auto flex-1 px-3.5 sm:px-6 pt-3 sm:pt-5 pb-28 sm:pb-10">
         <AnimatePresence mode="wait">
           {activeSection === 'health' ? (
@@ -2086,7 +1325,7 @@ export default function App() {
             </motion.div>
           ) : activeSection === 'skin' ? (
             <motion.div
-              key="skin-inventory"
+              key="skin-shelf"
               initial={{ opacity: 0, y: 6 }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -6 }}
@@ -2111,7 +1350,7 @@ export default function App() {
             </motion.div>
           ) : (
             <motion.div
-              key="wardrobe-studio"
+              key="wardrobe-fits"
               initial={{ opacity: 0, y: 6 }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -6 }}
@@ -2191,7 +1430,7 @@ export default function App() {
         </div>
       </div>
 
-      {/* Partner Sync & Profile Customization Modal */}
+      {/* Partner Pairing & Workspace Customization Modal */}
       <PartnerModal
         isOpen={isPartnerModalOpen}
         onClose={() => setIsPartnerModalOpen(false)}
