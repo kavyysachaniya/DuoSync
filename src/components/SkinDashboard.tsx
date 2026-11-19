@@ -20,6 +20,8 @@ import {
   Wind,
   X,
 } from 'lucide-react';
+import { DuoDropdown } from './ui/DuoDropdown';
+import { DuoDatePicker } from './ui/DuoDatePicker';
 import {
   CareProductDoc,
   CareSegment,
@@ -1242,34 +1244,34 @@ export const SkinDashboard: React.FC<SkinDashboardProps> = ({
                   <label className="block text-xs text-zinc-400 mb-1">
                     Product Category (or type new)
                   </label>
-                  <input
-                    type="text"
-                    list="subcategory-options"
-                    maxLength={50}
-                    required
+                  <DuoDropdown
                     value={formSubCategory}
-                    onChange={(e) => setFormSubCategory(e.target.value)}
-                    placeholder="e.g. Cleanser, Moisturizer..."
-                    className="w-full min-h-[42px] bg-[#090A0F] border border-white/10 rounded-xl px-3 text-sm text-white"
+                    onChange={(val) => setFormSubCategory(val)}
+                    options={(categoriesBySegment[formSegment] || []).map((c) => ({
+                      value: c,
+                      label: c,
+                    }))}
+                    placeholder="Select or enter category..."
+                    searchable={true}
+                    allowCustom={true}
+                    onAddCustom={(newCat) => {
+                      onAddSubCategory(formSegment, newCat);
+                      setFormSubCategory(newCat);
+                    }}
                   />
-                  <datalist id="subcategory-options">
-                    {(categoriesBySegment[formSegment] || []).map((c) => (
-                      <option key={c} value={c} />
-                    ))}
-                  </datalist>
                 </div>
 
                 <div>
                   <label className="block text-xs text-zinc-400 mb-1">Whose Product?</label>
-                  <select
+                  <DuoDropdown
                     value={formProfileSlot}
-                    onChange={(e) => setFormProfileSlot(e.target.value as ProductOwnerSlot)}
-                    className="w-full min-h-[42px] bg-[#090A0F] border border-white/10 rounded-xl px-3 text-sm text-white"
-                  >
-                    <option value={profile.slot}>{profile.name}</option>
-                    <option value={partnerProfile.slot}>{partnerProfile.name}</option>
-                    <option value="shared">Shared (Both of Us)</option>
-                  </select>
+                    onChange={(val) => setFormProfileSlot(val as ProductOwnerSlot)}
+                    options={[
+                      { value: profile.slot, label: profile.name },
+                      { value: partnerProfile.slot, label: partnerProfile.name },
+                      { value: 'shared', label: 'Shared (Both of Us)' },
+                    ]}
+                  />
                 </div>
               </div>
 
@@ -1345,11 +1347,10 @@ export const SkinDashboard: React.FC<SkinDashboardProps> = ({
                     <Calendar className="w-3 h-3" />
                     <span>Ordered Date</span>
                   </label>
-                  <input
-                    type="date"
+                  <DuoDatePicker
                     value={formOrderedDate}
-                    onChange={(e) => setFormOrderedDate(e.target.value)}
-                    className="w-full min-h-[42px] bg-[#090A0F] border border-white/10 rounded-xl px-3 text-xs font-mono text-white"
+                    onChange={(val) => setFormOrderedDate(val)}
+                    placeholder="Select ordered date"
                   />
                 </div>
                 <div>
@@ -1357,11 +1358,10 @@ export const SkinDashboard: React.FC<SkinDashboardProps> = ({
                     <Calendar className="w-3 h-3" />
                     <span>Opened Date</span>
                   </label>
-                  <input
-                    type="date"
+                  <DuoDatePicker
                     value={formOpenedDate}
-                    onChange={(e) => setFormOpenedDate(e.target.value)}
-                    className="w-full min-h-[42px] bg-[#090A0F] border border-white/10 rounded-xl px-3 text-xs font-mono text-white"
+                    onChange={(val) => setFormOpenedDate(val)}
+                    placeholder="Select opened date"
                   />
                 </div>
                 <div>
@@ -1369,11 +1369,10 @@ export const SkinDashboard: React.FC<SkinDashboardProps> = ({
                     <Calendar className="w-3 h-3" />
                     <span>Expiry Date</span>
                   </label>
-                  <input
-                    type="date"
+                  <DuoDatePicker
                     value={formExpiryDate}
-                    onChange={(e) => setFormExpiryDate(e.target.value)}
-                    className="w-full min-h-[42px] bg-[#090A0F] border border-white/10 rounded-xl px-3 text-xs font-mono text-white"
+                    onChange={(val) => setFormExpiryDate(val)}
+                    placeholder="Select expiry date"
                   />
                 </div>
               </div>

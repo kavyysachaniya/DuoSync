@@ -24,6 +24,7 @@ import {
   Loader2,
 } from 'lucide-react';
 import { AnimatePresence, motion } from 'motion/react';
+import { DuoDropdown } from './ui/DuoDropdown';
 import { api } from '../services/apiClient';
 import {
   OutfitDoc,
@@ -557,34 +558,28 @@ export const WardrobeDashboard: React.FC<WardrobeDashboardProps> = ({
 
               {/* Occasion Filter */}
               <div className="sm:col-span-3">
-                <select
+                <DuoDropdown
                   value={selectedOccasionFilter}
-                  onChange={(e) => setSelectedOccasionFilter(e.target.value)}
-                  className="w-full min-h-[38px] px-3 rounded-2xl bg-zinc-900 border border-white/10 text-xs text-zinc-200 focus:outline-none focus:border-rose-400"
-                >
-                  <option value="All">All Occasions</option>
-                  {WARDROBE_OCCASIONS.map((occ) => (
-                    <option key={occ} value={occ}>
-                      {occ}
-                    </option>
-                  ))}
-                </select>
+                  onChange={(val) => setSelectedOccasionFilter(val)}
+                  options={[
+                    { value: 'All', label: 'All Occasions' },
+                    ...WARDROBE_OCCASIONS.map((occ) => ({ value: occ, label: occ })),
+                  ]}
+                  triggerClassName="!min-h-[38px] !text-xs !rounded-2xl"
+                />
               </div>
 
               {/* Color Filter */}
               <div className="sm:col-span-2">
-                <select
+                <DuoDropdown
                   value={selectedColorFilter}
-                  onChange={(e) => setSelectedColorFilter(e.target.value)}
-                  className="w-full min-h-[38px] px-3 rounded-2xl bg-zinc-900 border border-white/10 text-xs text-zinc-200 focus:outline-none focus:border-rose-400"
-                >
-                  <option value="All">All Colors</option>
-                  {PRESET_COLORS.map((c) => (
-                    <option key={c.name} value={c.name}>
-                      {c.name}
-                    </option>
-                  ))}
-                </select>
+                  onChange={(val) => setSelectedColorFilter(val)}
+                  options={[
+                    { value: 'All', label: 'All Colors' },
+                    ...PRESET_COLORS.map((c) => ({ value: c.name, label: c.name })),
+                  ]}
+                  triggerClassName="!min-h-[38px] !text-xs !rounded-2xl"
+                />
               </div>
 
               {/* Profile Ownership Toggle */}
@@ -1227,17 +1222,12 @@ export const WardrobeDashboard: React.FC<WardrobeDashboardProps> = ({
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                   <div className="space-y-1.5">
                     <label className="text-xs font-semibold text-zinc-300">Category *</label>
-                    <select
+                    <DuoDropdown
                       value={formCategory}
-                      onChange={(e) => setFormCategory(e.target.value as WardrobeCategory)}
-                      className="w-full min-h-[42px] px-3.5 rounded-2xl bg-zinc-900 border border-white/10 text-xs text-zinc-200 focus:outline-none focus:border-rose-400"
-                    >
-                      {WARDROBE_CATEGORIES.map((cat) => (
-                        <option key={cat} value={cat}>
-                          {cat}
-                        </option>
-                      ))}
-                    </select>
+                      onChange={(val) => setFormCategory(val as WardrobeCategory)}
+                      options={WARDROBE_CATEGORIES.map((cat) => ({ value: cat, label: cat }))}
+                      searchable={true}
+                    />
                   </div>
 
                   <div className="space-y-1.5">
@@ -1281,32 +1271,20 @@ export const WardrobeDashboard: React.FC<WardrobeDashboardProps> = ({
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                   <div className="space-y-1.5">
                     <label className="text-xs font-semibold text-zinc-300">Occasion</label>
-                    <select
+                    <DuoDropdown
                       value={formOccasion}
-                      onChange={(e) => setFormOccasion(e.target.value as WardrobeOccasion)}
-                      className="w-full min-h-[42px] px-3.5 rounded-2xl bg-zinc-900 border border-white/10 text-xs text-zinc-200 focus:outline-none focus:border-rose-400"
-                    >
-                      {WARDROBE_OCCASIONS.map((occ) => (
-                        <option key={occ} value={occ}>
-                          {occ}
-                        </option>
-                      ))}
-                    </select>
+                      onChange={(val) => setFormOccasion(val as WardrobeOccasion)}
+                      options={WARDROBE_OCCASIONS.map((occ) => ({ value: occ, label: occ }))}
+                    />
                   </div>
 
                   <div className="space-y-1.5">
                     <label className="text-xs font-semibold text-zinc-300">Season</label>
-                    <select
+                    <DuoDropdown
                       value={formSeason}
-                      onChange={(e) => setFormSeason(e.target.value as WardrobeSeason)}
-                      className="w-full min-h-[42px] px-3.5 rounded-2xl bg-zinc-900 border border-white/10 text-xs text-zinc-200 focus:outline-none focus:border-rose-400"
-                    >
-                      {WARDROBE_SEASONS.map((s) => (
-                        <option key={s} value={s}>
-                          {s}
-                        </option>
-                      ))}
-                    </select>
+                      onChange={(val) => setFormSeason(val as WardrobeSeason)}
+                      options={WARDROBE_SEASONS.map((s) => ({ value: s, label: s }))}
+                    />
                   </div>
                 </div>
 

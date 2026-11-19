@@ -22,6 +22,7 @@ import {
   PartnerProfileView,
 } from '../types';
 import { CircularProgressRing } from './CircularProgressRing';
+import { DuoDatePicker } from './ui/DuoDatePicker';
 
 interface HealthDashboardProps {
   profile: PartnerProfileView;
@@ -396,20 +397,31 @@ export const HealthDashboard: React.FC<HealthDashboardProps> = ({
 
       {/* Horizontal Date Selector Scroller + Today's Live Circular Rings Strip */}
       <div className="rounded-3xl bg-[#12141C] border border-white/8 p-4 sm:p-5 space-y-4">
-        <div className="flex items-center justify-between gap-2">
+        <div className="flex flex-wrap items-center justify-between gap-2">
           <div className="flex items-center gap-2 text-xs font-medium text-zinc-300">
             <Calendar className="w-4 h-4 text-zinc-400" />
             <span>Select Log Date</span>
           </div>
-          {selectedDate !== todayDate && (
-            <button
-              type="button"
-              onClick={() => onSelectDate(todayDate)}
-              className="min-h-[34px] px-3 py-1 rounded-xl bg-rose-500/15 border border-rose-500/30 text-xs font-medium text-rose-300 hover:bg-rose-500/25 transition-colors whitespace-nowrap"
-            >
-              Jump to Today
-            </button>
-          )}
+          <div className="flex items-center gap-2">
+            <div className="w-36">
+              <DuoDatePicker
+                value={selectedDate}
+                onChange={(val) => {
+                  if (val) onSelectDate(val);
+                }}
+                placeholder="Pick date..."
+              />
+            </div>
+            {selectedDate !== todayDate && (
+              <button
+                type="button"
+                onClick={() => onSelectDate(todayDate)}
+                className="min-h-[34px] px-3 py-1 rounded-xl bg-rose-500/15 border border-rose-500/30 text-xs font-medium text-rose-300 hover:bg-rose-500/25 transition-colors whitespace-nowrap"
+              >
+                Jump to Today
+              </button>
+            )}
+          </div>
         </div>
 
         <div className="flex items-center gap-1.5 sm:gap-2 overflow-x-auto no-scrollbar pb-1 -mx-1 px-1">
