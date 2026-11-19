@@ -24,19 +24,19 @@ async function initNeonDb() {
 
   const schemaSql = fs.readFileSync(schemaPath, 'utf-8');
 
-  // Strip comments and split by statement
-  // Neon serverless HTTP driver executes queries statement by statement
-  const statements = schemaSql
-    .split(/;\s*$/m)
+  // Strip SQL comments first so statements starting with comments are not ignored
+  const cleanSql = schemaSql.replace(/--.*$/gm, '');
+  const statements = cleanSql
+    .split(';')
     .map((s) => s.trim())
-    .filter((s) => s.length > 0 && !s.startsWith('--'));
+    .filter((s) => s.length > 0);
 
   console.log(`📋 Executing ${statements.length} schema statements...`);
 
   for (let i = 0; i < statements.length; i++) {
     const stmt = statements[i];
     try {
-      await (sql as any)(stmt);
+      await (sql as any).query(stmt);
       console.log(`  ✓ Statement ${i + 1}/${statements.length} applied`);
     } catch (err: unknown) {
       console.error(`  ⚠️ Statement ${i + 1} notice/error:`, err instanceof Error ? err.message : err);

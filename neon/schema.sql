@@ -35,19 +35,8 @@ CREATE TABLE IF NOT EXISTS public.workspaces (
   updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 
--- Add foreign key constraint to users.workspace_id now that workspaces table exists
-DO $$
-BEGIN
-  IF NOT EXISTS (
-    SELECT 1 FROM pg_constraint WHERE conname = 'fk_users_workspace'
-  ) THEN
-    ALTER TABLE public.users
-      ADD CONSTRAINT fk_users_workspace
-      FOREIGN KEY (workspace_id)
-      REFERENCES public.workspaces(id)
-      ON DELETE SET NULL;
-  END IF;
-END $$;
+ALTER TABLE public.users DROP CONSTRAINT IF EXISTS fk_users_workspace;
+ALTER TABLE public.users ADD CONSTRAINT fk_users_workspace FOREIGN KEY (workspace_id) REFERENCES public.workspaces(id) ON DELETE SET NULL;
 
 CREATE INDEX IF NOT EXISTS idx_users_workspace_id ON public.users(workspace_id);
 CREATE INDEX IF NOT EXISTS idx_workspaces_owner ON public.workspaces(owner_id);
