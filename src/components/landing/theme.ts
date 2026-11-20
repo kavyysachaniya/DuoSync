@@ -1,12 +1,15 @@
 /**
  * DuoSync Landing Page Unified Theme System
  *
- * Strict Rule: Only these tokens are used across the landing experience.
- * No hardcoded arbitrary colors, green, teal, mint, or off-palette blues.
+ * Ring colors strictly matched with the in-app health vitals:
+ * Steps: Emerald (#10B981)
+ * Weight: Rose (#F43F5E)
+ * Sleep: Indigo (#818CF8)
+ * Water: Sky (#38BDF8)
  */
 
 export const THEME = {
-  // Base Surface & Typography
+  // Base Surface & Typography (Monochromatic Minimal Base)
   bg: '#07070A',
   surface: '#0E0E13',
   border: 'rgba(255, 255, 255, 0.08)',
@@ -15,54 +18,45 @@ export const THEME = {
   textDim: 'rgba(245, 245, 247, 0.6)',
   textFaint: 'rgba(245, 245, 247, 0.15)',
 
-  // Partner A (Warm)
-  rose: '#FF5C8A',
-  amber: '#FFB86B',
+  // Partner Accents (Minimal Clean Palette)
+  partnerA: '#F43F5E', // Rose
+  partnerB: '#38BDF8', // Sky
 
-  // Partner B (Cool)
-  sky: '#5CB8FF',
-  violet: '#8B7CFF',
-
-  // Concentric Rings: Base + Lighter Tint Gradients
+  // Concentric Rings: Matched with in-app health dashboard
   rings: {
     steps: {
       name: 'Steps',
-      base: '#FF5C8A',
-      tint: '#FFA6BF',
+      base: '#10B981',
+      tint: '#34D399',
       targetPct: 84,
       targetValue: '10,480',
       unit: 'steps',
     },
     weight: {
       name: 'Weight',
-      base: '#FFB86B',
-      tint: '#FFD7A8',
+      base: '#F43F5E',
+      tint: '#FB7185',
       targetPct: 92,
       targetValue: '62.4',
       unit: 'kg',
     },
-    water: {
-      name: 'Water',
-      base: '#5CB8FF',
-      tint: '#A3D7FF',
-      targetPct: 76,
-      targetValue: '2.4',
-      unit: 'L',
-    },
     sleep: {
       name: 'Sleep',
-      base: '#8B7CFF',
-      tint: '#BCB3FF',
+      base: '#818CF8',
+      tint: '#A5B4FC',
       targetPct: 88,
       targetValue: '7h 45m',
       unit: 'sleep',
     },
+    water: {
+      name: 'Water',
+      base: '#38BDF8',
+      tint: '#7DD3FC',
+      targetPct: 76,
+      targetValue: '2.4',
+      unit: 'L',
+    },
   },
-
-  // Primary Gradient Preset
-  primaryGradient: 'linear-gradient(135deg, #FF5C8A 0%, #FFB86B 100%)',
-  partnerAGradient: 'linear-gradient(135deg, #FF5C8A 0%, #FFB86B 100%)',
-  partnerBGradient: 'linear-gradient(135deg, #5CB8FF 0%, #8B7CFF 100%)',
 } as const;
 
 export type ThemeType = typeof THEME;

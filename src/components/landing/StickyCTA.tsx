@@ -30,7 +30,7 @@ export const StickyCTA: React.FC<StickyCTAProps> = ({
             type="button"
             onClick={onGetStarted}
             whileTap={shouldReduceMotion ? {} : { scale: 0.97 }}
-            className="h-11 min-h-[44px] px-6 rounded-full bg-gradient-to-r from-[#FF5C8A] to-[#FFB86B] text-zinc-950 font-medium text-xs flex items-center justify-center shadow-lg shadow-[#FF5C8A]/25 active:scale-95 cursor-pointer shrink-0"
+            className="h-11 min-h-[44px] px-6 rounded-full bg-white text-zinc-950 font-medium text-xs flex items-center justify-center shadow-lg shadow-white/10 hover:bg-white/90 active:scale-95 cursor-pointer shrink-0"
           >
             Get started
           </motion.button>

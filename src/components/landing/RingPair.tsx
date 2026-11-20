@@ -51,24 +51,24 @@ export const RingPair: React.FC<RingPairProps> = ({ className = '' }) => {
           xmlns="http://www.w3.org/2000/svg"
         >
           <defs>
-            {/* Primary Accent Gradient: Rose (#FF5C8A) to Amber (#FFB86B) */}
+            {/* Primary Accent Gradient: Rose (#F43F5E) to Soft Pink (#FDA4AF) */}
             <linearGradient id="roseAmberGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-              <stop offset="0%" stopColor="#FF5C8A" />
-              <stop offset="100%" stopColor="#FFB86B" />
+              <stop offset="0%" stopColor="#F43F5E" />
+              <stop offset="100%" stopColor="#FDA4AF" />
             </linearGradient>
 
-            {/* Secondary Partner Gradient: Violet (#A78BFA) to Sky (#38BDF8) */}
+            {/* Secondary Partner Gradient: Sky (#38BDF8) to Soft Sky (#BAE6FD) */}
             <linearGradient id="violetSkyGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-              <stop offset="0%" stopColor="#A78BFA" />
-              <stop offset="100%" stopColor="#38BDF8" />
+              <stop offset="0%" stopColor="#38BDF8" />
+              <stop offset="100%" stopColor="#BAE6FD" />
             </linearGradient>
 
             {/* Subtle glow filters */}
             <filter id="ringGlowRose" x="-20%" y="-20%" width="140%" height="140%">
-              <feDropShadow dx="0" dy="0" stdDeviation="5" floodColor="#FF5C8A" floodOpacity="0.35" />
+              <feDropShadow dx="0" dy="0" stdDeviation="5" floodColor="#F43F5E" floodOpacity="0.35" />
             </filter>
             <filter id="ringGlowViolet" x="-20%" y="-20%" width="140%" height="140%">
-              <feDropShadow dx="0" dy="0" stdDeviation="5" floodColor="#A78BFA" floodOpacity="0.35" />
+              <feDropShadow dx="0" dy="0" stdDeviation="5" floodColor="#38BDF8" floodOpacity="0.35" />
             </filter>
             <filter id="dotGlow" x="-50%" y="-50%" width="200%" height="200%">
               <feDropShadow dx="0" dy="0" stdDeviation="3" floodColor="#FFFFFF" floodOpacity="0.8" />
@@ -105,12 +105,12 @@ export const RingPair: React.FC<RingPairProps> = ({ className = '' }) => {
 
           {/* LEFT RING (Partner 1) - Center (115, 100) */}
           <g transform="rotate(-90 115 100)">
-            {/* Background Track */}
+            {/* Background Track at 8% white */}
             <circle
               cx="115"
               cy="100"
               r={radius}
-              stroke="rgba(255, 255, 255, 0.06)"
+              stroke="rgba(255, 255, 255, 0.08)"
               strokeWidth={strokeWidth}
               fill="none"
             />
@@ -137,12 +137,12 @@ export const RingPair: React.FC<RingPairProps> = ({ className = '' }) => {
 
           {/* RIGHT RING (Partner 2) - Center (205, 100) */}
           <g transform="rotate(-90 205 100)">
-            {/* Background Track */}
+            {/* Background Track at 8% white */}
             <circle
               cx="205"
               cy="100"
               r={radius}
-              stroke="rgba(255, 255, 255, 0.06)"
+              stroke="rgba(255, 255, 255, 0.08)"
               strokeWidth={strokeWidth}
               fill="none"
             />
@@ -168,8 +168,8 @@ export const RingPair: React.FC<RingPairProps> = ({ className = '' }) => {
           </g>
 
           {/* Minimal Ring Center Accents */}
-          <circle cx="115" cy="100" r="3" fill="#FF5C8A" opacity="0.8" />
-          <circle cx="205" cy="100" r="3" fill="#38BDF8" opacity="0.8" />
+          <circle cx="115" cy="100" r="3" fill="#F43F5E" opacity="0.9" />
+          <circle cx="205" cy="100" r="3" fill="#38BDF8" opacity="0.9" />
         </svg>
       </motion.div>
     </div>

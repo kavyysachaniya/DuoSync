@@ -2,8 +2,6 @@ import React, { useRef, useState } from 'react';
 import {
   motion,
   AnimatePresence,
-  useScroll,
-  useTransform,
   useInView,
   useReducedMotion,
 } from 'motion/react';
@@ -11,9 +9,10 @@ import { X } from 'lucide-react';
 import { AuthResponse } from '../../services/apiClient';
 import { AuthCard } from '../AuthCard';
 import { Hero } from './Hero';
-import { FeatureCarousel } from './FeatureCarousel';
+import { FeatureChapters } from './FeatureChapters';
 import { SyncSection } from './SyncSection';
 import { StickyCTA } from './StickyCTA';
+import { Aurora } from './Aurora';
 
 interface LandingPageProps {
   onAuthSuccess: (res: AuthResponse) => void;
@@ -28,11 +27,6 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onAuthSuccess }) => {
     amount: 0.15,
   });
 
-  // Background Parallax Drift
-  const { scrollY } = useScroll();
-  const glowY1 = useTransform(scrollY, [0, 1000], [0, 180]);
-  const glowY2 = useTransform(scrollY, [0, 1000], [0, -140]);
-
   // Auth Modal State
   const [authModalOpen, setAuthModalOpen] = useState(false);
   const [authMode, setAuthMode] = useState<'signin' | 'signup'>('signup');
@@ -43,35 +37,18 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onAuthSuccess }) => {
   };
 
   return (
-    <div className="relative min-h-screen bg-[#07070A] text-zinc-100 selection:bg-[#FF5C8A]/30 selection:text-white overflow-x-hidden font-sans">
-      {/* Soft Ambient Radial Glow (Rose + Violet, 8-12% opacity drifting slowly) */}
+    <div className="relative min-h-screen bg-[#07070A] text-zinc-100 selection:bg-white/20 selection:text-white overflow-x-clip font-sans snap-y snap-proximity">
+      {/* Minimal Ethereal Aurora Background from React Bits (Clean, non-rainbow silver/white light) */}
       <div className="fixed inset-0 pointer-events-none overflow-hidden z-0">
-        <motion.div
-          style={{ y: shouldReduceMotion ? 0 : glowY1 }}
-          animate={
-            shouldReduceMotion
-              ? {}
-              : {
-                  x: [0, 24, 0],
-                  scale: [1, 1.08, 1],
-                }
-          }
-          transition={{ repeat: Infinity, duration: 14, ease: 'easeInOut' }}
-          className="absolute -top-[15%] -left-[20%] w-[380px] sm:w-[480px] h-[380px] sm:h-[480px] rounded-full bg-[#FF5C8A] opacity-[0.09] blur-[110px]"
-        />
-
-        <motion.div
-          style={{ y: shouldReduceMotion ? 0 : glowY2 }}
-          animate={
-            shouldReduceMotion
-              ? {}
-              : {
-                  x: [0, -20, 0],
-                  scale: [1, 1.1, 1],
-                }
-          }
-          transition={{ repeat: Infinity, duration: 18, ease: 'easeInOut' }}
-          className="absolute top-[40%] -right-[25%] w-[340px] sm:w-[440px] h-[340px] sm:h-[440px] rounded-full bg-[#A78BFA] opacity-[0.11] blur-[120px]"
+        <Aurora
+          colorStops={['#ffffff', '#9aa0ad', '#ffffff']}
+          amplitude={0.9}
+          blend={0.5}
+          height={0.48}
+          speed={0.8}
+          glow={0.7}
+          brightness={0.75}
+          opacity={0.32}
         />
       </div>
 
@@ -86,9 +63,9 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onAuthSuccess }) => {
           />
         </div>
 
-        {/* 2. FEATURE SHOWCASE CAROUSEL */}
-        <div className="w-full pt-4 pb-8">
-          <FeatureCarousel />
+        {/* 2. FEATURE CHAPTERS (Vertical Scroll Reveal) */}
+        <div className="w-full">
+          <FeatureChapters />
         </div>
 
         {/* 3. SYNC MOMENT SECTION */}
@@ -117,7 +94,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onAuthSuccess }) => {
                 type="button"
                 onClick={() => openAuth('signup')}
                 whileTap={shouldReduceMotion ? {} : { scale: 0.97 }}
-                className="w-full h-12 min-h-[48px] rounded-full bg-gradient-to-r from-[#FF5C8A] to-[#FFB86B] text-zinc-950 font-medium text-sm flex items-center justify-center transition-shadow shadow-lg shadow-[#FF5C8A]/20 hover:shadow-[#FF5C8A]/35 active:scale-[0.97] cursor-pointer"
+                className="w-full h-12 min-h-[48px] rounded-full bg-white text-zinc-950 font-medium text-sm flex items-center justify-center transition-all shadow-lg shadow-white/10 hover:bg-white/90 active:scale-[0.97] cursor-pointer"
               >
                 Get started
               </motion.button>
@@ -125,7 +102,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onAuthSuccess }) => {
           </motion.div>
 
           <footer className="pt-6 border-t border-white/[0.06] flex items-center justify-between text-xs text-white/40">
-            <span className="font-medium text-white/60">DuoPulse</span>
+            <span className="font-medium text-white/60">DuoSync</span>
             <span>Shared vitals & routines</span>
           </footer>
         </section>
@@ -151,7 +128,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onAuthSuccess }) => {
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.96, y: 16 }}
               transition={{ duration: 0.22, ease: [0.22, 1, 0.36, 1] }}
-              className="relative w-full max-w-sm rounded-[28px] bg-[#101016] border border-white/[0.12] shadow-2xl p-4 sm:p-5 my-auto"
+              className="relative w-full max-w-sm rounded-[28px] bg-[#0E0E13] border border-white/[0.08] shadow-2xl p-4 sm:p-5 my-auto"
             >
               {/* Close Button */}
               <div className="flex items-center justify-end pb-1">

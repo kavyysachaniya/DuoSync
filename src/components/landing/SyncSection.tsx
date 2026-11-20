@@ -10,51 +10,49 @@ export const SyncSection: React.FC = () => {
     offset: ['start end', 'end start'],
   });
 
-  // Scroll-linked mirroring motion: Left rises, Right descends
-  const phone1Y = useTransform(scrollYProgress, [0, 1], [24, -24]);
-  const phone2Y = useTransform(scrollYProgress, [0, 1], [-24, 24]);
-  const ringRotate1 = useTransform(scrollYProgress, [0, 1], [0, 120]);
-  const ringRotate2 = useTransform(scrollYProgress, [0, 1], [120, 0]);
+  // Harmonious, synchronized levitation together
+  const phoneY = useTransform(scrollYProgress, [0, 0.5, 1], [14, 0, -14]);
 
   return (
     <section
       ref={sectionRef}
-      className="relative w-full max-w-[390px] mx-auto py-12 px-6 overflow-hidden flex flex-col items-center justify-center space-y-8"
+      className="relative w-full max-w-[390px] mx-auto py-16 px-4 overflow-hidden flex flex-col items-center justify-center space-y-8 select-none"
     >
-      {/* Single Phrase Headline */}
+      {/* Headline & Subtitle */}
       <motion.div
-        initial={{ opacity: 0, y: 12 }}
+        initial={{ opacity: 0, y: 14 }}
         whileInView={{ opacity: 1, y: 0 }}
         viewport={{ once: true, margin: '-40px' }}
         transition={{ duration: 0.7, ease: [0.22, 1, 0.36, 1] }}
-        className="text-center"
+        className="text-center space-y-2"
       >
         <h2 className="text-2xl sm:text-3xl font-light tracking-[-0.03em] text-white">
           Two phones. One rhythm.
         </h2>
+        <p className="text-[14px] text-white/60 font-normal">
+          Live partner sync every second of the day.
+        </p>
       </motion.div>
 
-      {/* Two Mirroring Phone Silhouettes */}
-      <div className="relative w-full max-w-[300px] h-[240px] flex items-center justify-center gap-3">
-        {/* Sync connecting beam */}
-        <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-          <div className="w-24 h-px bg-gradient-to-r from-[#FF5C8A]/40 via-white/30 to-[#38BDF8]/40" />
-        </div>
+      {/* Two Harmoniously Aligned Phone Silhouettes with Bridge Between */}
+      <motion.div
+        style={{ y: shouldReduceMotion ? 0 : phoneY }}
+        className="relative w-full max-w-[340px] flex items-center justify-center select-none"
+      >
+        {/* PHONE 1 (Partner 1 / Kavy) */}
+        <div className="w-[128px] sm:w-[136px] h-[220px] rounded-[24px] bg-[#0E0E13] border border-white/[0.12] backdrop-blur-xl p-2.5 flex flex-col justify-between shadow-2xl relative shrink-0">
+          {/* Top Notch + Label */}
+          <div className="flex flex-col items-center gap-1">
+            <div className="w-7 h-1.5 rounded-full bg-white/20" />
+            <div className="flex items-center gap-1">
+              <span className="w-1.5 h-1.5 rounded-full bg-[#FF5C8A]" />
+              <span className="text-[9px] font-medium text-white/70">Kavy</span>
+            </div>
+          </div>
 
-        {/* PHONE 1 (Partner 1) */}
-        <motion.div
-          style={{ y: shouldReduceMotion ? 0 : phone1Y }}
-          className="w-[126px] h-[216px] rounded-[26px] bg-[#0E0F17]/95 border border-white/[0.12] backdrop-blur-xl p-2.5 flex flex-col justify-between shadow-2xl relative select-none"
-        >
-          {/* Dynamic Island / Notch */}
-          <div className="w-8 h-1.5 rounded-full bg-white/20 mx-auto" />
-
-          {/* Activity Ring (Rose) */}
-          <div className="flex-1 flex flex-col items-center justify-center">
-            <motion.div
-              style={{ rotate: shouldReduceMotion ? 0 : ringRotate1 }}
-              className="relative w-16 h-16 flex items-center justify-center"
-            >
+          {/* Activity Ring (Rose to Amber) */}
+          <div className="flex-1 flex flex-col items-center justify-center my-auto">
+            <div className="relative w-16 h-16 flex items-center justify-center">
               <svg viewBox="0 0 64 64" className="w-full h-full -rotate-90">
                 <circle
                   cx="32"
@@ -72,40 +70,63 @@ export const SyncSection: React.FC = () => {
                   strokeWidth="5"
                   strokeLinecap="round"
                   strokeDasharray={2 * Math.PI * 24}
-                  strokeDashoffset={2 * Math.PI * 24 * 0.22}
+                  strokeDashoffset={2 * Math.PI * 24 * 0.18}
                   fill="none"
                 />
                 <defs>
                   <linearGradient id="syncRose" x1="0%" y1="0%" x2="100%" y2="100%">
-                    <stop offset="0%" stopColor="#FF5C8A" />
-                    <stop offset="100%" stopColor="#FFB86B" />
+                    <stop offset="0%" stopColor="#F43F5E" />
+                    <stop offset="100%" stopColor="#FDA4AF" />
                   </linearGradient>
                 </defs>
               </svg>
-              <span className="absolute text-[10px] font-mono text-white/80 font-bold">
+              <span className="absolute text-[10px] font-mono text-white/90 font-bold">
                 82%
               </span>
-            </motion.div>
+            </div>
+            <span className="text-[9px] font-mono text-white/45 mt-1">10,480 steps</span>
           </div>
 
           {/* Bottom Home Indicator */}
           <div className="w-10 h-1 rounded-full bg-white/25 mx-auto" />
-        </motion.div>
+        </div>
 
-        {/* PHONE 2 (Partner 2) */}
-        <motion.div
-          style={{ y: shouldReduceMotion ? 0 : phone2Y }}
-          className="w-[126px] h-[216px] rounded-[26px] bg-[#0E0F17]/95 border border-white/[0.12] backdrop-blur-xl p-2.5 flex flex-col justify-between shadow-2xl relative select-none"
-        >
-          {/* Dynamic Island / Notch */}
-          <div className="w-8 h-1.5 rounded-full bg-white/20 mx-auto" />
+        {/* Sync Laser Bridge ONLY in the gap between the phones */}
+        <div className="relative w-8 sm:w-12 h-6 flex items-center justify-center shrink-0">
+          {/* Connecting Laser Line */}
+          <div className="w-full h-[1.5px] bg-gradient-to-r from-[#F43F5E] via-white to-[#38BDF8] shadow-[0_0_8px_rgba(255,255,255,0.7)]" />
 
-          {/* Activity Ring (Sky / Violet) */}
-          <div className="flex-1 flex flex-col items-center justify-center">
+          {/* Traveling Sync Pulse Dot */}
+          {!shouldReduceMotion && (
             <motion.div
-              style={{ rotate: shouldReduceMotion ? 0 : ringRotate2 }}
-              className="relative w-16 h-16 flex items-center justify-center"
-            >
+              animate={{
+                x: [-12, 12, -12],
+                opacity: [0.7, 1, 0.7],
+              }}
+              transition={{
+                repeat: Infinity,
+                duration: 2.2,
+                ease: 'easeInOut',
+              }}
+              className="absolute w-2 h-2 rounded-full bg-white shadow-[0_0_8px_white]"
+            />
+          )}
+        </div>
+
+        {/* PHONE 2 (Partner 2 / Sneha) */}
+        <div className="w-[128px] sm:w-[136px] h-[220px] rounded-[24px] bg-[#0E0E13] border border-white/[0.12] backdrop-blur-xl p-2.5 flex flex-col justify-between shadow-2xl relative shrink-0">
+          {/* Top Notch + Label */}
+          <div className="flex flex-col items-center gap-1">
+            <div className="w-7 h-1.5 rounded-full bg-white/20" />
+            <div className="flex items-center gap-1">
+              <span className="w-1.5 h-1.5 rounded-full bg-[#38BDF8]" />
+              <span className="text-[9px] font-medium text-white/70">Sneha</span>
+            </div>
+          </div>
+
+          {/* Activity Ring (Sky / Indigo) */}
+          <div className="flex-1 flex flex-col items-center justify-center my-auto">
+            <div className="relative w-16 h-16 flex items-center justify-center">
               <svg viewBox="0 0 64 64" className="w-full h-full -rotate-90">
                 <circle
                   cx="32"
@@ -123,26 +144,27 @@ export const SyncSection: React.FC = () => {
                   strokeWidth="5"
                   strokeLinecap="round"
                   strokeDasharray={2 * Math.PI * 24}
-                  strokeDashoffset={2 * Math.PI * 24 * 0.28}
+                  strokeDashoffset={2 * Math.PI * 24 * 0.26}
                   fill="none"
                 />
                 <defs>
                   <linearGradient id="syncSky" x1="0%" y1="0%" x2="100%" y2="100%">
                     <stop offset="0%" stopColor="#38BDF8" />
-                    <stop offset="100%" stopColor="#A78BFA" />
+                    <stop offset="100%" stopColor="#818CF8" />
                   </linearGradient>
                 </defs>
               </svg>
-              <span className="absolute text-[10px] font-mono text-white/80 font-bold">
+              <span className="absolute text-[10px] font-mono text-white/90 font-bold">
                 74%
               </span>
-            </motion.div>
+            </div>
+            <span className="text-[9px] font-mono text-white/45 mt-1">9,820 steps</span>
           </div>
 
           {/* Bottom Home Indicator */}
           <div className="w-10 h-1 rounded-full bg-white/25 mx-auto" />
-        </motion.div>
-      </div>
+        </div>
+      </motion.div>
     </section>
   );
 };
