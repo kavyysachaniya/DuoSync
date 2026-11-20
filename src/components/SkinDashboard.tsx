@@ -24,6 +24,7 @@ import {
   ItemCard,
   EmptyState,
 } from './shared';
+import { DuoDatePicker } from './ui/DuoDatePicker';
 import {
   CareProductDoc,
   CareSegment,
@@ -1126,18 +1127,19 @@ export const SkinDashboard: React.FC<SkinDashboardProps> = ({
             role="dialog"
             aria-modal="true"
             aria-label="Add or Edit Product"
-            className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/85 backdrop-blur-md p-0 sm:p-4"
+            className="fixed inset-0 z-50 flex items-center justify-center bg-black/85 sm:backdrop-blur-md p-0 sm:p-4"
           >
             <motion.div
-              initial={{ opacity: 0, scale: 0.96, y: 16 }}
+              initial={{ opacity: 0, scale: 0.98, y: 16 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
-              exit={{ opacity: 0, scale: 0.96, y: 16 }}
-              className="w-full sm:max-w-lg max-h-[92dvh] flex flex-col rounded-t-3xl sm:rounded-3xl bg-[#0A0A0F] border border-white/10 text-zinc-100 shadow-2xl overflow-hidden"
+              exit={{ opacity: 0, scale: 0.98, y: 16 }}
+              transition={{ duration: 0.18, ease: [0.16, 1, 0.3, 1] }}
+              className="w-full h-full sm:h-auto sm:max-w-xl sm:max-h-[90dvh] flex flex-col rounded-none sm:rounded-3xl bg-[#0A0A0F] sm:border sm:border-white/10 text-zinc-100 shadow-2xl overflow-hidden"
             >
               {/* Modal Header */}
-              <div className="shrink-0 p-4 sm:p-5 pb-3 border-b border-white/10 flex items-center justify-between">
+              <div className="shrink-0 p-4 sm:p-5 border-b border-white/10 bg-[#0A0A0F]/95 backdrop-blur-md flex items-center justify-between z-10 pt-[max(0.85rem,env(safe-area-inset-top,0px))]">
                 <div>
-                  <h3 className="text-base font-bold text-white">
+                  <h3 className="text-base sm:text-lg font-bold text-white font-display">
                     {editingProductId ? 'Edit Routine Product' : 'Add Routine Product'}
                   </h3>
                   <p className="text-xs text-zinc-400">
@@ -1155,8 +1157,8 @@ export const SkinDashboard: React.FC<SkinDashboardProps> = ({
               </div>
 
               {/* Form Body */}
-              <form onSubmit={handleSaveProductSubmit} className="flex-1 flex flex-col min-h-0 overflow-hidden">
-                <div className="overflow-y-auto overscroll-contain flex-1 p-4 sm:p-5 space-y-4 no-scrollbar">
+              <form onSubmit={handleSaveProductSubmit} autoComplete="off" className="flex-1 flex flex-col min-h-0 overflow-hidden">
+                <div className="overflow-y-auto overscroll-contain flex-1 p-4 sm:p-6 space-y-5 pb-36 no-scrollbar">
                   {/* Dedicated 1:1 Product Photo Upload & Preview Card */}
                   <div className="p-3.5 rounded-2xl bg-black border border-white/10 space-y-3">
                     <div className="flex items-center justify-between">
@@ -1417,6 +1419,8 @@ export const SkinDashboard: React.FC<SkinDashboardProps> = ({
                       <label className="block text-xs font-semibold text-zinc-300">Price Paid ({currency})</label>
                       <input
                         type="number"
+                        inputMode="decimal"
+                        autoComplete="off"
                         min="0"
                         step="0.01"
                         placeholder="0.00"
@@ -1429,6 +1433,8 @@ export const SkinDashboard: React.FC<SkinDashboardProps> = ({
                       <label className="block text-xs font-semibold text-zinc-300">MRP / Orig ({currency})</label>
                       <input
                         type="number"
+                        inputMode="decimal"
+                        autoComplete="off"
                         min="0"
                         step="0.01"
                         placeholder="0.00"
@@ -1441,6 +1447,8 @@ export const SkinDashboard: React.FC<SkinDashboardProps> = ({
                       <label className="block text-xs font-semibold text-zinc-300">Quantity</label>
                       <input
                         type="number"
+                        inputMode="numeric"
+                        autoComplete="off"
                         min="1"
                         max="99"
                         value={formQuantity}
@@ -1450,33 +1458,37 @@ export const SkinDashboard: React.FC<SkinDashboardProps> = ({
                     </div>
                   </div>
 
-                  {/* Dates (Ordered, Opened, Expiry) */}
-                  <div className="grid grid-cols-3 gap-2.5">
-                    <div className="space-y-1">
-                      <label className="block text-[11px] font-semibold text-zinc-300">Purchased</label>
-                      <input
-                        type="date"
+                  {/* Routine Dates (Purchased, Opened, Expiry via Custom DuoDatePicker) */}
+                  <div className="space-y-2">
+                    <div className="flex items-center justify-between">
+                      <label className="text-xs font-semibold text-zinc-200 flex items-center gap-1.5">
+                        <Calendar className="w-3.5 h-3.5 text-rose-400" />
+                        <span>Routine Dates (Optional)</span>
+                      </label>
+                      <span className="text-[10px] text-zinc-500 font-mono">Custom Calendar</span>
+                    </div>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
+                      <DuoDatePicker
+                        label="Purchased Date"
                         value={formOrderedDate}
-                        onChange={(e) => setFormOrderedDate(e.target.value)}
-                        className="w-full min-h-[44px] bg-black border border-white/10 rounded-2xl px-2 text-xs font-mono text-white focus:outline-none focus:border-rose-400"
+                        onChange={setFormOrderedDate}
+                        placeholder="Select date..."
+                        align="left"
                       />
-                    </div>
-                    <div className="space-y-1">
-                      <label className="block text-[11px] font-semibold text-zinc-300">Opened</label>
-                      <input
-                        type="date"
+                      <DuoDatePicker
+                        label="Opened Date"
                         value={formOpenedDate}
-                        onChange={(e) => setFormOpenedDate(e.target.value)}
-                        className="w-full min-h-[44px] bg-black border border-white/10 rounded-2xl px-2 text-xs font-mono text-white focus:outline-none focus:border-rose-400"
+                        onChange={setFormOpenedDate}
+                        placeholder="Select date..."
+                        align="left"
                       />
-                    </div>
-                    <div className="space-y-1">
-                      <label className="block text-[11px] font-semibold text-zinc-300">Expiry</label>
-                      <input
-                        type="date"
+                      <DuoDatePicker
+                        label="Expiry Date"
                         value={formExpiryDate}
-                        onChange={(e) => setFormExpiryDate(e.target.value)}
-                        className="w-full min-h-[44px] bg-black border border-white/10 rounded-2xl px-2 text-xs font-mono text-white focus:outline-none focus:border-rose-400"
+                        onChange={setFormExpiryDate}
+                        placeholder="Select date..."
+                        align="right"
                       />
                     </div>
                   </div>
@@ -1528,18 +1540,18 @@ export const SkinDashboard: React.FC<SkinDashboardProps> = ({
                 </div>
 
                 {/* Modal Footer */}
-                <div className="shrink-0 p-4 border-t border-white/10 bg-[#0A0A0F] flex items-center justify-end gap-2">
+                <div className="shrink-0 p-3.5 sm:p-4 border-t border-white/10 bg-[#0A0A0F]/95 backdrop-blur-xl flex items-center justify-end gap-2.5 z-10 pb-[max(0.85rem,env(safe-area-inset-bottom,0px))]">
                   <button
                     type="button"
                     onClick={() => setIsProductModalOpen(false)}
-                    className="min-h-[44px] px-4 rounded-xl bg-white/5 hover:bg-white/10 text-xs font-semibold text-zinc-300 transition-colors"
+                    className="min-h-[44px] px-5 rounded-2xl bg-white/5 hover:bg-white/10 text-xs font-semibold text-zinc-300 transition-colors"
                   >
                     Cancel
                   </button>
                   <button
                     type="submit"
                     disabled={productSaving}
-                    className="min-h-[44px] px-6 rounded-xl bg-white text-zinc-950 hover:bg-zinc-200 text-xs font-bold transition-all shadow-md active:scale-95 disabled:opacity-50"
+                    className="min-h-[44px] px-6 rounded-2xl bg-white text-zinc-950 hover:bg-zinc-200 text-xs font-bold transition-all shadow-md active:scale-95 disabled:opacity-50"
                   >
                     {productSaving ? 'Saving...' : editingProductId ? 'Save Changes' : 'Add Product'}
                   </button>

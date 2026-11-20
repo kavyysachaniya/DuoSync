@@ -1093,15 +1093,16 @@ export const WardrobeDashboard: React.FC<WardrobeDashboardProps> = ({
       {/* CLOTHING ITEM ADD / EDIT MODAL */}
       <AnimatePresence>
         {isItemModalOpen && (
-          <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 bg-black/80 backdrop-blur-sm">
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-0 sm:p-4 bg-black/80 sm:backdrop-blur-sm">
             <motion.div
-              initial={{ opacity: 0, scale: 0.95, y: 10 }}
+              initial={{ opacity: 0, scale: 0.98, y: 12 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
-              exit={{ opacity: 0, scale: 0.95, y: 10 }}
-              className="w-full max-w-xl max-h-[90dvh] flex flex-col rounded-t-3xl sm:rounded-3xl bg-[#0A0A0F] border border-white/10 text-zinc-100 shadow-2xl overflow-hidden"
+              exit={{ opacity: 0, scale: 0.98, y: 12 }}
+              transition={{ duration: 0.18, ease: [0.16, 1, 0.3, 1] }}
+              className="w-full h-full sm:h-auto sm:max-w-xl sm:max-h-[90dvh] flex flex-col rounded-none sm:rounded-3xl bg-[#0A0A0F] sm:border sm:border-white/10 text-zinc-100 shadow-2xl overflow-hidden"
             >
               {/* Modal Header */}
-              <div className="shrink-0 p-4 sm:p-5 border-b border-white/10 bg-[#0A0A0F] flex items-center justify-between">
+              <div className="shrink-0 p-4 sm:p-5 border-b border-white/10 bg-[#0A0A0F]/95 backdrop-blur-md flex items-center justify-between z-10 pt-[max(0.85rem,env(safe-area-inset-top,0px))]">
                 <div className="flex items-center gap-2.5">
                   <div className="w-9 h-9 rounded-xl bg-rose-500/15 border border-rose-500/30 flex items-center justify-center text-rose-400">
                     <CollaredShirtNavIcon className="w-4 h-4" />
@@ -1126,8 +1127,8 @@ export const WardrobeDashboard: React.FC<WardrobeDashboardProps> = ({
               </div>
 
               {/* Modal Body & Form */}
-              <form onSubmit={handleSaveItemSubmit} className="flex-1 flex flex-col min-h-0 overflow-hidden">
-                <div className="overflow-y-auto overscroll-contain flex-1 p-4 sm:p-5 space-y-4 no-scrollbar">
+              <form onSubmit={handleSaveItemSubmit} autoComplete="off" className="flex-1 flex flex-col min-h-0 overflow-hidden">
+                <div className="overflow-y-auto overscroll-contain flex-1 p-4 sm:p-5 space-y-4 pb-36 no-scrollbar">
                   {/* Item Name */}
                   <div className="space-y-1.5">
                     <label className="text-xs font-semibold text-zinc-300">Clothing Name *</label>
@@ -1320,18 +1321,18 @@ export const WardrobeDashboard: React.FC<WardrobeDashboardProps> = ({
                 </div>
 
                 {/* Sticky Footer */}
-                <div className="shrink-0 p-4 border-t border-white/10 bg-[#0A0A0F] flex items-center justify-end gap-2">
+                <div className="shrink-0 p-3.5 sm:p-4 border-t border-white/10 bg-[#0A0A0F]/95 backdrop-blur-xl flex items-center justify-end gap-2.5 z-10 pb-[max(0.85rem,env(safe-area-inset-bottom,0px))]">
                   <button
                     type="button"
                     onClick={() => setIsItemModalOpen(false)}
-                    className="min-h-[44px] px-4 rounded-2xl bg-zinc-900 border border-white/10 text-xs font-semibold text-zinc-300 hover:text-white"
+                    className="min-h-[44px] px-5 rounded-2xl bg-white/5 hover:bg-white/10 text-xs font-semibold text-zinc-300 transition-colors"
                   >
                     Cancel
                   </button>
                   <button
                     type="submit"
                     disabled={itemSaving}
-                    className="min-h-[44px] px-6 rounded-2xl bg-white text-zinc-950 hover:bg-zinc-200 text-xs font-bold transition-all shadow-lg shadow-white/5"
+                    className="min-h-[44px] px-6 rounded-2xl bg-white text-zinc-950 hover:bg-zinc-200 text-xs font-bold transition-all shadow-md active:scale-95 disabled:opacity-50"
                   >
                     {itemSaving ? 'Saving...' : editingItemId ? 'Save Changes' : 'Add to Closet'}
                   </button>

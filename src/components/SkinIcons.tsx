@@ -412,7 +412,7 @@ export const ShampooBottleNavIcon: React.FC<IconProps> = ({ className = 'w-4 h-4
   </svg>
 );
 
-/** Navigation Icon: Collared Button-Down Shirt for Fits */
+/** Navigation Icon: Full-Sleeved Oxford Button-Down Shirt for Fits */
 export const CollaredShirtNavIcon: React.FC<IconProps> = ({ className = 'w-4 h-4' }) => (
   <svg
     viewBox="0 0 24 24"
@@ -424,16 +424,24 @@ export const CollaredShirtNavIcon: React.FC<IconProps> = ({ className = 'w-4 h-4
     className={className}
     aria-hidden="true"
   >
-    {/* Shirt outer contour (shoulders, short sleeves, torso, bottom hem) */}
-    <path d="M20.38 3.46 16 2a4 4 0 0 1-8 0L3.62 3.46a2 2 0 0 0-1.34 2.23l.58 3.47a1 1 0 0 0 .99.84H6v10a2 2 0 0 0 2 2h8a2 2 0 0 0 2-2V10h2.15a1 1 0 0 0 .99-.84l.58-3.47a2 2 0 0 0-1.34-2.23z" />
-    {/* Collared lapels */}
-    <path d="M8.5 2.5 12 7.5 10.5 2.5" />
-    <path d="M15.5 2.5 12 7.5 13.5 2.5" />
-    {/* Center button placket */}
-    <line x1="12" y1="7.5" x2="12" y2="20" />
-    {/* Shirt buttons */}
-    <circle cx="12" cy="11.5" r="0.75" fill="currentColor" />
-    <circle cx="12" cy="15.5" r="0.75" fill="currentColor" />
+    {/* Full-sleeved shirt outer silhouette: shoulders, long sleeves down to cuffs, torso, and curved Oxford bottom hem */}
+    <path d="M8.5 3L3.5 6.5L2 19.5H5L7 10V21C9.5 22 14.5 22 17 21V10L19 19.5H22L20.5 6.5L15.5 3" />
+    {/* Left & Right Wrist Cuffs */}
+    <line x1="2" y1="17" x2="5" y2="17" />
+    <line x1="19" y1="17" x2="22" y2="17" />
+    {/* Oxford Button-Down Collar */}
+    <path d="M8.5 3C10 2.2 14 2.2 15.5 3" />
+    <path d="M8.5 3L12 7.5L10 8L8.5 3" />
+    <path d="M15.5 3L12 7.5L14 8L15.5 3" />
+    {/* Collar point buttons */}
+    <circle cx="10" cy="8" r="0.45" fill="currentColor" />
+    <circle cx="14" cy="8" r="0.45" fill="currentColor" />
+    {/* Center Button Placket */}
+    <line x1="12" y1="7.5" x2="12" y2="21.5" />
+    {/* Placket Buttons */}
+    <circle cx="12" cy="11.5" r="0.6" fill="currentColor" />
+    <circle cx="12" cy="15" r="0.6" fill="currentColor" />
+    <circle cx="12" cy="18.5" r="0.6" fill="currentColor" />
   </svg>
 );
 
