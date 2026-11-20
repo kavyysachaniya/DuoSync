@@ -19,6 +19,7 @@ interface ViewportConfig {
 
 const VIEWPORTS: ViewportConfig[] = [
   { name: '320px-SE-narrow', width: 320, height: 568 },
+  { name: '360x640-standard', width: 360, height: 640 },
   { name: '360px-Galaxy-S8', width: 360, height: 740 },
   { name: '375px-iPhone-Mini', width: 375, height: 667 },
   { name: '390px-iPhone-14', width: 390, height: 844 },
