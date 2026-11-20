@@ -156,6 +156,7 @@ export const WardrobeDashboard: React.FC<WardrobeDashboardProps> = ({
   const [outfitNotes, setOutfitNotes] = useState('');
   const [outfitOwnerSlot, setOutfitOwnerSlot] = useState<ProductOwnerSlot>(profile.slot);
   const [outfitSaving, setOutfitSaving] = useState(false);
+  const [builderCategoryFilter, setBuilderCategoryFilter] = useState<string>('All');
 
   const fileInputRef = useRef<HTMLInputElement | null>(null);
 
@@ -220,6 +221,41 @@ export const WardrobeDashboard: React.FC<WardrobeDashboardProps> = ({
     items.forEach((it) => map.set(it.id, it));
     return map;
   }, [items]);
+
+  // Statistics for Saved Fits overview
+  const fitsStats = useMemo(() => {
+    const totalFits = filteredOutfits.length;
+    const uniquePieces = new Set<string>();
+    const occasionCounts: Record<string, number> = {};
+
+    filteredOutfits.forEach((fit) => {
+      (fit.itemIds || []).forEach((id) => uniquePieces.add(id));
+      if (fit.occasion) {
+        occasionCounts[fit.occasion] = (occasionCounts[fit.occasion] || 0) + 1;
+      }
+    });
+
+    let topOccasion = 'Versatile';
+    let maxCount = 0;
+    Object.entries(occasionCounts).forEach(([occ, count]) => {
+      if (count > maxCount) {
+        maxCount = count;
+        topOccasion = occ;
+      }
+    });
+
+    return {
+      totalFits,
+      piecesStyled: uniquePieces.size,
+      topOccasion,
+    };
+  }, [filteredOutfits]);
+
+  // Items filtered for outfit builder closet selector
+  const builderFilteredItems = useMemo(() => {
+    if (builderCategoryFilter === 'All') return items;
+    return items.filter((item) => item.category === builderCategoryFilter);
+  }, [items, builderCategoryFilter]);
 
   // Handle client-side image compression and cloud object storage upload
   const handleImageFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -782,38 +818,72 @@ export const WardrobeDashboard: React.FC<WardrobeDashboardProps> = ({
       {/* TAB 2: SAVED OUTFITS ("FITS") */}
       {activeTab === 'fits' && (
         <div className="space-y-6">
-          <div className="flex items-center justify-between">
+          {/* Section Header & Metrics */}
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
             <div>
-              <h2 className="text-base font-bold text-white">Your Saved Fits</h2>
-              <p className="text-xs text-zinc-400">
-                Complete outfits saved and styled from your wardrobe items.
+              <div className="flex items-center gap-2">
+                <h2 className="text-lg sm:text-xl font-bold text-white tracking-tight">Your Saved Fits</h2>
+                <span className="px-2.5 py-0.5 rounded-full bg-rose-500/15 border border-rose-500/30 text-rose-300 text-xs font-semibold">
+                  {filteredOutfits.length}
+                </span>
+              </div>
+              <p className="text-xs sm:text-sm text-zinc-400 mt-0.5">
+                Complete coordinated looks and styled combinations ready to wear.
               </p>
             </div>
             <button
               type="button"
               onClick={() => handleStartOutfitBuilder()}
-              className="min-h-[38px] px-4 rounded-2xl bg-white hover:bg-zinc-200 text-zinc-950 text-xs font-bold transition-all shadow-md flex items-center gap-1.5"
+              className="min-h-[44px] px-5 rounded-2xl bg-white hover:bg-zinc-200 text-zinc-950 text-xs font-bold transition-all shadow-lg shadow-white/5 flex items-center justify-center gap-2 active:scale-95 shrink-0 self-start sm:self-auto"
             >
-              <Sparkles className="w-3.5 h-3.5" />
+              <Sparkles className="w-4 h-4 text-rose-500" />
               <span>Create New Fit</span>
             </button>
           </div>
 
+          {/* Metric Summary Cards */}
+          <div className="grid grid-cols-3 gap-2.5 sm:gap-4">
+            <div className="rounded-2xl bg-[#12141C] border border-white/8 p-3 sm:p-4 space-y-1">
+              <span className="text-[10px] sm:text-xs font-medium text-zinc-400 uppercase tracking-wider block">
+                Total Fits
+              </span>
+              <span className="text-lg sm:text-2xl font-bold text-white font-mono tabular-nums block">
+                {fitsStats.totalFits}
+              </span>
+            </div>
+            <div className="rounded-2xl bg-[#12141C] border border-white/8 p-3 sm:p-4 space-y-1">
+              <span className="text-[10px] sm:text-xs font-medium text-zinc-400 uppercase tracking-wider block">
+                Pieces in Looks
+              </span>
+              <span className="text-lg sm:text-2xl font-bold text-rose-400 font-mono tabular-nums block">
+                {fitsStats.piecesStyled}
+              </span>
+            </div>
+            <div className="rounded-2xl bg-[#12141C] border border-white/8 p-3 sm:p-4 space-y-1">
+              <span className="text-[10px] sm:text-xs font-medium text-zinc-400 uppercase tracking-wider block">
+                Top Occasion
+              </span>
+              <span className="text-sm sm:text-lg font-bold text-white truncate block">
+                {fitsStats.topOccasion}
+              </span>
+            </div>
+          </div>
+
           {filteredOutfits.length === 0 ? (
-            <div className="rounded-3xl bg-[#12141C] border border-white/8 p-12 text-center space-y-4">
-              <div className="w-14 h-14 rounded-3xl bg-zinc-900 border border-white/10 flex items-center justify-center mx-auto text-amber-400">
-                <Layers className="w-6 h-6" />
+            <div className="rounded-3xl bg-[#12141C] border border-white/8 p-10 sm:p-14 text-center space-y-4">
+              <div className="w-16 h-16 rounded-3xl bg-zinc-900 border border-white/10 flex items-center justify-center mx-auto text-rose-400 shadow-xl shadow-rose-500/5">
+                <Layers className="w-8 h-8" />
               </div>
-              <div className="space-y-1">
-                <h3 className="text-base font-bold text-white">No saved outfits yet</h3>
-                <p className="text-xs text-zinc-400 max-w-sm mx-auto">
-                  Combine tops, bottoms, shoes, and outerwear from your closet into complete curated fits.
+              <div className="space-y-1.5 max-w-sm mx-auto">
+                <h3 className="text-base sm:text-lg font-bold text-white">No styled outfits yet</h3>
+                <p className="text-xs text-zinc-400 leading-relaxed">
+                  Combine tops, bottoms, shoes, and outerwear from your closet into complete curated looks for any occasion.
                 </p>
               </div>
               <button
                 type="button"
                 onClick={() => handleStartOutfitBuilder()}
-                className="min-h-[44px] px-6 rounded-2xl bg-white text-zinc-950 hover:bg-zinc-200 text-xs font-bold inline-flex items-center gap-2 transition-all shadow-lg shadow-white/5"
+                className="min-h-[44px] px-6 rounded-2xl bg-white text-zinc-950 hover:bg-zinc-200 text-xs font-bold inline-flex items-center gap-2 transition-all shadow-lg shadow-white/5 active:scale-95"
               >
                 <Sparkles className="w-4 h-4 text-rose-500" />
                 <span>Open Outfit Studio</span>
@@ -829,46 +899,52 @@ export const WardrobeDashboard: React.FC<WardrobeDashboardProps> = ({
                 return (
                   <div
                     key={outfit.id}
-                    className="rounded-3xl bg-[#12141C] border border-white/10 p-4 space-y-3.5 flex flex-col justify-between"
+                    className="rounded-3xl bg-[#12141C] border border-white/10 hover:border-white/20 p-5 space-y-4 flex flex-col justify-between transition-all duration-200 shadow-xl"
                   >
-                    <div className="space-y-2.5">
+                    <div className="space-y-3.5">
                       <div className="flex items-center justify-between gap-2">
-                        <span className={`px-2.5 py-1 rounded-xl border text-[11px] font-semibold ${getOccasionColor(outfit.occasion)}`}>
+                        <span
+                          className={`px-3 py-1 rounded-full border text-xs font-semibold ${getOccasionColor(
+                            outfit.occasion
+                          )}`}
+                        >
                           {outfit.occasion}
                         </span>
-                        <div className="flex items-center gap-1">
+                        <div className="flex items-center gap-1.5">
                           <button
                             type="button"
                             onClick={() => handleStartOutfitBuilder(outfit)}
-                            className="p-1.5 rounded-lg text-zinc-400 hover:text-white hover:bg-white/5 transition-colors"
+                            className="min-w-[36px] min-h-[36px] rounded-xl bg-white/5 hover:bg-white/10 text-zinc-400 hover:text-white flex items-center justify-center transition-colors active:scale-90"
                             title="Edit Fit"
+                            aria-label="Edit Fit"
                           >
-                            <Edit3 className="w-3.5 h-3.5" />
+                            <Edit3 className="w-4 h-4" />
                           </button>
                           <button
                             type="button"
                             onClick={() => onDeleteOutfit(outfit.id)}
-                            className="p-1.5 rounded-lg text-zinc-400 hover:text-rose-400 hover:bg-rose-500/10 transition-colors"
+                            className="min-w-[36px] min-h-[36px] rounded-xl bg-white/5 hover:bg-rose-500/15 text-zinc-400 hover:text-rose-400 flex items-center justify-center transition-colors active:scale-90"
                             title="Delete Fit"
+                            aria-label="Delete Fit"
                           >
-                            <Trash2 className="w-3.5 h-3.5" />
+                            <Trash2 className="w-4 h-4" />
                           </button>
                         </div>
                       </div>
 
                       <div>
-                        <h3 className="text-base font-bold text-white">{outfit.name}</h3>
-                        <p className="text-[11px] text-zinc-400">
+                        <h3 className="text-base sm:text-lg font-bold text-white tracking-tight">{outfit.name}</h3>
+                        <p className="text-xs text-zinc-400 mt-0.5">
                           {outfitItems.length} {outfitItems.length === 1 ? 'piece' : 'pieces'} styled
                         </p>
                       </div>
 
-                      {/* Collage / Strip of pieces */}
+                      {/* Collage / Strip of pieces with smooth image zoom */}
                       <div className="grid grid-cols-4 gap-2 pt-1">
                         {outfitItems.slice(0, 4).map((piece) => (
                           <div
                             key={piece.id}
-                            className="aspect-square rounded-xl bg-zinc-900 border border-white/8 overflow-hidden relative group/piece"
+                            className="aspect-square rounded-2xl bg-zinc-950 border border-white/8 overflow-hidden relative group/piece"
                             title={`${piece.category}: ${piece.name}`}
                           >
                             {piece.imageUrl ? (
@@ -877,7 +953,7 @@ export const WardrobeDashboard: React.FC<WardrobeDashboardProps> = ({
                                 alt={piece.name}
                                 loading="lazy"
                                 decoding="async"
-                                className="w-full h-full object-cover"
+                                className="w-full h-full object-cover group-hover/piece:scale-105 transition-transform duration-300"
                               />
                             ) : (
                               <div className="w-full h-full flex flex-col items-center justify-center p-1 text-[9px] text-zinc-500 font-mono text-center">
@@ -889,25 +965,28 @@ export const WardrobeDashboard: React.FC<WardrobeDashboardProps> = ({
                       </div>
 
                       {/* Item Names List */}
-                      <div className="space-y-1 pt-1 border-t border-white/6">
+                      <div className="space-y-1.5 pt-2 border-t border-white/6">
                         {outfitItems.map((piece) => (
                           <div
                             key={piece.id}
                             className="text-xs text-zinc-300 flex items-center justify-between gap-2"
                           >
-                            <span className="truncate">
-                              <span className="text-zinc-500 text-[10px] mr-1">[{piece.category}]</span>
-                              {piece.name}
+                            <span className="truncate flex items-center gap-1.5">
+                              <span className="w-1.5 h-1.5 rounded-full bg-rose-400 shrink-0" />
+                              <span className="text-zinc-500 font-mono text-[10px]">[{piece.category}]</span>
+                              <span className="truncate">{piece.name}</span>
                             </span>
-                            <span className="text-[10px] text-zinc-500 font-mono">{piece.brand}</span>
+                            <span className="text-[10px] text-zinc-500 font-mono shrink-0">{piece.brand}</span>
                           </div>
                         ))}
                       </div>
 
                       {outfit.notes && (
-                        <p className="text-xs text-zinc-400 italic pt-1 border-t border-white/6">
-                          "{outfit.notes}"
-                        </p>
+                        <div className="border-l-2 border-rose-500/60 bg-white/2 pl-3 py-1.5 rounded-r-xl">
+                          <p className="text-xs text-zinc-400 italic">
+                            "{outfit.notes}"
+                          </p>
+                        </div>
                       )}
                     </div>
                   </div>
@@ -921,85 +1000,85 @@ export const WardrobeDashboard: React.FC<WardrobeDashboardProps> = ({
       {/* TAB 3: OUTFIT BUILDER STUDIO */}
       {activeTab === 'builder' && (
         <form onSubmit={handleSaveOutfitSubmit} className="space-y-6">
-          <div className="flex items-center justify-between border-b border-white/8 pb-4">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-white/8 pb-4">
             <div>
-              <h2 className="text-lg font-bold text-white">
+              <h2 className="text-lg sm:text-xl font-bold text-white tracking-tight">
                 {editingOutfitId ? 'Edit Outfit' : 'Create Your Fit'}
               </h2>
-              <p className="text-xs text-zinc-400">
-                Select items from your closet to arrange and save a complete look.
+              <p className="text-xs text-zinc-400 mt-0.5">
+                Select items from your closet to arrange and style a coordinated look.
               </p>
             </div>
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2 self-start sm:self-auto">
               <button
                 type="button"
                 onClick={() => setActiveTab('fits')}
-                className="min-h-[36px] px-3.5 rounded-xl bg-zinc-900 border border-white/10 text-xs text-zinc-300 hover:text-white"
+                className="min-h-[44px] px-4 rounded-2xl bg-zinc-900 border border-white/10 text-xs font-semibold text-zinc-300 hover:text-white transition-colors active:scale-95"
               >
                 Cancel
               </button>
               <button
                 type="submit"
                 disabled={outfitSaving}
-                className="min-h-[36px] px-5 rounded-xl bg-white hover:bg-zinc-200 text-zinc-950 text-xs font-bold flex items-center gap-1.5 shadow-lg shadow-white/5"
+                className="min-h-[44px] px-5 rounded-2xl bg-white hover:bg-zinc-200 text-zinc-950 text-xs font-bold flex items-center gap-2 shadow-lg shadow-white/5 transition-all active:scale-95 disabled:opacity-50"
               >
-                <Sparkles className="w-3.5 h-3.5 text-rose-500" />
-                <span>{outfitSaving ? 'Saving Fit...' : 'Save Fit to Closet'}</span>
+                <Sparkles className="w-4 h-4 text-rose-500" />
+                <span>{outfitSaving ? 'Saving Fit...' : 'Save Fit'}</span>
               </button>
             </div>
           </div>
 
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
             {/* Left: Fit Meta Details (Name, Occasion, Notes, Owner) */}
-            <div className="lg:col-span-5 rounded-3xl bg-[#12141C] border border-white/10 p-5 space-y-4">
-              <h3 className="text-sm font-bold text-white flex items-center gap-2">
+            <div className="lg:col-span-5 rounded-3xl bg-[#12141C] border border-white/10 p-5 sm:p-6 space-y-4 shadow-xl">
+              <h3 className="text-sm font-bold text-white flex items-center gap-2 pb-2 border-b border-white/8">
                 <Tag className="w-4 h-4 text-rose-400" />
                 <span>Fit Configuration</span>
               </h3>
 
               <div className="space-y-1.5">
-                <label className="text-xs font-medium text-zinc-300">Outfit Name *</label>
+                <label className="text-xs font-semibold text-zinc-300">Outfit Name *</label>
                 <input
                   type="text"
                   required
                   placeholder="e.g. Sunset Rooftop Dinner, Campus Casual..."
                   value={outfitName}
                   onChange={(e) => setOutfitName(e.target.value)}
-                  className="w-full min-h-[42px] px-3.5 rounded-2xl bg-zinc-900 border border-white/10 text-xs text-zinc-100 placeholder-zinc-500 focus:outline-none focus:border-rose-400"
+                  className="w-full min-h-[44px] px-4 rounded-2xl bg-[#090A0F] border border-white/10 text-xs text-zinc-100 placeholder-zinc-500 focus:outline-none focus:border-rose-400 transition-colors"
                 />
               </div>
 
               <div className="space-y-1.5">
-                <label className="text-xs font-medium text-zinc-300">Occasion</label>
+                <label className="text-xs font-semibold text-zinc-300">Occasion</label>
                 <div className="grid grid-cols-2 gap-2">
                   {WARDROBE_OCCASIONS.map((occ) => (
                     <button
                       key={occ}
                       type="button"
                       onClick={() => setOutfitOccasion(occ)}
-                      className={`min-h-[34px] px-3 rounded-xl text-xs font-semibold transition-colors flex items-center justify-between ${
+                      className={`min-h-[40px] px-3 rounded-xl text-xs font-semibold transition-all flex items-center justify-between active:scale-95 ${
                         outfitOccasion === occ
-                          ? 'bg-rose-500 text-white shadow-md'
-                          : 'bg-zinc-900 text-zinc-400 hover:text-white border border-white/6'
+                          ? 'bg-rose-500 text-white shadow-md shadow-rose-500/20'
+                          : 'bg-[#090A0F] text-zinc-400 hover:text-white border border-white/6'
                       }`}
                     >
                       <span>{occ}</span>
-                      {outfitOccasion === occ && <Check className="w-3.5 h-3.5" />}
+                      {outfitOccasion === occ && <Check className="w-3.5 h-3.5 stroke-[2.5]" />}
                     </button>
                   ))}
                 </div>
               </div>
 
               <div className="space-y-1.5">
-                <label className="text-xs font-medium text-zinc-300">Who is this fit for?</label>
+                <label className="text-xs font-semibold text-zinc-300">Who is this fit for?</label>
                 <div className="grid grid-cols-3 gap-2">
                   <button
                     type="button"
                     onClick={() => setOutfitOwnerSlot(profile.slot)}
-                    className={`min-h-[34px] rounded-xl text-xs font-semibold transition-colors ${
+                    className={`min-h-[40px] rounded-xl text-xs font-semibold transition-all active:scale-95 ${
                       outfitOwnerSlot === profile.slot
-                        ? 'bg-sky-500 text-white'
-                        : 'bg-zinc-900 text-zinc-400 border border-white/6'
+                        ? 'bg-sky-500 text-white shadow-md shadow-sky-500/20'
+                        : 'bg-[#090A0F] text-zinc-400 border border-white/6'
                     }`}
                   >
                     {profile.name}
@@ -1007,10 +1086,10 @@ export const WardrobeDashboard: React.FC<WardrobeDashboardProps> = ({
                   <button
                     type="button"
                     onClick={() => setOutfitOwnerSlot(partnerProfile.slot)}
-                    className={`min-h-[34px] rounded-xl text-xs font-semibold transition-colors ${
+                    className={`min-h-[40px] rounded-xl text-xs font-semibold transition-all active:scale-95 ${
                       outfitOwnerSlot === partnerProfile.slot
-                        ? 'bg-rose-500 text-white'
-                        : 'bg-zinc-900 text-zinc-400 border border-white/6'
+                        ? 'bg-rose-500 text-white shadow-md shadow-rose-500/20'
+                        : 'bg-[#090A0F] text-zinc-400 border border-white/6'
                     }`}
                   >
                     {partnerProfile.name}
@@ -1018,10 +1097,10 @@ export const WardrobeDashboard: React.FC<WardrobeDashboardProps> = ({
                   <button
                     type="button"
                     onClick={() => setOutfitOwnerSlot('shared')}
-                    className={`min-h-[34px] rounded-xl text-xs font-semibold transition-colors ${
+                    className={`min-h-[40px] rounded-xl text-xs font-semibold transition-all active:scale-95 ${
                       outfitOwnerSlot === 'shared'
-                        ? 'bg-amber-500 text-zinc-950 font-bold'
-                        : 'bg-zinc-900 text-zinc-400 border border-white/6'
+                        ? 'bg-amber-500 text-zinc-950 font-bold shadow-md shadow-amber-500/20'
+                        : 'bg-[#090A0F] text-zinc-400 border border-white/6'
                     }`}
                   >
                     Shared
@@ -1030,19 +1109,19 @@ export const WardrobeDashboard: React.FC<WardrobeDashboardProps> = ({
               </div>
 
               <div className="space-y-1.5">
-                <label className="text-xs font-medium text-zinc-300">Styling Notes</label>
+                <label className="text-xs font-semibold text-zinc-300">Styling Notes</label>
                 <textarea
                   rows={3}
                   placeholder="e.g. Roll sleeves, pair with silver necklace, wear with light socks..."
                   value={outfitNotes}
                   onChange={(e) => setOutfitNotes(e.target.value)}
-                  className="w-full p-3 rounded-2xl bg-zinc-900 border border-white/10 text-xs text-zinc-100 placeholder-zinc-500 focus:outline-none focus:border-rose-400 resize-none"
+                  className="w-full p-3.5 rounded-2xl bg-[#090A0F] border border-white/10 text-xs text-zinc-100 placeholder-zinc-500 focus:outline-none focus:border-rose-400 resize-none transition-colors"
                 />
               </div>
 
               {/* Selected Pieces Counter Preview */}
-              <div className="pt-2 border-t border-white/8 space-y-2">
-                <div className="flex items-center justify-between text-xs font-semibold text-zinc-300">
+              <div className="pt-3 border-t border-white/8 space-y-2.5">
+                <div className="flex items-center justify-between text-xs font-semibold text-zinc-200">
                   <span>Selected Pieces ({outfitSelectedIds.length})</span>
                   {outfitSelectedIds.length > 0 && (
                     <button
@@ -1055,78 +1134,107 @@ export const WardrobeDashboard: React.FC<WardrobeDashboardProps> = ({
                   )}
                 </div>
 
-                <div className="space-y-1.5 max-h-48 overflow-y-auto pr-1">
-                  {outfitSelectedIds.map((id) => {
-                    const piece = itemsById.get(id);
-                    if (!piece) return null;
-                    return (
-                      <div
-                        key={id}
-                        className="flex items-center justify-between gap-2 p-2 rounded-xl bg-zinc-900/90 border border-white/6 text-xs"
-                      >
-                        <div className="flex items-center gap-2 truncate">
-                          {piece.imageUrl ? (
-                            <img
-                              src={piece.thumbnailUrl || piece.imageUrl}
-                              alt={piece.name}
-                              loading="lazy"
-                              decoding="async"
-                              className="w-6 h-6 rounded-lg object-cover"
-                            />
-                          ) : (
-                            <Shirt className="w-4 h-4 text-zinc-500" />
-                          )}
-                          <span className="truncate text-white font-medium">{piece.name}</span>
-                          <span className="text-[10px] text-zinc-500 font-mono">({piece.category})</span>
-                        </div>
-                        <button
-                          type="button"
-                          onClick={() => handleToggleItemInOutfit(id)}
-                          className="text-zinc-500 hover:text-rose-400 p-1"
+                {outfitSelectedIds.length === 0 ? (
+                  <p className="text-xs text-zinc-500 italic py-1">
+                    No items selected yet. Tap pieces from the right to build this fit.
+                  </p>
+                ) : (
+                  <div className="space-y-1.5 max-h-52 overflow-y-auto no-scrollbar pr-1">
+                    {outfitSelectedIds.map((id) => {
+                      const piece = itemsById.get(id);
+                      if (!piece) return null;
+                      return (
+                        <div
+                          key={id}
+                          className="flex items-center justify-between gap-2 p-2.5 rounded-xl bg-[#090A0F] border border-white/6 text-xs"
                         >
-                          <X className="w-3.5 h-3.5" />
-                        </button>
-                      </div>
-                    );
-                  })}
-                </div>
+                          <div className="flex items-center gap-2.5 truncate">
+                            {piece.imageUrl ? (
+                              <img
+                                src={piece.thumbnailUrl || piece.imageUrl}
+                                alt={piece.name}
+                                loading="lazy"
+                                decoding="async"
+                                className="w-8 h-8 rounded-lg object-cover shrink-0"
+                              />
+                            ) : (
+                              <div className="w-8 h-8 rounded-lg bg-zinc-900 border border-white/6 flex items-center justify-center shrink-0">
+                                <Shirt className="w-4 h-4 text-zinc-500" />
+                              </div>
+                            )}
+                            <div className="truncate">
+                              <span className="truncate text-white font-medium block">{piece.name}</span>
+                              <span className="text-[10px] text-zinc-500 font-mono">{piece.category}</span>
+                            </div>
+                          </div>
+                          <button
+                            type="button"
+                            onClick={() => handleToggleItemInOutfit(id)}
+                            className="min-w-[32px] min-h-[32px] rounded-lg text-zinc-500 hover:text-rose-400 hover:bg-rose-500/10 flex items-center justify-center transition-colors shrink-0"
+                            aria-label={`Remove ${piece.name}`}
+                          >
+                            <X className="w-4 h-4" />
+                          </button>
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
               </div>
             </div>
 
-            {/* Right: Interactive Closet Selector (Click item to add/remove from fit) */}
-            <div className="lg:col-span-7 rounded-3xl bg-[#12141C] border border-white/10 p-5 space-y-4">
-              <div>
-                <h3 className="text-sm font-bold text-white flex items-center justify-between">
-                  <span>Tap Pieces from Your Closet to Include in this Fit</span>
-                  <span className="text-xs text-rose-400 font-mono">
-                    {outfitSelectedIds.length} items selected
+            {/* Right: Interactive Closet Selector */}
+            <div className="lg:col-span-7 rounded-3xl bg-[#12141C] border border-white/10 p-5 sm:p-6 space-y-4 shadow-xl">
+              <div className="space-y-2">
+                <div className="flex items-center justify-between">
+                  <h3 className="text-sm font-bold text-white">Select Pieces from Closet</h3>
+                  <span className="text-xs text-rose-400 font-mono font-semibold">
+                    {outfitSelectedIds.length} styled
                   </span>
-                </h3>
-                <p className="text-xs text-zinc-400 mt-0.5">
-                  Click any item card below to toggle it in or out of this outfit.
+                </div>
+                <p className="text-xs text-zinc-400">
+                  Tap any piece below to toggle it in or out of this look.
                 </p>
+
+                {/* Category quick filter strip */}
+                <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar pt-1 pb-1">
+                  {['All', ...WARDROBE_CATEGORIES].map((cat) => (
+                    <button
+                      key={cat}
+                      type="button"
+                      onClick={() => setBuilderCategoryFilter(cat)}
+                      className={`min-h-[32px] px-3 rounded-xl text-xs font-semibold whitespace-nowrap transition-colors active:scale-95 ${
+                        builderCategoryFilter === cat
+                          ? 'bg-rose-500 text-white shadow-md'
+                          : 'bg-[#090A0F] text-zinc-400 hover:text-white border border-white/6'
+                      }`}
+                    >
+                      {cat}
+                    </button>
+                  ))}
+                </div>
               </div>
 
-              {items.length === 0 ? (
-                <div className="p-8 text-center text-xs text-zinc-400 bg-zinc-900/50 rounded-2xl border border-white/6">
-                  No wardrobe items available yet. Add items to your closet first!
+              {builderFilteredItems.length === 0 ? (
+                <div className="p-8 text-center text-xs text-zinc-400 bg-[#090A0F] rounded-2xl border border-white/6 space-y-2">
+                  <Shirt className="w-6 h-6 text-zinc-600 mx-auto" />
+                  <p>No wardrobe items match this category.</p>
                 </div>
               ) : (
-                <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 max-h-[560px] overflow-y-auto pr-1">
-                  {items.map((item) => {
+                <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 max-h-[580px] overflow-y-auto no-scrollbar pr-1">
+                  {builderFilteredItems.map((item) => {
                     const isSelected = outfitSelectedIds.includes(item.id);
                     return (
                       <button
                         key={item.id}
                         type="button"
                         onClick={() => handleToggleItemInOutfit(item.id)}
-                        className={`relative rounded-2xl p-2.5 text-left border transition-all flex flex-col justify-between ${
+                        className={`relative rounded-2xl p-2.5 text-left border transition-all flex flex-col justify-between active:scale-95 ${
                           isSelected
                             ? 'bg-rose-500/15 border-rose-500 shadow-md ring-2 ring-rose-500/40'
-                            : 'bg-zinc-900/80 border-white/6 hover:border-white/20'
+                            : 'bg-[#090A0F] border-white/8 hover:border-white/20'
                         }`}
                       >
-                        {/* Selected Indicator Checkmark */}
                         {isSelected && (
                           <div className="absolute top-2 right-2 w-5 h-5 rounded-full bg-rose-500 text-white flex items-center justify-center z-10 shadow">
                             <Check className="w-3 h-3 stroke-[3]" />
@@ -1147,7 +1255,7 @@ export const WardrobeDashboard: React.FC<WardrobeDashboardProps> = ({
                               <Shirt className="w-6 h-6" />
                             </div>
                           )}
-                          <span className="absolute bottom-1.5 left-1.5 px-1.5 py-0.5 rounded bg-black/70 text-[9px] font-semibold text-white">
+                          <span className="absolute bottom-1.5 left-1.5 px-1.5 py-0.5 rounded bg-black/75 text-[9px] font-semibold text-white">
                             {item.category}
                           </span>
                         </div>
