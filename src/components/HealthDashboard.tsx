@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import {
   Activity,
   Calendar,
@@ -16,6 +16,7 @@ import {
 } from 'lucide-react';
 import {
   FitnessAppId,
+  formatLocalDate,
   formatSleepDuration,
   getLastNDates,
   HealthLogDoc,
@@ -165,8 +166,36 @@ export const HealthDashboard: React.FC<HealthDashboardProps> = ({
     }, 1800);
   };
 
-  // Date strip: last 10 days ending Today
-  const dateStrip = getLastNDates(10, todayDate);
+  // 5-day strip centered on today: [today-2, today-1, TODAY, today+1, today+2]
+  const dateStrip = useMemo(() => {
+    const base = new Date(`${todayDate}T12:00:00`);
+    return [-2, -1, 0, 1, 2].map((offset) => {
+      const d = new Date(base);
+      d.setDate(base.getDate() + offset);
+      return formatLocalDate(d);
+    });
+  }, [todayDate]);
+
+  // Selected date formatted: e.g. "Nov 20" (format: MMM d)
+  const selectedDateDisplay = useMemo(() => {
+    if (!selectedDate) return '';
+    const d = new Date(`${selectedDate}T12:00:00`);
+    return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+  }, [selectedDate]);
+
+  const selectedPillRef = useRef<HTMLButtonElement | null>(null);
+
+  // Auto-scroll / snap into center when screen opens or selected day changes
+  useEffect(() => {
+    if (selectedPillRef.current) {
+      selectedPillRef.current.scrollIntoView({
+        behavior: 'smooth',
+        inline: 'center',
+        block: 'nearest',
+      });
+    }
+  }, [selectedDate]);
+
   // 7-day trend window ending on selectedDate
   const sevenDayDates = getLastNDates(7, selectedDate);
 
@@ -397,13 +426,20 @@ export const HealthDashboard: React.FC<HealthDashboardProps> = ({
 
       {/* Horizontal Date Selector Scroller + Today's Live Circular Rings Strip */}
       <div className="rounded-3xl bg-[#12141C] border border-white/8 p-4 sm:p-5 space-y-4">
-        <div className="flex flex-wrap items-center justify-between gap-2">
-          <div className="flex items-center gap-2 text-xs font-medium text-zinc-300">
-            <Calendar className="w-4 h-4 text-zinc-400" />
-            <span>Select Log Date</span>
+        <div className="flex items-center justify-between gap-2">
+          <div className="flex items-center gap-2 min-w-0 flex-1">
+            <Calendar className="w-4 h-4 text-rose-400 shrink-0" />
+            <span className="text-sm sm:text-base font-semibold text-white whitespace-nowrap min-w-0">
+              {selectedDateDisplay}
+            </span>
+            {selectedDate === todayDate && (
+              <span className="text-[10px] font-semibold tracking-wider uppercase px-2 py-0.5 rounded-full bg-rose-500/15 border border-rose-500/30 text-rose-300 shrink-0">
+                Today
+              </span>
+            )}
           </div>
-          <div className="flex items-center gap-2">
-            <div className="w-36">
+          <div className="flex items-center gap-2 shrink-0">
+            <div className="w-32 sm:w-36">
               <DuoDatePicker
                 value={selectedDate}
                 onChange={(val) => {
@@ -417,15 +453,15 @@ export const HealthDashboard: React.FC<HealthDashboardProps> = ({
               <button
                 type="button"
                 onClick={() => onSelectDate(todayDate)}
-                className="min-h-[34px] px-3 py-1 rounded-xl bg-rose-500/15 border border-rose-500/30 text-xs font-medium text-rose-300 hover:bg-rose-500/25 transition-colors whitespace-nowrap"
+                className="min-h-[34px] px-2.5 sm:px-3 py-1 rounded-xl bg-rose-500/15 border border-rose-500/30 text-xs font-medium text-rose-300 hover:bg-rose-500/25 transition-colors whitespace-nowrap active:scale-95"
               >
-                Jump to Today
+                Today
               </button>
             )}
           </div>
         </div>
 
-        <div className="flex items-center gap-1.5 sm:gap-2 overflow-x-auto no-scrollbar pb-1 -mx-1 px-1">
+        <div className="flex items-center justify-start sm:justify-center gap-1.5 sm:gap-2 overflow-x-auto no-scrollbar scroll-smooth snap-x pb-1 -mx-1 px-1">
           {dateStrip.map((dateStr) => {
             const d = new Date(`${dateStr}T12:00:00`);
             const dayName = d.toLocaleDateString('en-US', { weekday: 'short' });
@@ -440,22 +476,29 @@ export const HealthDashboard: React.FC<HealthDashboardProps> = ({
             return (
               <button
                 key={dateStr}
+                ref={isSelected ? selectedPillRef : null}
                 type="button"
                 onClick={() => onSelectDate(dateStr)}
-                className={`min-w-[52px] min-h-[62px] rounded-2xl px-2 py-2 flex flex-col items-center justify-center transition-all shrink-0 border ${
+                className={`snap-center flex-1 min-w-[54px] max-w-[76px] min-h-[64px] rounded-2xl px-2 py-2 flex flex-col items-center justify-center transition-all shrink-0 border active:scale-95 ${
                   isSelected
-                    ? 'bg-white text-zinc-950 border-white shadow-lg shadow-white/5 font-semibold'
+                    ? 'bg-white text-zinc-950 border-white shadow-lg shadow-white/10 font-bold'
+                    : isToday
+                    ? 'bg-rose-500/10 text-rose-200 border-rose-500/30 hover:border-rose-500/50 hover:bg-rose-500/20'
                     : 'bg-zinc-900/70 text-zinc-400 border-white/6 hover:border-white/15 hover:text-zinc-200'
                 }`}
               >
-                <span className="text-[10px] uppercase tracking-wider opacity-75">
+                <span
+                  className={`text-[10px] uppercase tracking-wider font-semibold ${
+                    isSelected ? 'opacity-80' : isToday ? 'text-rose-300' : 'opacity-70'
+                  }`}
+                >
                   {isToday ? 'Today' : dayName}
                 </span>
                 <span className="text-base font-mono tabular-nums font-bold mt-0.5">{dayNum}</span>
                 <span
-                  className={`mt-0.5 text-[9px] font-mono ${
+                  className={`mt-0.5 text-[9px] font-mono leading-none ${
                     isSelected
-                      ? 'text-zinc-800'
+                      ? 'text-zinc-950'
                       : hasData
                       ? 'text-emerald-400'
                       : 'text-transparent'
