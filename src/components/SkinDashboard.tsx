@@ -1,4 +1,4 @@
-import React, { useMemo, useRef, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import {
   Calendar,
   Check,
@@ -10,7 +10,7 @@ import {
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { api } from '../services/apiClient';
-import { cropImageToSquare } from '../utils/imageCropper';
+import { cropImageToSquare, cropImageTo3by4 } from '../utils/imageCropper';
 import {
   getCategoryIcon,
   ProductPhotoSilhouette,
@@ -108,9 +108,33 @@ export const SkinDashboard: React.FC<SkinDashboardProps> = ({
   onAddSubCategory,
   onRemoveSubCategory,
 }) => {
-  // 1. Top segment toggle
-  const [activeSegment, setActiveSegment] = useState<CareSegment>('skincare');
-  const [selectedSubCategory, setSelectedSubCategory] = useState<string>('all');
+  // 1. Top segment toggle - starts from where user left it
+  const [activeSegment, setActiveSegment] = useState<CareSegment>(() => {
+    if (typeof localStorage !== 'undefined') {
+      const saved = localStorage.getItem('duosync_skin_active_segment');
+      if (saved === 'skincare' || saved === 'haircare' || saved === 'bodycare') return saved;
+    }
+    return 'skincare';
+  });
+  const [selectedSubCategory, setSelectedSubCategory] = useState<string>(() => {
+    if (typeof localStorage !== 'undefined') {
+      const saved = localStorage.getItem('duosync_skin_selected_subcategory');
+      if (saved) return saved;
+    }
+    return 'all';
+  });
+
+  useEffect(() => {
+    if (typeof localStorage !== 'undefined') {
+      localStorage.setItem('duosync_skin_active_segment', activeSegment);
+    }
+  }, [activeSegment]);
+
+  useEffect(() => {
+    if (typeof localStorage !== 'undefined') {
+      localStorage.setItem('duosync_skin_selected_subcategory', selectedSubCategory);
+    }
+  }, [selectedSubCategory]);
 
   // Detail Modal State (on tap card)
   const [selectedProductForDetail, setSelectedProductForDetail] = useState<CareProductDoc | null>(null);
@@ -158,15 +182,15 @@ export const SkinDashboard: React.FC<SkinDashboardProps> = ({
   };
 
   /**
-   * Reads an image file, automatically center-crops it into a 1:1 square on an HTML5 canvas,
+   * Reads an image file, automatically center-crops it into a 3:4 portrait on an HTML5 canvas,
    * attempts to upload to object storage backend, with local cropped dataUrl fallback.
    */
   const processAndUploadFile = async (
     file: File,
     workspaceId?: string
   ): Promise<{ imageUrl: string; thumbnailUrl: string }> => {
-    // 1. Center-crop automatically to 1:1 aspect ratio square using HTML5 canvas
-    const { dataUrl, filename } = await cropImageToSquare(file, 800, 0.88);
+    // 1. Center-crop automatically to 3:4 aspect ratio portrait using HTML5 canvas
+    const { dataUrl, filename } = await cropImageTo3by4(file, 750, 0.88);
 
     // 2. Attempt cloud upload to backend storage
     try {
@@ -179,10 +203,10 @@ export const SkinDashboard: React.FC<SkinDashboardProps> = ({
         };
       }
     } catch (err) {
-      console.warn('Backend storage upload fallback to local 1:1 cropped data URL:', err);
+      console.warn('Backend storage upload fallback to local 3:4 cropped data URL:', err);
     }
 
-    // 3. Fallback to 1:1 cropped base64 data URL
+    // 3. Fallback to 3:4 cropped base64 data URL
     return { imageUrl: dataUrl, thumbnailUrl: dataUrl };
   };
 
@@ -333,15 +357,15 @@ export const SkinDashboard: React.FC<SkinDashboardProps> = ({
     }
   };
 
-  // 1:1 Photo Upload from Add / Edit Product Modal
+  // 3:4 Photo Upload from Add / Edit Product Modal
   const handleFormFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
 
     try {
       setIsUploadingFormImage(true);
-      // Auto crop to 1:1 square
-      const { dataUrl, filename } = await cropImageToSquare(file, 800, 0.88);
+      // Auto crop to 3:4 portrait
+      const { dataUrl, filename } = await cropImageTo3by4(file, 750, 0.88);
       // Instant local preview
       setFormImageUrl(dataUrl);
       setFormThumbnailUrl(dataUrl);
@@ -353,11 +377,11 @@ export const SkinDashboard: React.FC<SkinDashboardProps> = ({
         if (uploadRes?.imageUrl) {
           setFormImageUrl(uploadRes.imageUrl);
           setFormThumbnailUrl(uploadRes.thumbnailUrl || uploadRes.imageUrl);
-          showToast('1:1 Photo cropped & uploaded!');
+          showToast('Photo cropped & uploaded!');
         }
       } catch (uploadErr) {
         console.warn('Backend upload fallback:', uploadErr);
-        showToast('1:1 Photo cropped locally!');
+        showToast('Photo cropped locally!');
       }
     } catch (err: any) {
       console.error('Form photo error:', err);
@@ -826,8 +850,8 @@ export const SkinDashboard: React.FC<SkinDashboardProps> = ({
 
               {/* Scrollable Content */}
               <div className="overflow-y-auto overscroll-contain flex-1 p-4 sm:p-5 space-y-4 no-scrollbar">
-                {/* Large 1:1 Aspect Ratio Photo */}
-                <div className="aspect-square w-full rounded-2xl bg-zinc-950 border border-white/10 overflow-hidden relative flex items-center justify-center">
+                {/* Large 3:4 Aspect Ratio Photo */}
+                <div className="aspect-[3/4] w-full max-w-sm mx-auto rounded-2xl bg-zinc-950 border border-white/10 overflow-hidden relative flex items-center justify-center">
                   {selectedProductForDetail.imageUrl ? (
                     <img
                       src={selectedProductForDetail.thumbnailUrl || selectedProductForDetail.imageUrl}
@@ -858,7 +882,7 @@ export const SkinDashboard: React.FC<SkinDashboardProps> = ({
                     </span>
                   </div>
 
-                  {/* 1:1 Photo Actions on Detail Modal */}
+                  {/* 3:4 Photo Actions on Detail Modal */}
                   <div className="absolute bottom-3 right-3 flex items-center gap-2 z-10">
                     <button
                       type="button"
@@ -869,13 +893,13 @@ export const SkinDashboard: React.FC<SkinDashboardProps> = ({
                       {isUploadingDetailImage ? (
                         <>
                           <Loader2 className="w-3.5 h-3.5 animate-spin text-rose-400" />
-                          <span className="text-[11px] font-mono">Cropping 1:1...</span>
+                          <span className="text-[11px] font-mono">Cropping 3:4...</span>
                         </>
                       ) : (
                         <>
                           <CameraUploadIcon className="w-3.5 h-3.5 text-rose-400" />
                           <span className="text-[11px]">
-                            {selectedProductForDetail.imageUrl ? 'Change Photo' : 'Upload 1:1 Photo'}
+                            {selectedProductForDetail.imageUrl ? 'Change Photo' : 'Upload Photo'}
                           </span>
                         </>
                       )}
@@ -1159,21 +1183,21 @@ export const SkinDashboard: React.FC<SkinDashboardProps> = ({
               {/* Form Body */}
               <form onSubmit={handleSaveProductSubmit} autoComplete="off" className="flex-1 flex flex-col min-h-0 overflow-hidden">
                 <div className="overflow-y-auto overscroll-contain flex-1 p-4 sm:p-6 space-y-5 pb-36 no-scrollbar">
-                  {/* Dedicated 1:1 Product Photo Upload & Preview Card */}
+                  {/* Dedicated 3:4 Product Photo Upload & Preview Card */}
                   <div className="p-3.5 rounded-2xl bg-black border border-white/10 space-y-3">
                     <div className="flex items-center justify-between">
                       <label className="text-xs font-semibold text-zinc-200 flex items-center gap-1.5">
                         <PhotoUploadIcon className="w-4 h-4 text-rose-400" />
-                        <span>Product Photo (1:1 Square)</span>
+                        <span>Product Photo (3:4 Portrait)</span>
                       </label>
                       <span className="text-[10px] text-zinc-400 font-mono">
-                        Auto-crops to 1:1
+                        Auto-crops to 3:4
                       </span>
                     </div>
 
                     <div className="flex items-center gap-3">
-                      {/* 1:1 Preview Box */}
-                      <div className="w-20 h-20 rounded-2xl bg-zinc-950 border border-white/15 overflow-hidden relative shrink-0 flex items-center justify-center shadow-inner">
+                      {/* 3:4 Preview Box */}
+                      <div className="w-[60px] h-[80px] aspect-[3/4] rounded-2xl bg-zinc-950 border border-white/15 overflow-hidden relative shrink-0 flex items-center justify-center shadow-inner">
                         {formImageUrl ? (
                           <img
                             src={formThumbnailUrl || formImageUrl}
@@ -1181,7 +1205,7 @@ export const SkinDashboard: React.FC<SkinDashboardProps> = ({
                             className="w-full h-full object-cover"
                           />
                         ) : (
-                          <ProductPhotoSilhouette className="w-10 h-10 text-zinc-600" />
+                          <ProductPhotoSilhouette className="w-8 h-8 text-zinc-600" />
                         )}
                         {isUploadingFormImage && (
                           <div className="absolute inset-0 bg-black/80 backdrop-blur-xs flex flex-col items-center justify-center gap-1">
@@ -1201,7 +1225,7 @@ export const SkinDashboard: React.FC<SkinDashboardProps> = ({
                             className="min-h-[38px] px-3.5 rounded-xl bg-white text-zinc-950 hover:bg-zinc-200 active:scale-95 text-xs font-bold inline-flex items-center gap-1.5 transition-all shadow-md disabled:opacity-50"
                           >
                             <CameraUploadIcon className="w-3.5 h-3.5" />
-                            <span>{formImageUrl ? 'Change Photo' : 'Upload Photo (1:1)'}</span>
+                            <span>{formImageUrl ? 'Change Photo' : 'Upload Photo (3:4)'}</span>
                           </button>
 
                           {formImageUrl && (

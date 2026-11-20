@@ -1,4 +1,4 @@
-import React, { useMemo, useRef, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import {
   Camera,
   Check,
@@ -17,6 +17,7 @@ import { CollaredShirtNavIcon } from './SkinIcons';
 import { AnimatePresence, motion } from 'motion/react';
 import { DuoDropdown } from './ui/DuoDropdown';
 import { api } from '../services/apiClient';
+import { cropImageTo3by4 } from '../utils/imageCropper';
 import {
   ScreenHeader,
   ChipBar,
@@ -109,8 +110,14 @@ export const WardrobeDashboard: React.FC<WardrobeDashboardProps> = ({
   onSaveOutfit,
   onDeleteOutfit,
 }) => {
-  // Main view toggle: Closet vs Fits
-  const [activeTab, setActiveTab] = useState<'closet' | 'fits' | 'builder'>('closet');
+  // Main view toggle: Closet vs Fits (starts from where user left it)
+  const [activeTab, setActiveTab] = useState<'closet' | 'fits' | 'builder'>(() => {
+    if (typeof localStorage !== 'undefined') {
+      const saved = localStorage.getItem('duosync_wardrobe_active_tab');
+      if (saved === 'closet' || saved === 'fits' || saved === 'builder') return saved;
+    }
+    return 'closet';
+  });
 
   // Active categories from workspace or fallback defaults
   const activeCategories = useMemo(() => {
@@ -119,8 +126,26 @@ export const WardrobeDashboard: React.FC<WardrobeDashboardProps> = ({
       : WARDROBE_CATEGORIES;
   }, [wardrobeCategories]);
 
-  // Filters for Closet Inventory
-  const [selectedCategory, setSelectedCategory] = useState<string>('All');
+  // Filters for Closet Inventory (starts from where user left it)
+  const [selectedCategory, setSelectedCategory] = useState<string>(() => {
+    if (typeof localStorage !== 'undefined') {
+      const saved = localStorage.getItem('duosync_wardrobe_selected_category');
+      if (saved) return saved;
+    }
+    return 'All';
+  });
+
+  useEffect(() => {
+    if (typeof localStorage !== 'undefined') {
+      localStorage.setItem('duosync_wardrobe_active_tab', activeTab);
+    }
+  }, [activeTab]);
+
+  useEffect(() => {
+    if (typeof localStorage !== 'undefined') {
+      localStorage.setItem('duosync_wardrobe_selected_category', selectedCategory);
+    }
+  }, [selectedCategory]);
   const [selectedOccasionFilter, setSelectedOccasionFilter] = useState<string>('All');
   const [selectedColorFilter, setSelectedColorFilter] = useState<string>('All');
   const [ownerFilter, setOwnerFilter] = useState<'all' | 'me' | 'partner' | 'shared'>('all');
@@ -256,8 +281,8 @@ export const WardrobeDashboard: React.FC<WardrobeDashboardProps> = ({
     return items.filter((item) => item.category === builderCategoryFilter);
   }, [items, builderCategoryFilter]);
 
-  // Handle client-side image compression and cloud object storage upload
-  const handleImageFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  // Handle client-side 3:4 portrait crop and cloud object storage upload
+  const handleImageFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
 
@@ -266,49 +291,31 @@ export const WardrobeDashboard: React.FC<WardrobeDashboardProps> = ({
       return;
     }
 
-    const reader = new FileReader();
-    reader.onload = (loadEvent) => {
-      const img = new Image();
-      img.onload = async () => {
-        const canvas = document.createElement('canvas');
-        const maxDim = 800;
-        let width = img.width;
-        let height = img.height;
+    try {
+      const { dataUrl, filename } = await cropImageTo3by4(file, 750, 0.88);
+      // Show instant local preview
+      setFormImageUrl(dataUrl);
+      setFormThumbnailUrl(dataUrl);
+      setIsUploadingPhoto(true);
 
-        if (width > height && width > maxDim) {
-          height = Math.round((height * maxDim) / width);
-          width = maxDim;
-        } else if (height > maxDim) {
-          width = Math.round((width * maxDim) / height);
-          height = maxDim;
+      try {
+        const wsId = items[0]?.workspaceId || 'shared';
+        const uploadRes = await api.upload.uploadImage(dataUrl, filename, wsId);
+        if (uploadRes?.imageUrl) {
+          setFormImageUrl(uploadRes.imageUrl);
+          setFormThumbnailUrl(uploadRes.thumbnailUrl || uploadRes.imageUrl);
+          showToast('Photo cropped to 3:4 & uploaded!');
         }
-
-        canvas.width = width;
-        canvas.height = height;
-        const ctx = canvas.getContext('2d');
-        if (ctx) {
-          ctx.drawImage(img, 0, 0, width, height);
-          const dataUrl = canvas.toDataURL('image/jpeg', 0.85);
-          // Show instant local preview
-          setFormImageUrl(dataUrl);
-          setIsUploadingPhoto(true);
-
-          try {
-            const wsId = items[0]?.workspaceId || 'shared';
-            const uploadRes = await api.upload.uploadImage(dataUrl, file.name, wsId);
-            setFormImageUrl(uploadRes.imageUrl);
-            setFormThumbnailUrl(uploadRes.thumbnailUrl);
-            showToast('Photo uploaded to cloud storage!');
-          } catch (uploadErr) {
-            console.warn('Cloud upload notice:', uploadErr);
-          } finally {
-            setIsUploadingPhoto(false);
-          }
-        }
-      };
-      img.src = loadEvent.target?.result as string;
-    };
-    reader.readAsDataURL(file);
+      } catch (uploadErr) {
+        console.warn('Cloud upload notice:', uploadErr);
+        showToast('Photo cropped to 3:4 locally!');
+      } finally {
+        setIsUploadingPhoto(false);
+      }
+    } catch (err: any) {
+      console.error('Image crop error:', err);
+      showToast(err?.message || 'Failed to process image');
+    }
   };
 
   const handleOpenAddItem = () => {
@@ -755,7 +762,7 @@ export const WardrobeDashboard: React.FC<WardrobeDashboardProps> = ({
                         {outfitItems.slice(0, 4).map((piece) => (
                           <div
                             key={piece.id}
-                            className="aspect-square rounded-2xl bg-zinc-950 border border-white/8 overflow-hidden relative group/piece"
+                            className="aspect-[3/4] rounded-2xl bg-zinc-950 border border-white/8 overflow-hidden relative group/piece"
                             title={`${piece.category}: ${piece.name}`}
                           >
                             {piece.imageUrl ? (
@@ -1052,7 +1059,7 @@ export const WardrobeDashboard: React.FC<WardrobeDashboardProps> = ({
                           </div>
                         )}
 
-                        <div className="aspect-[4/3] w-full rounded-xl bg-zinc-950 overflow-hidden mb-2 relative">
+                        <div className="aspect-[3/4] w-full rounded-xl bg-zinc-950 overflow-hidden mb-2 relative">
                           {item.imageUrl ? (
                             <img
                               src={item.thumbnailUrl || item.imageUrl}
@@ -1257,7 +1264,7 @@ export const WardrobeDashboard: React.FC<WardrobeDashboardProps> = ({
                     <label className="text-xs font-semibold text-zinc-300">Clothing Image</label>
                     <div className="flex items-center gap-3">
                       {/* Thumbnail preview */}
-                      <div className="w-16 h-16 rounded-2xl bg-zinc-900 border border-white/10 overflow-hidden flex items-center justify-center shrink-0">
+                      <div className="w-[54px] h-[72px] aspect-[3/4] rounded-2xl bg-zinc-900 border border-white/10 overflow-hidden flex items-center justify-center shrink-0">
                         {formImageUrl ? (
                           <img
                             src={formImageUrl}

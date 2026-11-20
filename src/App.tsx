@@ -159,9 +159,21 @@ export default function App() {
   const lastSyncTimestampRef = useRef<number>(0);
   const isSyncingRef = useRef<boolean>(false);
 
-  // Navigation & Active Profile Slot
-  const [activeSection, setActiveSection] = useState<TopNavSection>('health');
-  const [activeSlot, setActiveSlot] = useState<ProfileSlot>('partner1');
+  // Navigation & Active Profile Slot (starts from where user left it)
+  const [activeSection, setActiveSection] = useState<TopNavSection>(() => {
+    if (typeof localStorage !== 'undefined') {
+      const saved = localStorage.getItem('duosync_active_section');
+      if (saved === 'health' || saved === 'skin' || saved === 'wardrobe') return saved;
+    }
+    return 'health';
+  });
+  const [activeSlot, setActiveSlot] = useState<ProfileSlot>(() => {
+    if (typeof localStorage !== 'undefined') {
+      const saved = localStorage.getItem('duosync_active_slot');
+      if (saved === 'partner1' || saved === 'partner2') return saved;
+    }
+    return 'partner1';
+  });
   const [hasInitializedSlot, setHasInitializedSlot] = useState(false);
 
   // Modals
@@ -183,14 +195,78 @@ export default function App() {
     return () => window.removeEventListener('duosync-avatar-updated', updatePhoto);
   }, [userDoc?.uid]);
 
-  // Requirement 6: Reset scroll to top on login, tab change, route switch, or logout
+  // Persist navigation and partner slot so the app always starts from where user left it
   useEffect(() => {
-    if (typeof window !== 'undefined') {
-      window.scrollTo({ top: 0, left: 0, behavior: 'instant' });
-      document.documentElement.scrollTop = 0;
-      document.body.scrollTop = 0;
+    if (typeof localStorage !== 'undefined') {
+      localStorage.setItem('duosync_active_section', activeSection);
     }
-  }, [activeSection, activeSlot, authUser?.id]);
+  }, [activeSection]);
+
+  useEffect(() => {
+    if (typeof localStorage !== 'undefined') {
+      localStorage.setItem('duosync_active_slot', activeSlot);
+    }
+  }, [activeSlot]);
+
+  // Track and restore scroll position so app always starts where user left it
+  const isInitialMountRef = useRef(true);
+  const previousSectionRef = useRef<TopNavSection>(activeSection);
+
+  // 1. Record scroll position periodically per section
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+
+    let timer: any;
+    const handleScroll = () => {
+      clearTimeout(timer);
+      timer = setTimeout(() => {
+        try {
+          sessionStorage.setItem(`duosync_scroll_${activeSection}`, String(window.scrollY));
+        } catch {}
+      }, 120);
+    };
+
+    window.addEventListener('scroll', handleScroll, { passive: true });
+    return () => {
+      clearTimeout(timer);
+      window.removeEventListener('scroll', handleScroll);
+    };
+  }, [activeSection]);
+
+  // 2. Restore scroll position on reload / section load
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+
+    if (isInitialMountRef.current) {
+      isInitialMountRef.current = false;
+      const savedY = sessionStorage.getItem(`duosync_scroll_${activeSection}`);
+      if (savedY && parseFloat(savedY) > 0) {
+        requestAnimationFrame(() => {
+          requestAnimationFrame(() => {
+            window.scrollTo({ top: parseFloat(savedY), left: 0, behavior: 'instant' });
+          });
+        });
+      }
+      return;
+    }
+
+    // When switching to a different section
+    if (previousSectionRef.current !== activeSection) {
+      previousSectionRef.current = activeSection;
+      const savedY = sessionStorage.getItem(`duosync_scroll_${activeSection}`);
+      const targetY = savedY ? parseFloat(savedY) : 0;
+      requestAnimationFrame(() => {
+        window.scrollTo({ top: targetY, left: 0, behavior: 'instant' });
+      });
+    }
+  }, [activeSection, activeSlot]);
+
+  // Reset scroll on logout
+  useEffect(() => {
+    if (!authUser && typeof window !== 'undefined') {
+      window.scrollTo({ top: 0, left: 0, behavior: 'instant' });
+    }
+  }, [authUser]);
 
   // Date State for Health Dashboard
   const [selectedDate, setSelectedDate] = useState<string>(todayDate);
@@ -237,7 +313,12 @@ export default function App() {
           const wsDoc = mapToWorkspaceDoc(res.workspace, res.members, res.pairingCode);
           setWorkspace(wsDoc);
           if (!hasInitializedSlot) {
-            setActiveSlot(mappedUser.defaultSlot || 'partner1');
+            const savedSlot = typeof localStorage !== 'undefined' ? localStorage.getItem('duosync_active_slot') : null;
+            if (savedSlot === 'partner1' || savedSlot === 'partner2') {
+              setActiveSlot(savedSlot);
+            } else {
+              setActiveSlot(mappedUser.defaultSlot || 'partner1');
+            }
             setHasInitializedSlot(true);
           }
         }

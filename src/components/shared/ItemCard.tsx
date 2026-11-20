@@ -99,9 +99,9 @@ export const ItemCard: React.FC<ItemCardProps> = ({
       }}
       className={`rounded-[22px] bg-[#0A0A0F] border border-white/[0.08] hover:border-white/[0.16] overflow-hidden cursor-pointer transition-colors shadow-lg active:scale-[0.98] select-none flex flex-col justify-between ${className}`}
     >
-      {/* Top: 4:5 Aspect Ratio Image Area */}
+      {/* Top: 3:4 Aspect Ratio Image Area */}
       <div className="w-full p-2 pb-0">
-        <div className="aspect-[4/5] w-full rounded-[16px] overflow-hidden relative bg-zinc-900/60">
+        <div className="aspect-[3/4] w-full rounded-[16px] overflow-hidden relative bg-zinc-900/60">
           {displayImage ? (
             <img
               src={displayImage}
