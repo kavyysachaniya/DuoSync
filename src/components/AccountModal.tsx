@@ -246,7 +246,7 @@ export const AccountModal: React.FC<AccountModalProps> = ({
       aria-label="Account Settings"
       className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-black/80 backdrop-blur-md overflow-y-auto no-scrollbar"
     >
-      <div className="relative w-full max-w-lg rounded-3xl bg-[#12141C] border border-white/10 shadow-2xl p-5 sm:p-6 my-auto space-y-5 animate-in fade-in zoom-in-95 duration-200">
+      <div className="relative w-full max-w-lg rounded-3xl bg-[#0A0A0F] border border-white/10 shadow-2xl p-5 sm:p-6 my-auto space-y-5 animate-in fade-in zoom-in-95 duration-200">
         {/* Header with 44px close affordance */}
         <div className="flex items-center justify-between gap-3 pb-3 border-b border-white/8">
           <div className="flex items-center gap-2.5 min-w-0">
@@ -273,7 +273,7 @@ export const AccountModal: React.FC<AccountModalProps> = ({
         </div>
 
         {/* 1. Profile Summary Card (Avatar with NO GRADIENTS, photo upload/replace/remove) */}
-        <div className="rounded-2xl bg-[#090A0F] border border-white/8 p-4 space-y-3">
+        <div className="rounded-2xl bg-black border border-white/8 p-4 space-y-3">
           <div className="flex items-center gap-3.5">
             <div className="relative group shrink-0">
               <UserAvatar name={displayName} photoUrl={avatarPhoto} size="lg" />
@@ -320,7 +320,7 @@ export const AccountModal: React.FC<AccountModalProps> = ({
                     }
                   }}
                   placeholder="Enter your name"
-                  className="h-10 min-h-[40px] px-3 bg-[#12141C] border border-white/15 rounded-xl text-sm font-semibold text-white placeholder:text-zinc-600 focus:outline-none focus:border-rose-500/60 w-full max-w-[210px]"
+                  className="h-10 min-h-[40px] px-3 bg-black border border-white/15 rounded-xl text-sm font-semibold text-white placeholder:text-zinc-600 focus:outline-none focus:border-rose-500/60 w-full max-w-[210px]"
                 />
                 <button
                   type="button"
@@ -359,7 +359,7 @@ export const AccountModal: React.FC<AccountModalProps> = ({
         </div>
 
         {/* 2. PARTNER PAIRING SECTION (Moved here into Account) */}
-        <div className="rounded-2xl bg-[#090A0F] border border-white/8 p-4 space-y-3.5">
+        <div className="rounded-2xl bg-black border border-white/8 p-4 space-y-3.5">
           <div className="flex items-center justify-between">
             <span className="text-xs font-semibold text-white tracking-tight flex items-center gap-1.5">
               <span>Partner Sync & Code</span>
@@ -491,7 +491,7 @@ export const AccountModal: React.FC<AccountModalProps> = ({
 
         {/* 3. Customize Names & Launch Preferences */}
         {onUpdateWorkspaceIdentities && (
-          <form onSubmit={handleSaveIdentities} className="rounded-2xl bg-[#090A0F] border border-white/8 p-4 space-y-3.5">
+          <form onSubmit={handleSaveIdentities} className="rounded-2xl bg-black border border-white/8 p-4 space-y-3.5">
             <div className="flex items-center justify-between">
               <span className="text-xs font-semibold text-white tracking-tight">
                 Profile Names & Workspace
@@ -514,7 +514,7 @@ export const AccountModal: React.FC<AccountModalProps> = ({
                     maxLength={60}
                     value={partner1Name}
                     onChange={(e) => setPartner1Name(e.target.value)}
-                    className="w-full h-11 min-h-[44px] bg-[#090A0F] border border-white/10 rounded-xl px-3 text-sm text-white focus:outline-none focus:border-rose-500/60"
+                    className="w-full h-11 min-h-[44px] bg-black border border-white/10 rounded-xl px-3 text-sm text-white focus:outline-none focus:border-rose-500/60"
                   />
                 </div>
                 <div>
@@ -524,7 +524,7 @@ export const AccountModal: React.FC<AccountModalProps> = ({
                     maxLength={40}
                     value={partner1Role}
                     onChange={(e) => setPartner1Role(e.target.value)}
-                    className="w-full h-11 min-h-[44px] bg-[#090A0F] border border-white/10 rounded-xl px-3 text-xs text-zinc-200 focus:outline-none focus:border-rose-500/60"
+                    className="w-full h-11 min-h-[44px] bg-black border border-white/10 rounded-xl px-3 text-xs text-zinc-200 focus:outline-none focus:border-rose-500/60"
                   />
                 </div>
               </div>
@@ -538,7 +538,7 @@ export const AccountModal: React.FC<AccountModalProps> = ({
                     maxLength={60}
                     value={partner2Name}
                     onChange={(e) => setPartner2Name(e.target.value)}
-                    className="w-full h-11 min-h-[44px] bg-[#090A0F] border border-white/10 rounded-xl px-3 text-sm text-white focus:outline-none focus:border-rose-500/60"
+                    className="w-full h-11 min-h-[44px] bg-black border border-white/10 rounded-xl px-3 text-sm text-white focus:outline-none focus:border-rose-500/60"
                   />
                 </div>
                 <div>
@@ -548,7 +548,7 @@ export const AccountModal: React.FC<AccountModalProps> = ({
                     maxLength={40}
                     value={partner2Role}
                     onChange={(e) => setPartner2Role(e.target.value)}
-                    className="w-full h-11 min-h-[44px] bg-[#090A0F] border border-white/10 rounded-xl px-3 text-xs text-zinc-200 focus:outline-none focus:border-rose-500/60"
+                    className="w-full h-11 min-h-[44px] bg-black border border-white/10 rounded-xl px-3 text-xs text-zinc-200 focus:outline-none focus:border-rose-500/60"
                   />
                 </div>
               </div>
@@ -616,7 +616,7 @@ export const AccountModal: React.FC<AccountModalProps> = ({
         )}
 
         {/* 4. Edit Onboarding Baseline Details Section */}
-        <div className="rounded-2xl bg-[#090A0F] border border-white/8 p-4 space-y-3">
+        <div className="rounded-2xl bg-black border border-white/8 p-4 space-y-3">
           <div className="space-y-0.5">
             <div className="flex items-center gap-1.5 text-xs font-semibold text-white">
               <SlidersHorizontal className="w-3.5 h-3.5 text-rose-400" />
@@ -642,7 +642,7 @@ export const AccountModal: React.FC<AccountModalProps> = ({
         </div>
 
         {/* 5. Preferences & Settings */}
-        <div className="rounded-2xl bg-[#090A0F] border border-white/8 p-4 space-y-3">
+        <div className="rounded-2xl bg-black border border-white/8 p-4 space-y-3">
           <span className="text-xs font-semibold text-white tracking-tight block">
             App Preferences
           </span>
@@ -689,7 +689,7 @@ export const AccountModal: React.FC<AccountModalProps> = ({
         </div>
 
         {/* 6. App Info & Cloud Sync */}
-        <div className="rounded-2xl bg-[#090A0F] border border-white/8 p-4 space-y-2.5">
+        <div className="rounded-2xl bg-black border border-white/8 p-4 space-y-2.5">
           <div className="flex items-center justify-between text-xs">
             <span className="text-zinc-400 flex items-center gap-1.5">
               <Database className="w-3.5 h-3.5 text-emerald-400" />
@@ -776,7 +776,7 @@ export const AccountModal: React.FC<AccountModalProps> = ({
                   <button
                     type="button"
                     onClick={() => setConfirmDelete(false)}
-                    className="min-h-[44px] px-3 rounded-xl text-xs text-zinc-400 hover:text-white bg-[#090A0F] border border-white/10 cursor-pointer"
+                    className="min-h-[44px] px-3 rounded-xl text-xs text-zinc-400 hover:text-white bg-black border border-white/10 cursor-pointer"
                   >
                     Cancel
                   </button>
@@ -801,7 +801,7 @@ export const AccountModal: React.FC<AccountModalProps> = ({
       {showLogoutConfirm &&
         createPortal(
           <div className="fixed inset-0 z-70 flex items-center justify-center p-4 bg-black/85 backdrop-blur-md animate-in fade-in">
-            <div className="w-full max-w-sm rounded-3xl bg-[#12141C] border border-red-500/30 p-5 space-y-4 shadow-2xl animate-in fade-in zoom-in-95">
+            <div className="w-full max-w-sm rounded-3xl bg-[#0A0A0F] border border-red-500/30 p-5 space-y-4 shadow-2xl animate-in fade-in zoom-in-95">
               <div className="flex items-center gap-3">
                 <div className="w-10 h-10 rounded-full bg-red-500/15 border border-red-500/30 flex items-center justify-center text-red-400 shrink-0">
                   <AlertTriangle className="w-5 h-5" />
@@ -813,7 +813,7 @@ export const AccountModal: React.FC<AccountModalProps> = ({
                   </p>
                 </div>
               </div>
-              <p className="text-xs text-zinc-400 leading-relaxed bg-[#090A0F] rounded-xl p-3 border border-white/6">
+              <p className="text-xs text-zinc-400 leading-relaxed bg-black rounded-xl p-3 border border-white/6">
                 You will need your login credentials to re-access this shared workspace on this device.
               </p>
               <div className="grid grid-cols-2 gap-2 pt-1">
@@ -845,7 +845,7 @@ export const AccountModal: React.FC<AccountModalProps> = ({
       {policyModal &&
         createPortal(
           <div className="fixed inset-0 z-70 flex items-center justify-center p-4 bg-black/85 backdrop-blur-md animate-in fade-in">
-            <div className="w-full max-w-md rounded-3xl bg-[#12141C] border border-white/10 p-5 space-y-4 shadow-2xl animate-in fade-in zoom-in-95">
+            <div className="w-full max-w-md rounded-3xl bg-[#0A0A0F] border border-white/10 p-5 space-y-4 shadow-2xl animate-in fade-in zoom-in-95">
               <div className="flex items-center justify-between pb-2 border-b border-white/8">
                 <h4 className="text-sm font-bold text-white capitalize">
                   {policyModal === 'privacy' ? 'Privacy Policy' : 'Terms of Service'}

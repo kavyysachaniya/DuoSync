@@ -276,14 +276,14 @@ export const DuoDatePicker: React.FC<DuoDatePickerProps> = ({
           onClick={() => setIsOpen((prev) => !prev)}
           aria-haspopup="dialog"
           aria-expanded={isOpen}
-          className={`w-full min-h-[44px] px-3.5 py-2.5 rounded-2xl bg-[#090A0F] border text-left text-sm flex items-center justify-between gap-2.5 transition-all outline-none ${
+          className={`w-full min-h-[44px] px-3.5 py-2.5 rounded-2xl bg-black border text-left text-sm flex items-center justify-between gap-2.5 transition-all outline-none ${
             disabled
               ? 'opacity-50 cursor-not-allowed border-white/5 bg-zinc-950 text-zinc-600'
               : error
               ? 'border-rose-500/50 hover:border-rose-500 focus:border-rose-500'
               : isOpen
-              ? 'border-white/30 ring-1 ring-white/10 bg-[#12141C]'
-              : 'border-white/10 hover:border-white/20 hover:bg-[#0E1017]'
+              ? 'border-white/30 ring-1 ring-white/10 bg-[#0A0A0F]'
+              : 'border-white/10 hover:border-white/20 hover:bg-white/5'
           } ${triggerClassName}`}
         >
           <div className="flex items-center gap-2.5 truncate">
@@ -341,7 +341,7 @@ export const DuoDatePicker: React.FC<DuoDatePickerProps> = ({
             transition={{ duration: 0.14, ease: [0.16, 1, 0.3, 1] }}
             className={`absolute top-full mt-2 ${
               align === 'right' ? 'right-0' : 'left-0'
-            } max-w-[calc(100vw-1.5rem)] w-[min(290px,calc(100vw-1.5rem))] z-50 rounded-3xl bg-[#12141C] border border-white/12 shadow-2xl shadow-black/95 p-3.5 sm:p-4 backdrop-blur-2xl select-none`}
+            } max-w-[calc(100vw-1.5rem)] w-[min(290px,calc(100vw-1.5rem))] z-50 rounded-3xl bg-[#0A0A0F] border border-white/12 shadow-2xl shadow-black/95 p-3.5 sm:p-4 backdrop-blur-2xl select-none`}
           >
             {/* Calendar Navigation Header */}
             <div className="flex items-center justify-between gap-2 pb-3 border-b border-white/8">

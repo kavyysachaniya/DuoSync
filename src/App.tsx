@@ -971,7 +971,7 @@ export default function App() {
   // Initial Loading Screen while checking JWT token
   if (!authReady) {
     return (
-      <div className="min-h-screen bg-[#090A0F] flex items-center justify-center p-6">
+      <div className="min-h-screen bg-black flex items-center justify-center p-6">
         <div className="text-center space-y-2">
           <div className="w-10 h-10 rounded-2xl bg-white/5 border border-white/10 flex items-center justify-center mx-auto animate-pulse">
             <HeartHandshake className="w-5 h-5 text-rose-400" />
@@ -990,8 +990,8 @@ export default function App() {
   // Loading Dashboard State
   if (!workspace || !userDoc || !activeProfile || !otherProfile || !partner1Profile || !partner2Profile) {
     return (
-      <div className="min-h-screen bg-[#090A0F] text-zinc-100 flex items-center justify-center p-4 sm:p-6">
-        <div className="w-full max-w-md rounded-3xl bg-[#12141C] border border-white/10 p-6 sm:p-8 text-center space-y-5 shadow-2xl">
+      <div className="min-h-screen bg-black text-zinc-100 flex items-center justify-center p-4 sm:p-6">
+        <div className="w-full max-w-md rounded-3xl bg-[#0A0A0F] border border-white/[0.08] p-6 sm:p-8 text-center space-y-5 shadow-2xl">
           <div className="w-12 h-12 rounded-2xl bg-white/5 border border-white/10 flex items-center justify-center mx-auto">
             {syncError ? (
               <AlertCircle className="w-6 h-6 text-amber-400" />
@@ -1012,7 +1012,7 @@ export default function App() {
           <button
             type="button"
             onClick={() => window.location.reload()}
-            className="w-full min-h-[40px] rounded-xl bg-[#090A0F] hover:bg-white/5 border border-white/10 text-xs font-medium text-zinc-400 hover:text-white flex items-center justify-center gap-1.5 transition-colors"
+            className="w-full min-h-[40px] rounded-xl bg-black hover:bg-white/5 border border-white/10 text-xs font-medium text-zinc-400 hover:text-white flex items-center justify-center gap-1.5 transition-colors"
           >
             <RotateCcw className="w-3.5 h-3.5" />
             <span>Retry Connection</span>
@@ -1049,9 +1049,9 @@ export default function App() {
 
   // Active Main Dashboard
   return (
-    <div className="min-h-screen bg-[#090A0F] text-zinc-100 flex flex-col font-sans selection:bg-rose-500 selection:text-white pb-20 sm:pb-8">
+    <div className="min-h-screen bg-black text-zinc-100 flex flex-col font-sans selection:bg-rose-500 selection:text-white pb-20 sm:pb-8">
       {/* Top Header */}
-      <header className="sticky top-0 z-40 bg-[#090A0F]/85 backdrop-blur-xl border-b border-white/8 px-2.5 sm:px-8 py-2.5 sm:py-3 pt-[max(0.65rem,env(safe-area-inset-top,0px))] flex items-center justify-between gap-1.5 sm:gap-3">
+      <header className="sticky top-0 z-40 bg-black/80 backdrop-blur-2xl border-b border-white/[0.06] px-2.5 sm:px-8 py-2.5 sm:py-3 pt-[max(0.65rem,env(safe-area-inset-top,0px))] flex items-center justify-between gap-1.5 sm:gap-3">
         {/* Brand */}
         <a
           href="#dashboard"
@@ -1067,20 +1067,20 @@ export default function App() {
         {/* Top Navbar Pill: Hidden on mobile, visible on tablet/desktop */}
         <nav
           aria-label="Primary View Switcher"
-          className="hidden sm:flex items-center p-1 rounded-full bg-[#12141C] border border-white/10"
+          className="hidden sm:flex items-center p-1 rounded-full bg-[#0A0A0F] border border-white/10"
         >
           <button
             type="button"
             onClick={() => setActiveSection('health')}
             className={`relative min-h-[34px] sm:min-h-[36px] px-3.5 sm:px-5 py-1 rounded-full text-xs font-semibold transition-colors whitespace-nowrap shrink-0 flex items-center gap-1.5 ${
-              activeSection === 'health' ? 'text-zinc-950' : 'text-white/60 hover:text-white'
+              activeSection === 'health' ? 'text-zinc-950 font-bold' : 'text-white/60 hover:text-white'
             }`}
           >
             {activeSection === 'health' && (
               <motion.span
                 layoutId="topNavPill"
                 transition={{ duration: 0.18, ease: [0.16, 1, 0.3, 1] }}
-                className="absolute inset-0 rounded-full bg-white"
+                className="absolute inset-0 rounded-full bg-white shadow-sm"
               />
             )}
             <Activity className="w-3.5 h-3.5 relative z-10" strokeWidth={1.5} />
@@ -1091,14 +1091,14 @@ export default function App() {
             type="button"
             onClick={() => setActiveSection('skin')}
             className={`relative min-h-[34px] sm:min-h-[36px] px-3.5 sm:px-5 py-1 rounded-full text-xs font-semibold transition-colors whitespace-nowrap shrink-0 flex items-center gap-1.5 ${
-              activeSection === 'skin' ? 'text-zinc-950' : 'text-white/60 hover:text-white'
+              activeSection === 'skin' ? 'text-zinc-950 font-bold' : 'text-white/60 hover:text-white'
             }`}
           >
             {activeSection === 'skin' && (
               <motion.span
                 layoutId="topNavPill"
                 transition={{ duration: 0.18, ease: [0.16, 1, 0.3, 1] }}
-                className="absolute inset-0 rounded-full bg-white"
+                className="absolute inset-0 rounded-full bg-white shadow-sm"
               />
             )}
             <Sparkles className="w-3.5 h-3.5 relative z-10" strokeWidth={1.5} />
@@ -1109,14 +1109,14 @@ export default function App() {
             type="button"
             onClick={() => setActiveSection('wardrobe')}
             className={`relative min-h-[34px] sm:min-h-[36px] px-3.5 sm:px-5 py-1 rounded-full text-xs font-semibold transition-colors whitespace-nowrap shrink-0 flex items-center gap-1.5 ${
-              activeSection === 'wardrobe' ? 'text-zinc-950' : 'text-white/60 hover:text-white'
+              activeSection === 'wardrobe' ? 'text-zinc-950 font-bold' : 'text-white/60 hover:text-white'
             }`}
           >
             {activeSection === 'wardrobe' && (
               <motion.span
                 layoutId="topNavPill"
                 transition={{ duration: 0.18, ease: [0.16, 1, 0.3, 1] }}
-                className="absolute inset-0 rounded-full bg-white"
+                className="absolute inset-0 rounded-full bg-white shadow-sm"
               />
             )}
             <Shirt className="w-3.5 h-3.5 relative z-10" strokeWidth={1.5} />
@@ -1126,7 +1126,7 @@ export default function App() {
 
         {/* Partner Switcher & Actions */}
         <div className="flex items-center gap-1 sm:gap-2 shrink-0">
-          <div className="flex items-center p-0.5 rounded-full bg-[#12141C] border border-white/10">
+          <div className="flex items-center p-0.5 rounded-full bg-[#0A0A0F] border border-white/10">
             <button
               type="button"
               onClick={() => setActiveSlot('partner1')}
@@ -1244,9 +1244,27 @@ export default function App() {
         </AnimatePresence>
       </main>
 
+      {/* Premium Top Blur Effect (diffuses content scrolling under top header) */}
+      <div
+        className="fixed top-0 inset-x-0 h-24 bg-gradient-to-b from-black via-black/85 to-transparent pointer-events-none z-30 backdrop-blur-[8px]"
+        style={{
+          WebkitMaskImage: 'linear-gradient(to bottom, black 50%, transparent)',
+          maskImage: 'linear-gradient(to bottom, black 50%, transparent)',
+        }}
+      />
+
+      {/* Premium Bottom Blur Effect (obscures content behind bottom nav so it is not visible) */}
+      <div
+        className="fixed bottom-0 inset-x-0 h-32 bg-gradient-to-t from-black via-black/95 to-transparent pointer-events-none z-30 backdrop-blur-[12px]"
+        style={{
+          WebkitMaskImage: 'linear-gradient(to top, black 55%, transparent)',
+          maskImage: 'linear-gradient(to top, black 55%, transparent)',
+        }}
+      />
+
       {/* Mobile-Only Floating Bottom Navbar Pill [ Health | Skin | Fits ] */}
       <div className="sm:hidden fixed bottom-[max(0.75rem,env(safe-area-inset-bottom,0px))] inset-x-0 mx-auto w-[min(92%,360px)] z-40">
-        <div className="bg-[#12141C]/92 backdrop-blur-xl border border-white/12 shadow-2xl shadow-black/80 rounded-full p-1.5 flex items-center justify-between gap-1">
+        <div className="bg-[#0A0A0F]/95 backdrop-blur-2xl border border-white/12 shadow-2xl shadow-black rounded-full p-1.5 flex items-center justify-between gap-1">
           <button
             type="button"
             onClick={() => setActiveSection('health')}

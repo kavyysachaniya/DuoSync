@@ -10,8 +10,8 @@
 
 export const THEME = {
   // Base Surface & Typography (Monochromatic Minimal Base)
-  bg: '#07070A',
-  surface: '#0E0E13',
+  bg: '#000000',
+  surface: '#0A0A0F',
   border: 'rgba(255, 255, 255, 0.08)',
   borderLight: 'rgba(255, 255, 255, 0.15)',
   text: '#F5F5F7',

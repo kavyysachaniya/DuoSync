@@ -280,7 +280,7 @@ export const OnboardingWizard: React.FC<OnboardingWizardProps> = ({
   };
 
   return (
-    <div className="min-h-screen bg-[#090A0F] text-zinc-100 flex flex-col justify-between p-3 sm:p-8">
+    <div className="min-h-screen bg-black text-zinc-100 flex flex-col justify-between p-3 sm:p-8">
       <div className="max-w-xl w-full mx-auto my-auto space-y-4 sm:space-y-6 pb-6">
         {/* Top Progress Header */}
         <div className="flex items-center justify-between gap-4 pt-1">
@@ -318,7 +318,7 @@ export const OnboardingWizard: React.FC<OnboardingWizardProps> = ({
         </div>
 
         {/* Main Mobile-First Card */}
-        <div className="rounded-3xl bg-[#12141C] border border-white/10 p-5 sm:p-7 shadow-2xl space-y-5">
+        <div className="rounded-3xl bg-[#0A0A0F] border border-white/10 p-5 sm:p-7 shadow-2xl space-y-5">
           {/* STEP 1: IDENTITY, PARTNER CONNECTION & FITNESS APP */}
           {step === 1 && (
             <div className="space-y-5">
@@ -346,7 +346,7 @@ export const OnboardingWizard: React.FC<OnboardingWizardProps> = ({
                     value={myName}
                     onChange={(e) => setMyName(e.target.value)}
                     placeholder="Enter your name"
-                    className="w-full min-h-[48px] bg-[#090A0F] border border-white/10 rounded-2xl px-4 text-base text-white placeholder:text-zinc-600 focus:outline-none focus:border-white/30"
+                    className="w-full min-h-[48px] bg-black border border-white/10 rounded-2xl px-4 text-base text-white placeholder:text-zinc-600 focus:outline-none focus:border-white/30"
                   />
                 </div>
 
@@ -356,7 +356,7 @@ export const OnboardingWizard: React.FC<OnboardingWizardProps> = ({
                   <label className="block text-xs font-medium text-zinc-300 mb-1.5">
                     Preferred Price Currency
                   </label>
-                  <div className="grid grid-cols-6 gap-1.5 p-1.5 bg-[#090A0F] border border-white/10 rounded-2xl">
+                  <div className="grid grid-cols-6 gap-1.5 p-1.5 bg-black border border-white/10 rounded-2xl">
                     {CURRENCIES.map((sym) => (
                       <button
                         key={sym}
@@ -386,7 +386,7 @@ export const OnboardingWizard: React.FC<OnboardingWizardProps> = ({
                       className={`p-3.5 rounded-2xl border text-left transition-all space-y-1 ${
                         setupMode === 'own_workspace'
                           ? 'bg-zinc-900 border-white text-white'
-                          : 'bg-[#090A0F] border-white/8 text-zinc-400 hover:border-white/20'
+                          : 'bg-black border-white/8 text-zinc-400 hover:border-white/20'
                       }`}
                     >
                       <div className="flex items-center justify-between">
@@ -406,7 +406,7 @@ export const OnboardingWizard: React.FC<OnboardingWizardProps> = ({
                       className={`p-3.5 rounded-2xl border text-left transition-all space-y-1 ${
                         setupMode === 'join_code'
                           ? 'bg-zinc-900 border-rose-500 text-white'
-                          : 'bg-[#090A0F] border-white/8 text-zinc-400 hover:border-white/20'
+                          : 'bg-black border-white/8 text-zinc-400 hover:border-white/20'
                       }`}
                     >
                       <div className="flex items-center justify-between">
@@ -422,7 +422,7 @@ export const OnboardingWizard: React.FC<OnboardingWizardProps> = ({
                   </div>
 
                   {setupMode === 'own_workspace' ? (
-                    <div className="rounded-2xl bg-[#090A0F] border border-white/8 p-3.5 space-y-2.5">
+                    <div className="rounded-2xl bg-black border border-white/8 p-3.5 space-y-2.5">
                       <div>
                         <label className="block text-xs text-zinc-400 mb-1">
                           Partner’s Name (Optional — they can join anytime via your 6-digit code)
@@ -433,7 +433,7 @@ export const OnboardingWizard: React.FC<OnboardingWizardProps> = ({
                           value={partnerName}
                           onChange={(e) => setPartnerName(e.target.value)}
                           placeholder="e.g. Partner's Name"
-                          className="w-full min-h-[44px] bg-[#12141C] border border-white/10 rounded-xl px-3.5 text-base sm:text-sm text-white placeholder:text-zinc-600 focus:outline-none focus:border-white/30"
+                          className="w-full min-h-[44px] bg-black border border-white/10 rounded-xl px-3.5 text-base sm:text-sm text-white placeholder:text-zinc-600 focus:outline-none focus:border-white/30"
                         />
                       </div>
                       {pairingCode && (
@@ -446,7 +446,7 @@ export const OnboardingWizard: React.FC<OnboardingWizardProps> = ({
                       )}
                     </div>
                   ) : (
-                    <div className="rounded-2xl bg-[#090A0F] border border-rose-500/30 p-3.5 space-y-2">
+                    <div className="rounded-2xl bg-black border border-rose-500/30 p-3.5 space-y-2">
                       <label className="block text-xs text-zinc-300">
                         Enter Partner’s 6-Digit Pairing Code *
                       </label>
@@ -459,7 +459,7 @@ export const OnboardingWizard: React.FC<OnboardingWizardProps> = ({
                           setPartnerCodeInput(e.target.value.replace(/\D/g, '').slice(0, 6))
                         }
                         placeholder="e.g. 482910"
-                        className="w-full min-h-[44px] bg-[#12141C] border border-white/10 rounded-xl px-4 text-base sm:text-lg font-mono tracking-[0.25em] text-white placeholder:text-zinc-600 focus:outline-none focus:border-rose-500"
+                        className="w-full min-h-[44px] bg-black border border-white/10 rounded-xl px-4 text-base sm:text-lg font-mono tracking-[0.25em] text-white placeholder:text-zinc-600 focus:outline-none focus:border-rose-500"
                       />
                     </div>
                   )}
@@ -489,7 +489,7 @@ export const OnboardingWizard: React.FC<OnboardingWizardProps> = ({
                   <label className="block text-xs font-medium text-zinc-300 mb-1.5">
                     Preferred Weight Unit
                   </label>
-                  <div className="grid grid-cols-2 gap-2 p-1.5 bg-[#090A0F] border border-white/10 rounded-2xl">
+                  <div className="grid grid-cols-2 gap-2 p-1.5 bg-black border border-white/10 rounded-2xl">
                     {(['kg', 'lbs'] as const).map((unit) => (
                       <button
                         key={unit}
@@ -508,7 +508,7 @@ export const OnboardingWizard: React.FC<OnboardingWizardProps> = ({
                 </div>
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
-                  <div className="rounded-2xl bg-[#090A0F] border border-white/10 p-4 space-y-2">
+                  <div className="rounded-2xl bg-black border border-white/10 p-4 space-y-2">
                     <label className="block text-xs text-zinc-400">
                       Current Weight ({weightUnit}) *
                     </label>
@@ -519,14 +519,14 @@ export const OnboardingWizard: React.FC<OnboardingWizardProps> = ({
                       max="500"
                       value={currentWeight}
                       onChange={(e) => setCurrentWeight(e.target.value)}
-                      className="w-full min-h-[48px] bg-[#12141C] border border-white/10 rounded-xl px-4 text-xl font-mono tabular-nums font-bold text-white focus:outline-none focus:border-rose-500"
+                      className="w-full min-h-[48px] bg-black border border-white/10 rounded-xl px-4 text-xl font-mono tabular-nums font-bold text-white focus:outline-none focus:border-rose-500"
                     />
                     <span className="block text-[11px] text-zinc-500">
                       Saved as today’s baseline log
                     </span>
                   </div>
 
-                  <div className="rounded-2xl bg-[#090A0F] border border-white/10 p-4 space-y-2">
+                  <div className="rounded-2xl bg-black border border-white/10 p-4 space-y-2">
                     <label className="block text-xs text-zinc-400">
                       Target Goal Weight ({weightUnit}) *
                     </label>
@@ -537,7 +537,7 @@ export const OnboardingWizard: React.FC<OnboardingWizardProps> = ({
                       max="500"
                       value={targetWeight}
                       onChange={(e) => setTargetWeight(e.target.value)}
-                      className="w-full min-h-[48px] bg-[#12141C] border border-white/10 rounded-xl px-4 text-xl font-mono tabular-nums font-bold text-white focus:outline-none focus:border-rose-500"
+                      className="w-full min-h-[48px] bg-black border border-white/10 rounded-xl px-4 text-xl font-mono tabular-nums font-bold text-white focus:outline-none focus:border-rose-500"
                     />
                     <span className="block text-[11px] text-zinc-500">
                       Your personal target milestone
@@ -566,7 +566,7 @@ export const OnboardingWizard: React.FC<OnboardingWizardProps> = ({
 
               <div className="space-y-4">
                 {/* Steps Target */}
-                <div className="rounded-2xl bg-[#090A0F] border border-white/10 p-3.5 space-y-2.5">
+                <div className="rounded-2xl bg-black border border-white/10 p-3.5 space-y-2.5">
                   <div className="flex items-center justify-between">
                     <span className="text-xs font-medium text-emerald-400 flex items-center gap-1.5">
                       <Footprints className="w-4 h-4" />
@@ -583,7 +583,7 @@ export const OnboardingWizard: React.FC<OnboardingWizardProps> = ({
                     max="100000"
                     value={stepsGoal}
                     onChange={(e) => setStepsGoal(e.target.value)}
-                    className="w-full min-h-[44px] bg-[#12141C] border border-white/10 rounded-xl px-3.5 text-base font-mono tabular-nums text-white"
+                    className="w-full min-h-[44px] bg-black border border-white/10 rounded-xl px-3.5 text-base font-mono tabular-nums text-white"
                   />
                   <div className="grid grid-cols-4 gap-1.5">
                     {[6000, 8000, 10000, 12000].map((preset) => (
@@ -604,7 +604,7 @@ export const OnboardingWizard: React.FC<OnboardingWizardProps> = ({
                 </div>
 
                 {/* Sleep Target */}
-                <div className="rounded-2xl bg-[#090A0F] border border-white/10 p-3.5 space-y-2.5">
+                <div className="rounded-2xl bg-black border border-white/10 p-3.5 space-y-2.5">
                   <div className="flex items-center justify-between">
                     <span className="text-xs font-medium text-indigo-400 flex items-center gap-1.5">
                       <Moon className="w-4 h-4" />
@@ -625,7 +625,7 @@ export const OnboardingWizard: React.FC<OnboardingWizardProps> = ({
                         max="24"
                         value={sleepHours}
                         onChange={(e) => setSleepHours(e.target.value)}
-                        className="w-full min-h-[44px] bg-[#12141C] border border-white/10 rounded-xl pl-3.5 pr-11 text-base font-mono tabular-nums text-white"
+                        className="w-full min-h-[44px] bg-black border border-white/10 rounded-xl pl-3.5 pr-11 text-base font-mono tabular-nums text-white"
                       />
                       <span className="absolute right-3.5 top-1/2 -translate-y-1/2 text-xs text-zinc-500 font-mono">
                         hrs
@@ -638,7 +638,7 @@ export const OnboardingWizard: React.FC<OnboardingWizardProps> = ({
                         max="59"
                         value={sleepMins}
                         onChange={(e) => setSleepMins(e.target.value)}
-                        className="w-full min-h-[44px] bg-[#12141C] border border-white/10 rounded-xl pl-3.5 pr-12 text-base font-mono tabular-nums text-white"
+                        className="w-full min-h-[44px] bg-black border border-white/10 rounded-xl pl-3.5 pr-12 text-base font-mono tabular-nums text-white"
                       />
                       <span className="absolute right-3.5 top-1/2 -translate-y-1/2 text-xs text-zinc-500 font-mono">
                         mins
@@ -648,7 +648,7 @@ export const OnboardingWizard: React.FC<OnboardingWizardProps> = ({
                 </div>
 
                 {/* Water Target */}
-                <div className="rounded-2xl bg-[#090A0F] border border-white/10 p-3.5 space-y-2.5">
+                <div className="rounded-2xl bg-black border border-white/10 p-3.5 space-y-2.5">
                   <div className="flex items-center justify-between">
                     <span className="text-xs font-medium text-sky-400 flex items-center gap-1.5">
                       <Droplets className="w-4 h-4" />
@@ -666,7 +666,7 @@ export const OnboardingWizard: React.FC<OnboardingWizardProps> = ({
                     step="50"
                     value={waterGoalMl}
                     onChange={(e) => setWaterGoalMl(e.target.value)}
-                    className="w-full min-h-[44px] bg-[#12141C] border border-white/10 rounded-xl px-3.5 text-base font-mono tabular-nums text-white"
+                    className="w-full min-h-[44px] bg-black border border-white/10 rounded-xl px-3.5 text-base font-mono tabular-nums text-white"
                   />
                   <div className="grid grid-cols-4 gap-1.5">
                     {[2000, 2500, 3000, 3500].map((preset) => (
@@ -707,7 +707,7 @@ export const OnboardingWizard: React.FC<OnboardingWizardProps> = ({
 
               <div className="space-y-4 max-h-[min(52dvh,28rem)] overflow-y-auto pr-1 overscroll-contain no-scrollbar">
                 {/* Skincare Categories */}
-                <div className="rounded-2xl bg-[#090A0F] border border-white/10 p-3.5 space-y-2.5">
+                <div className="rounded-2xl bg-black border border-white/10 p-3.5 space-y-2.5">
                   <span className="text-xs font-semibold text-rose-400 flex items-center gap-1.5">
                     <Sparkles className="w-3.5 h-3.5" />
                     <span>1. Skincare Categories ({skincareCats.length})</span>
@@ -752,7 +752,7 @@ export const OnboardingWizard: React.FC<OnboardingWizardProps> = ({
                         }
                       }}
                       placeholder="Add custom skincare category..."
-                      className="flex-1 min-h-[44px] bg-[#12141C] border border-white/10 rounded-xl px-3 text-base sm:text-xs text-white placeholder:text-zinc-600 focus:outline-none focus:border-white/30"
+                      className="flex-1 min-h-[44px] bg-black border border-white/10 rounded-xl px-3 text-base sm:text-xs text-white placeholder:text-zinc-600 focus:outline-none focus:border-white/30"
                     />
                     <button
                       type="button"
@@ -773,7 +773,7 @@ export const OnboardingWizard: React.FC<OnboardingWizardProps> = ({
                 </div>
 
                 {/* Haircare Categories */}
-                <div className="rounded-2xl bg-[#090A0F] border border-white/10 p-3.5 space-y-2.5">
+                <div className="rounded-2xl bg-black border border-white/10 p-3.5 space-y-2.5">
                   <span className="text-xs font-semibold text-amber-400 flex items-center gap-1.5">
                     <Wind className="w-3.5 h-3.5" />
                     <span>2. Haircare Categories ({haircareCats.length})</span>
@@ -818,7 +818,7 @@ export const OnboardingWizard: React.FC<OnboardingWizardProps> = ({
                         }
                       }}
                       placeholder="Add custom haircare category..."
-                      className="flex-1 min-h-[44px] bg-[#12141C] border border-white/10 rounded-xl px-3 text-base sm:text-xs text-white placeholder:text-zinc-600 focus:outline-none focus:border-white/30"
+                      className="flex-1 min-h-[44px] bg-black border border-white/10 rounded-xl px-3 text-base sm:text-xs text-white placeholder:text-zinc-600 focus:outline-none focus:border-white/30"
                     />
                     <button
                       type="button"
@@ -839,7 +839,7 @@ export const OnboardingWizard: React.FC<OnboardingWizardProps> = ({
                 </div>
 
                 {/* Bodycare Categories */}
-                <div className="rounded-2xl bg-[#090A0F] border border-white/10 p-3.5 space-y-2.5">
+                <div className="rounded-2xl bg-black border border-white/10 p-3.5 space-y-2.5">
                   <span className="text-xs font-semibold text-sky-400 flex items-center gap-1.5">
                     <Droplet className="w-3.5 h-3.5" />
                     <span>3. Bodycare Categories ({bodycareCats.length})</span>
@@ -884,7 +884,7 @@ export const OnboardingWizard: React.FC<OnboardingWizardProps> = ({
                         }
                       }}
                       placeholder="Add custom bodycare category..."
-                      className="flex-1 min-h-[44px] bg-[#12141C] border border-white/10 rounded-xl px-3 text-base sm:text-xs text-white placeholder:text-zinc-600 focus:outline-none focus:border-white/30"
+                      className="flex-1 min-h-[44px] bg-black border border-white/10 rounded-xl px-3 text-base sm:text-xs text-white placeholder:text-zinc-600 focus:outline-none focus:border-white/30"
                     />
                     <button
                       type="button"

@@ -69,7 +69,7 @@ export function cropImageToSquare(
         }
 
         // Fill background with subtle dark color in case of any sub-pixel gap
-        ctx.fillStyle = '#12141C';
+        ctx.fillStyle = '#000000';
         ctx.fillRect(0, 0, outputSize, outputSize);
 
         // Draw center-cropped square

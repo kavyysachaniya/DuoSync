@@ -472,7 +472,7 @@ export const WardrobeDashboard: React.FC<WardrobeDashboardProps> = ({
 
       {/* 2. NAVIGATION ROW (Closet / Fits / Create Fit as text only) + Round White "+" Button */}
       <div className="flex items-center justify-between gap-2.5">
-        <div className="flex-1 flex items-center p-1 rounded-full bg-[#12141C] border border-white/10 shadow-lg">
+        <div className="flex-1 flex items-center p-1 rounded-full bg-[#0A0A0F] border border-white/10 shadow-lg">
           <button
             type="button"
             onClick={() => setActiveTab('closet')}
@@ -646,7 +646,7 @@ export const WardrobeDashboard: React.FC<WardrobeDashboardProps> = ({
 
           {/* Metric Summary Cards */}
           <div className="grid grid-cols-3 gap-2.5 sm:gap-4">
-            <div className="rounded-2xl bg-[#12141C] border border-white/8 p-3 sm:p-4 space-y-1">
+            <div className="rounded-2xl bg-[#0A0A0F] border border-white/8 p-3 sm:p-4 space-y-1">
               <span className="text-[10px] sm:text-xs font-medium text-zinc-400 uppercase tracking-wider block">
                 Total Fits
               </span>
@@ -654,7 +654,7 @@ export const WardrobeDashboard: React.FC<WardrobeDashboardProps> = ({
                 {fitsStats.totalFits}
               </span>
             </div>
-            <div className="rounded-2xl bg-[#12141C] border border-white/8 p-3 sm:p-4 space-y-1">
+            <div className="rounded-2xl bg-[#0A0A0F] border border-white/8 p-3 sm:p-4 space-y-1">
               <span className="text-[10px] sm:text-xs font-medium text-zinc-400 uppercase tracking-wider block">
                 Pieces in Looks
               </span>
@@ -662,7 +662,7 @@ export const WardrobeDashboard: React.FC<WardrobeDashboardProps> = ({
                 {fitsStats.piecesStyled}
               </span>
             </div>
-            <div className="rounded-2xl bg-[#12141C] border border-white/8 p-3 sm:p-4 space-y-1">
+            <div className="rounded-2xl bg-[#0A0A0F] border border-white/8 p-3 sm:p-4 space-y-1">
               <span className="text-[10px] sm:text-xs font-medium text-zinc-400 uppercase tracking-wider block">
                 Top Occasion
               </span>
@@ -673,7 +673,7 @@ export const WardrobeDashboard: React.FC<WardrobeDashboardProps> = ({
           </div>
 
           {filteredOutfits.length === 0 ? (
-            <div className="rounded-3xl bg-[#12141C] border border-white/8 p-10 sm:p-14 text-center space-y-4">
+            <div className="rounded-3xl bg-[#0A0A0F] border border-white/8 p-10 sm:p-14 text-center space-y-4">
               <div className="w-16 h-16 rounded-3xl bg-zinc-900 border border-white/10 flex items-center justify-center mx-auto text-rose-400 shadow-xl shadow-rose-500/5">
                 <Layers className="w-8 h-8" />
               </div>
@@ -702,7 +702,7 @@ export const WardrobeDashboard: React.FC<WardrobeDashboardProps> = ({
                 return (
                   <div
                     key={outfit.id}
-                    className="rounded-3xl bg-[#12141C] border border-white/10 hover:border-white/20 p-5 space-y-4 flex flex-col justify-between transition-all duration-200 shadow-xl"
+                    className="rounded-3xl bg-[#0A0A0F] border border-white/10 hover:border-white/20 p-5 space-y-4 flex flex-col justify-between transition-all duration-200 shadow-xl"
                   >
                     <div className="space-y-3.5">
                       <div className="flex items-center justify-between gap-2">
@@ -833,7 +833,7 @@ export const WardrobeDashboard: React.FC<WardrobeDashboardProps> = ({
 
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
             {/* Left: Fit Meta Details (Name, Occasion, Notes, Owner) */}
-            <div className="lg:col-span-5 rounded-3xl bg-[#12141C] border border-white/10 p-5 sm:p-6 space-y-4 shadow-xl">
+            <div className="lg:col-span-5 rounded-3xl bg-[#0A0A0F] border border-white/10 p-5 sm:p-6 space-y-4 shadow-xl">
               <h3 className="text-sm font-bold text-white flex items-center gap-2 pb-2 border-b border-white/8">
                 <Tag className="w-4 h-4 text-rose-400" />
                 <span>Fit Configuration</span>
@@ -847,7 +847,7 @@ export const WardrobeDashboard: React.FC<WardrobeDashboardProps> = ({
                   placeholder="e.g. Sunset Rooftop Dinner, Campus Casual..."
                   value={outfitName}
                   onChange={(e) => setOutfitName(e.target.value)}
-                  className="w-full min-h-[44px] px-4 rounded-2xl bg-[#090A0F] border border-white/10 text-xs text-zinc-100 placeholder-zinc-500 focus:outline-none focus:border-rose-400 transition-colors"
+                  className="w-full min-h-[44px] px-4 rounded-2xl bg-black border border-white/10 text-xs text-zinc-100 placeholder-zinc-500 focus:outline-none focus:border-rose-400 transition-colors"
                 />
               </div>
 
@@ -862,7 +862,7 @@ export const WardrobeDashboard: React.FC<WardrobeDashboardProps> = ({
                       className={`min-h-[40px] px-3 rounded-xl text-xs font-semibold transition-all flex items-center justify-between active:scale-95 ${
                         outfitOccasion === occ
                           ? 'bg-rose-500 text-white shadow-md shadow-rose-500/20'
-                          : 'bg-[#090A0F] text-zinc-400 hover:text-white border border-white/6'
+                          : 'bg-black text-zinc-400 hover:text-white border border-white/6'
                       }`}
                     >
                       <span>{occ}</span>
@@ -881,7 +881,7 @@ export const WardrobeDashboard: React.FC<WardrobeDashboardProps> = ({
                     className={`min-h-[40px] rounded-xl text-xs font-semibold transition-all active:scale-95 ${
                       outfitOwnerSlot === profile.slot
                         ? 'bg-sky-500 text-white shadow-md shadow-sky-500/20'
-                        : 'bg-[#090A0F] text-zinc-400 border border-white/6'
+                        : 'bg-black text-zinc-400 border border-white/6'
                     }`}
                   >
                     {profile.name}
@@ -892,7 +892,7 @@ export const WardrobeDashboard: React.FC<WardrobeDashboardProps> = ({
                     className={`min-h-[40px] rounded-xl text-xs font-semibold transition-all active:scale-95 ${
                       outfitOwnerSlot === partnerProfile.slot
                         ? 'bg-rose-500 text-white shadow-md shadow-rose-500/20'
-                        : 'bg-[#090A0F] text-zinc-400 border border-white/6'
+                        : 'bg-black text-zinc-400 border border-white/6'
                     }`}
                   >
                     {partnerProfile.name}
@@ -903,7 +903,7 @@ export const WardrobeDashboard: React.FC<WardrobeDashboardProps> = ({
                     className={`min-h-[40px] rounded-xl text-xs font-semibold transition-all active:scale-95 ${
                       outfitOwnerSlot === 'shared'
                         ? 'bg-amber-500 text-zinc-950 font-bold shadow-md shadow-amber-500/20'
-                        : 'bg-[#090A0F] text-zinc-400 border border-white/6'
+                        : 'bg-black text-zinc-400 border border-white/6'
                     }`}
                   >
                     Shared
@@ -918,7 +918,7 @@ export const WardrobeDashboard: React.FC<WardrobeDashboardProps> = ({
                   placeholder="e.g. Roll sleeves, pair with silver necklace, wear with light socks..."
                   value={outfitNotes}
                   onChange={(e) => setOutfitNotes(e.target.value)}
-                  className="w-full p-3.5 rounded-2xl bg-[#090A0F] border border-white/10 text-xs text-zinc-100 placeholder-zinc-500 focus:outline-none focus:border-rose-400 resize-none transition-colors"
+                  className="w-full p-3.5 rounded-2xl bg-black border border-white/10 text-xs text-zinc-100 placeholder-zinc-500 focus:outline-none focus:border-rose-400 resize-none transition-colors"
                 />
               </div>
 
@@ -949,7 +949,7 @@ export const WardrobeDashboard: React.FC<WardrobeDashboardProps> = ({
                       return (
                         <div
                           key={id}
-                          className="flex items-center justify-between gap-2 p-2.5 rounded-xl bg-[#090A0F] border border-white/6 text-xs"
+                          className="flex items-center justify-between gap-2 p-2.5 rounded-xl bg-black border border-white/6 text-xs"
                         >
                           <div className="flex items-center gap-2.5 truncate">
                             {piece.imageUrl ? (
@@ -987,7 +987,7 @@ export const WardrobeDashboard: React.FC<WardrobeDashboardProps> = ({
             </div>
 
             {/* Right: Interactive Closet Selector */}
-            <div className="lg:col-span-7 rounded-3xl bg-[#12141C] border border-white/10 p-5 sm:p-6 space-y-4 shadow-xl">
+            <div className="lg:col-span-7 rounded-3xl bg-[#0A0A0F] border border-white/10 p-5 sm:p-6 space-y-4 shadow-xl">
               <div className="space-y-2">
                 <div className="flex items-center justify-between">
                   <h3 className="text-sm font-bold text-white">Select Pieces from Closet</h3>
@@ -1009,7 +1009,7 @@ export const WardrobeDashboard: React.FC<WardrobeDashboardProps> = ({
                       className={`min-h-[32px] px-3 rounded-xl text-xs font-semibold whitespace-nowrap transition-colors active:scale-95 ${
                         builderCategoryFilter === cat
                           ? 'bg-rose-500 text-white shadow-md'
-                          : 'bg-[#090A0F] text-zinc-400 hover:text-white border border-white/6'
+                          : 'bg-black text-zinc-400 hover:text-white border border-white/6'
                       }`}
                     >
                       {cat}
@@ -1019,7 +1019,7 @@ export const WardrobeDashboard: React.FC<WardrobeDashboardProps> = ({
               </div>
 
               {builderFilteredItems.length === 0 ? (
-                <div className="p-8 text-center text-xs text-zinc-400 bg-[#090A0F] rounded-2xl border border-white/6 space-y-2">
+                <div className="p-8 text-center text-xs text-zinc-400 bg-black rounded-2xl border border-white/6 space-y-2">
                   <Shirt className="w-6 h-6 text-zinc-600 mx-auto" />
                   <p>No wardrobe items match this category.</p>
                 </div>
@@ -1035,7 +1035,7 @@ export const WardrobeDashboard: React.FC<WardrobeDashboardProps> = ({
                         className={`relative rounded-2xl p-2.5 text-left border transition-all flex flex-col justify-between active:scale-95 ${
                           isSelected
                             ? 'bg-rose-500/15 border-rose-500 shadow-md ring-2 ring-rose-500/40'
-                            : 'bg-[#090A0F] border-white/8 hover:border-white/20'
+                            : 'bg-black border-white/8 hover:border-white/20'
                         }`}
                       >
                         {isSelected && (
@@ -1091,10 +1091,10 @@ export const WardrobeDashboard: React.FC<WardrobeDashboardProps> = ({
               initial={{ opacity: 0, scale: 0.95, y: 10 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.95, y: 10 }}
-              className="w-full max-w-xl max-h-[90dvh] flex flex-col rounded-t-3xl sm:rounded-3xl bg-[#12141C] border border-white/10 text-zinc-100 shadow-2xl overflow-hidden"
+              className="w-full max-w-xl max-h-[90dvh] flex flex-col rounded-t-3xl sm:rounded-3xl bg-[#0A0A0F] border border-white/10 text-zinc-100 shadow-2xl overflow-hidden"
             >
               {/* Modal Header */}
-              <div className="shrink-0 p-4 sm:p-5 border-b border-white/10 bg-[#12141C] flex items-center justify-between">
+              <div className="shrink-0 p-4 sm:p-5 border-b border-white/10 bg-[#0A0A0F] flex items-center justify-between">
                 <div className="flex items-center gap-2.5">
                   <div className="w-9 h-9 rounded-xl bg-rose-500/15 border border-rose-500/30 flex items-center justify-center text-rose-400">
                     <Shirt className="w-4 h-4" />
@@ -1313,7 +1313,7 @@ export const WardrobeDashboard: React.FC<WardrobeDashboardProps> = ({
                 </div>
 
                 {/* Sticky Footer */}
-                <div className="shrink-0 p-4 border-t border-white/10 bg-[#12141C] flex items-center justify-end gap-2">
+                <div className="shrink-0 p-4 border-t border-white/10 bg-[#0A0A0F] flex items-center justify-end gap-2">
                   <button
                     type="button"
                     onClick={() => setIsItemModalOpen(false)}

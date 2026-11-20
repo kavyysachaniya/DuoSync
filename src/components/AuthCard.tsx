@@ -74,9 +74,9 @@ export const AuthCard: React.FC<AuthCardProps> = ({ onSuccess, initialMode = 'si
   };
 
   return (
-    <div className="w-full max-w-md mx-auto rounded-3xl bg-[#12141C] border border-white/10 p-4 sm:p-7 shadow-2xl shadow-black/60 space-y-5">
+    <div className="w-full max-w-md mx-auto rounded-3xl bg-[#0A0A0F] border border-white/10 p-4 sm:p-7 shadow-2xl shadow-black/60 space-y-5">
       {/* Auth Mode Toggle Pill */}
-      <div className="flex items-center p-1 rounded-2xl bg-[#090A0F] border border-white/8 text-xs font-semibold">
+      <div className="flex items-center p-1 rounded-2xl bg-black border border-white/8 text-xs font-semibold">
         <button
           type="button"
           onClick={() => {
@@ -121,7 +121,7 @@ export const AuthCard: React.FC<AuthCardProps> = ({ onSuccess, initialMode = 'si
                 placeholder="e.g. Alex"
                 maxLength={40}
                 required
-                className="w-full min-h-[44px] bg-[#090A0F] border border-white/10 rounded-xl pl-9 pr-3 text-base sm:text-sm text-zinc-100 placeholder:text-zinc-600 focus:outline-none focus:border-rose-500/70"
+                className="w-full min-h-[44px] bg-black border border-white/10 rounded-xl pl-9 pr-3 text-base sm:text-sm text-zinc-100 placeholder:text-zinc-600 focus:outline-none focus:border-rose-500/70"
               />
             </div>
           </div>
@@ -138,7 +138,7 @@ export const AuthCard: React.FC<AuthCardProps> = ({ onSuccess, initialMode = 'si
               onChange={(e) => setEmail(e.target.value)}
               placeholder="you@example.com"
               autoComplete="email"
-              className="w-full min-h-[44px] bg-[#090A0F] border border-white/10 rounded-xl pl-9 pr-3 text-base sm:text-sm text-zinc-100 placeholder:text-zinc-600 focus:outline-none focus:border-rose-500/70"
+              className="w-full min-h-[44px] bg-black border border-white/10 rounded-xl pl-9 pr-3 text-base sm:text-sm text-zinc-100 placeholder:text-zinc-600 focus:outline-none focus:border-rose-500/70"
             />
           </div>
         </div>
@@ -155,7 +155,7 @@ export const AuthCard: React.FC<AuthCardProps> = ({ onSuccess, initialMode = 'si
               onChange={(e) => setPassword(e.target.value)}
               placeholder="Min. 6 characters"
               autoComplete={authMode === 'signup' ? 'new-password' : 'current-password'}
-              className="w-full min-h-[44px] bg-[#090A0F] border border-white/10 rounded-xl pl-9 pr-12 text-base sm:text-sm text-zinc-100 placeholder:text-zinc-600 focus:outline-none focus:border-rose-500/70"
+              className="w-full min-h-[44px] bg-black border border-white/10 rounded-xl pl-9 pr-12 text-base sm:text-sm text-zinc-100 placeholder:text-zinc-600 focus:outline-none focus:border-rose-500/70"
             />
             <button
               type="button"

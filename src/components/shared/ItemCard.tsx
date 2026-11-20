@@ -73,10 +73,10 @@ export const ItemCard: React.FC<ItemCardProps> = ({
 
   // Soft gradient palette tint for image-less items (no icon)
   const tintGradients = [
-    'from-white/[0.06] via-[#0E0E13] to-white/[0.02]',
-    'from-rose-500/[0.06] via-[#0E0E13] to-white/[0.02]',
-    'from-sky-500/[0.06] via-[#0E0E13] to-white/[0.02]',
-    'from-violet-500/[0.06] via-[#0E0E13] to-white/[0.02]',
+    'from-white/[0.06] via-[#0A0A0F] to-white/[0.02]',
+    'from-rose-500/[0.06] via-[#0A0A0F] to-white/[0.02]',
+    'from-sky-500/[0.06] via-[#0A0A0F] to-white/[0.02]',
+    'from-violet-500/[0.06] via-[#0A0A0F] to-white/[0.02]',
   ];
   const placeholderGradient = tintGradients[index % tintGradients.length];
 
@@ -97,7 +97,7 @@ export const ItemCard: React.FC<ItemCardProps> = ({
           onLongPress();
         }
       }}
-      className={`rounded-[22px] bg-[#0E0E13] border border-white/[0.08] hover:border-white/[0.16] overflow-hidden cursor-pointer transition-colors shadow-lg active:scale-[0.98] select-none flex flex-col justify-between ${className}`}
+      className={`rounded-[22px] bg-[#0A0A0F] border border-white/[0.08] hover:border-white/[0.16] overflow-hidden cursor-pointer transition-colors shadow-lg active:scale-[0.98] select-none flex flex-col justify-between ${className}`}
     >
       {/* Top: 4:5 Aspect Ratio Image Area */}
       <div className="w-full p-2 pb-0">

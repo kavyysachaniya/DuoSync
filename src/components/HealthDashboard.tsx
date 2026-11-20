@@ -380,7 +380,7 @@ export const HealthDashboard: React.FC<HealthDashboardProps> = ({
             type="button"
             onClick={onSwitchToPartner}
             style={{ flex: 6 }}
-            className="h-11 sm:h-12 min-h-[44px] px-3 sm:px-3.5 rounded-full bg-[#12141C] hover:bg-white/5 border border-white/10 text-left flex items-center gap-2 sm:gap-2.5 transition-colors overflow-hidden active:scale-95 cursor-pointer shadow-sm"
+            className="h-11 sm:h-12 min-h-[44px] px-3 sm:px-3.5 rounded-full bg-[#0A0A0F] hover:bg-white/5 border border-white/10 text-left flex items-center gap-2 sm:gap-2.5 transition-colors overflow-hidden active:scale-95 cursor-pointer shadow-sm"
           >
             <div className="w-7 h-7 rounded-full bg-white/5 flex items-center justify-center text-xs font-bold text-zinc-200 shrink-0">
               {partnerProfile.name.slice(0, 1).toUpperCase()}
@@ -407,7 +407,7 @@ export const HealthDashboard: React.FC<HealthDashboardProps> = ({
             type="button"
             onClick={() => setIsGoalsOpen(true)}
             style={{ flex: 4 }}
-            className="h-11 sm:h-12 min-h-[44px] px-3.5 rounded-full bg-[#12141C] hover:bg-white/5 border border-white/10 text-xs font-semibold text-white flex items-center justify-center gap-2 transition-colors overflow-hidden active:scale-95 cursor-pointer shadow-sm"
+            className="h-11 sm:h-12 min-h-[44px] px-3.5 rounded-full bg-[#0A0A0F] hover:bg-white/5 border border-white/10 text-xs font-semibold text-white flex items-center justify-center gap-2 transition-colors overflow-hidden active:scale-95 cursor-pointer shadow-sm"
           >
             <SlidersHorizontal className="w-4 h-4 text-rose-400 shrink-0" />
             <span className="truncate">Targets</span>
@@ -415,7 +415,7 @@ export const HealthDashboard: React.FC<HealthDashboardProps> = ({
         </div>
 
         {/* 2. SECOND CARD (date strip + 2x2 progress rings) */}
-        <div className="flex-1 min-h-0 rounded-3xl bg-[#12141C] border border-white/8 p-3 sm:p-4 flex flex-col justify-between overflow-hidden">
+        <div className="flex-1 min-h-0 rounded-3xl bg-[#0A0A0F] border border-white/[0.08] p-3 sm:p-4 flex flex-col justify-between overflow-hidden shadow-2xl">
           {/* Compact Date Header */}
           <div className="shrink-0 flex items-center justify-between gap-2 pb-2">
             <div className="flex items-center gap-2 min-w-0 flex-1">
@@ -474,7 +474,7 @@ export const HealthDashboard: React.FC<HealthDashboardProps> = ({
                       ? 'bg-white text-zinc-950 border-white shadow-lg shadow-white/10 font-bold'
                       : isToday
                       ? 'bg-rose-500/10 text-rose-200 border-rose-500/30 hover:border-rose-500/50 hover:bg-rose-500/20'
-                      : 'bg-zinc-900/70 text-zinc-400 border-white/6 hover:border-white/15 hover:text-zinc-200'
+                      : 'bg-black/60 text-zinc-400 border-white/[0.06] hover:border-white/15 hover:text-zinc-200'
                   }`}
                 >
                   <span
@@ -520,7 +520,7 @@ export const HealthDashboard: React.FC<HealthDashboardProps> = ({
             <button
               type="button"
               onClick={() => scrollToCard('card-weight')}
-              className="w-full h-full min-h-0 rounded-2xl bg-zinc-900/50 hover:bg-zinc-900/90 border border-white/6 hover:border-white/15 p-1.5 sm:p-2.5 flex flex-col items-center justify-center transition-all active:scale-95 group text-center cursor-pointer overflow-hidden"
+              className="w-full h-full min-h-0 rounded-2xl bg-black/60 hover:bg-black/90 border border-white/[0.06] hover:border-white/12 p-1.5 sm:p-2.5 flex flex-col items-center justify-center transition-all active:scale-95 group text-center cursor-pointer overflow-hidden"
             >
               <CircularProgressRing
                 percentage={weightPct}
@@ -547,7 +547,7 @@ export const HealthDashboard: React.FC<HealthDashboardProps> = ({
             <button
               type="button"
               onClick={() => scrollToCard('card-steps')}
-              className="w-full h-full min-h-0 rounded-2xl bg-zinc-900/50 hover:bg-zinc-900/90 border border-white/6 hover:border-white/15 p-1.5 sm:p-2.5 flex flex-col items-center justify-center transition-all active:scale-95 group text-center cursor-pointer overflow-hidden"
+              className="w-full h-full min-h-0 rounded-2xl bg-black/60 hover:bg-black/90 border border-white/[0.06] hover:border-white/12 p-1.5 sm:p-2.5 flex flex-col items-center justify-center transition-all active:scale-95 group text-center cursor-pointer overflow-hidden"
             >
               <CircularProgressRing
                 percentage={stepsPct}
@@ -578,7 +578,7 @@ export const HealthDashboard: React.FC<HealthDashboardProps> = ({
             <button
               type="button"
               onClick={() => scrollToCard('card-sleep')}
-              className="w-full h-full min-h-0 rounded-2xl bg-zinc-900/50 hover:bg-zinc-900/90 border border-white/6 hover:border-white/15 p-1.5 sm:p-2.5 flex flex-col items-center justify-center transition-all active:scale-95 group text-center cursor-pointer overflow-hidden"
+              className="w-full h-full min-h-0 rounded-2xl bg-black/60 hover:bg-black/90 border border-white/[0.06] hover:border-white/12 p-1.5 sm:p-2.5 flex flex-col items-center justify-center transition-all active:scale-95 group text-center cursor-pointer overflow-hidden"
             >
               <CircularProgressRing
                 percentage={sleepPct}
@@ -605,7 +605,7 @@ export const HealthDashboard: React.FC<HealthDashboardProps> = ({
             <button
               type="button"
               onClick={() => scrollToCard('card-water')}
-              className="w-full h-full min-h-0 rounded-2xl bg-zinc-900/50 hover:bg-zinc-900/90 border border-white/6 hover:border-white/15 p-1.5 sm:p-2.5 flex flex-col items-center justify-center transition-all active:scale-95 group text-center cursor-pointer overflow-hidden"
+              className="w-full h-full min-h-0 rounded-2xl bg-black/60 hover:bg-black/90 border border-white/[0.06] hover:border-white/12 p-1.5 sm:p-2.5 flex flex-col items-center justify-center transition-all active:scale-95 group text-center cursor-pointer overflow-hidden"
             >
               <CircularProgressRing
                 percentage={waterPct}
@@ -641,7 +641,7 @@ export const HealthDashboard: React.FC<HealthDashboardProps> = ({
         {/* Card: Body Weight (50% of available viewport) */}
         <section
           id="card-weight"
-          className="flex-1 min-h-0 scroll-mt-[68px] sm:scroll-mt-[76px] rounded-3xl bg-[#12141C] border border-white/8 p-4 flex flex-col justify-between overflow-y-auto no-scrollbar"
+          className="flex-1 min-h-0 scroll-mt-[68px] sm:scroll-mt-[76px] rounded-3xl bg-[#0A0A0F] border border-white/[0.08] p-4 flex flex-col justify-between overflow-y-auto no-scrollbar"
         >
           {/* Header Row: Clean metric title & goal info */}
           <div className="shrink-0 flex items-center justify-between gap-2 pb-1.5">
@@ -704,7 +704,7 @@ export const HealthDashboard: React.FC<HealthDashboardProps> = ({
                   value={weightInput}
                   onChange={(e) => setWeightInput(e.target.value)}
                   placeholder={String(profile.targetWeight)}
-                  className="w-full h-12 min-h-[48px] bg-[#090A0F] border border-white/10 rounded-xl pl-3 pr-9 text-base sm:text-sm font-mono tabular-nums text-white placeholder:text-zinc-600 focus:outline-none focus:border-rose-500/60"
+                  className="w-full h-12 min-h-[48px] bg-black border border-white/10 rounded-xl pl-3 pr-9 text-base sm:text-sm font-mono tabular-nums text-white placeholder:text-zinc-600 focus:outline-none focus:border-rose-500/60"
                 />
                 <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs font-mono text-zinc-400 pointer-events-none">
                   {profile.weightUnit}
@@ -797,7 +797,7 @@ export const HealthDashboard: React.FC<HealthDashboardProps> = ({
         {/* Card: Daily Steps (50% of available viewport) */}
         <section
           id="card-steps"
-          className="flex-1 min-h-0 scroll-mt-[68px] sm:scroll-mt-[76px] rounded-3xl bg-[#12141C] border border-white/8 p-4 flex flex-col justify-between overflow-y-auto no-scrollbar"
+          className="flex-1 min-h-0 scroll-mt-[68px] sm:scroll-mt-[76px] rounded-3xl bg-[#0A0A0F] border border-white/[0.08] p-4 flex flex-col justify-between overflow-y-auto no-scrollbar"
         >
           {/* Header Row: Clean metric title & goal info */}
           <div className="shrink-0 flex items-center justify-between gap-2 pb-1.5">
@@ -850,7 +850,7 @@ export const HealthDashboard: React.FC<HealthDashboardProps> = ({
                   value={stepsInput}
                   onChange={(e) => setStepsInput(e.target.value)}
                   placeholder={String(profile.stepsGoal)}
-                  className="w-full h-12 min-h-[48px] bg-[#090A0F] border border-white/10 rounded-xl pl-3 pr-11 text-base sm:text-sm font-mono tabular-nums text-white placeholder:text-zinc-600 focus:outline-none focus:border-emerald-500/60"
+                  className="w-full h-12 min-h-[48px] bg-black border border-white/10 rounded-xl pl-3 pr-11 text-base sm:text-sm font-mono tabular-nums text-white placeholder:text-zinc-600 focus:outline-none focus:border-emerald-500/60"
                 />
                 <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs font-mono text-zinc-400 pointer-events-none">
                   steps
@@ -946,7 +946,7 @@ export const HealthDashboard: React.FC<HealthDashboardProps> = ({
         {/* Card: Sleep Duration (50% of available viewport) */}
         <section
           id="card-sleep"
-          className="flex-1 min-h-0 scroll-mt-[68px] sm:scroll-mt-[76px] rounded-3xl bg-[#12141C] border border-white/8 p-4 flex flex-col justify-between overflow-y-auto no-scrollbar"
+          className="flex-1 min-h-0 scroll-mt-[68px] sm:scroll-mt-[76px] rounded-3xl bg-[#0A0A0F] border border-white/[0.08] p-4 flex flex-col justify-between overflow-y-auto no-scrollbar"
         >
           {/* Header Row: Clean metric title & goal info */}
           <div className="shrink-0 flex items-center justify-between gap-2 pb-1.5">
@@ -995,7 +995,7 @@ export const HealthDashboard: React.FC<HealthDashboardProps> = ({
                     value={sleepHoursInput}
                     onChange={(e) => setSleepHoursInput(e.target.value)}
                     placeholder="8"
-                    className="w-full h-12 min-h-[48px] bg-[#090A0F] border border-white/10 rounded-xl pl-2.5 pr-6 text-base sm:text-sm font-mono tabular-nums text-white placeholder:text-zinc-600 focus:outline-none focus:border-indigo-500/60"
+                    className="w-full h-12 min-h-[48px] bg-black border border-white/10 rounded-xl pl-2.5 pr-6 text-base sm:text-sm font-mono tabular-nums text-white placeholder:text-zinc-600 focus:outline-none focus:border-indigo-500/60"
                   />
                   <span className="absolute right-2 top-1/2 -translate-y-1/2 text-xs font-mono text-zinc-400 pointer-events-none">
                     hr
@@ -1009,7 +1009,7 @@ export const HealthDashboard: React.FC<HealthDashboardProps> = ({
                     value={sleepMinsInput}
                     onChange={(e) => setSleepMinsInput(e.target.value)}
                     placeholder="00"
-                    className="w-full h-12 min-h-[48px] bg-[#090A0F] border border-white/10 rounded-xl pl-2.5 pr-7 text-base sm:text-sm font-mono tabular-nums text-white placeholder:text-zinc-600 focus:outline-none focus:border-indigo-500/60"
+                    className="w-full h-12 min-h-[48px] bg-black border border-white/10 rounded-xl pl-2.5 pr-7 text-base sm:text-sm font-mono tabular-nums text-white placeholder:text-zinc-600 focus:outline-none focus:border-indigo-500/60"
                   />
                   <span className="absolute right-2 top-1/2 -translate-y-1/2 text-xs font-mono text-zinc-400 pointer-events-none">
                     min
@@ -1100,7 +1100,7 @@ export const HealthDashboard: React.FC<HealthDashboardProps> = ({
         {/* Card: Hydration (50% of available viewport) */}
         <section
           id="card-water"
-          className="flex-1 min-h-0 scroll-mt-[68px] sm:scroll-mt-[76px] rounded-3xl bg-[#12141C] border border-white/8 p-4 flex flex-col justify-between overflow-y-auto no-scrollbar"
+          className="flex-1 min-h-0 scroll-mt-[68px] sm:scroll-mt-[76px] rounded-3xl bg-[#0A0A0F] border border-white/[0.08] p-4 flex flex-col justify-between overflow-y-auto no-scrollbar"
         >
           {/* Header Row: Clean metric title & goal info */}
           <div className="shrink-0 flex items-center justify-between gap-2 pb-1.5">
@@ -1149,7 +1149,7 @@ export const HealthDashboard: React.FC<HealthDashboardProps> = ({
                   value={waterInput}
                   onChange={(e) => setWaterInput(e.target.value)}
                   placeholder={String(profile.waterGoalMl)}
-                  className="w-full h-12 min-h-[48px] bg-[#090A0F] border border-white/10 rounded-xl pl-3 pr-8 text-base sm:text-sm font-mono tabular-nums text-white placeholder:text-zinc-600 focus:outline-none focus:border-sky-500/60"
+                  className="w-full h-12 min-h-[48px] bg-black border border-white/10 rounded-xl pl-3 pr-8 text-base sm:text-sm font-mono tabular-nums text-white placeholder:text-zinc-600 focus:outline-none focus:border-sky-500/60"
                 />
                 <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs font-mono text-zinc-400 pointer-events-none">
                   ml
@@ -1243,7 +1243,7 @@ export const HealthDashboard: React.FC<HealthDashboardProps> = ({
       <div className="snap-start scroll-mt-[68px] sm:scroll-mt-[76px] pt-1 pb-16 sm:pb-8">
         <form
           onSubmit={handleSaveNote}
-          className="rounded-3xl bg-[#12141C] border border-white/8 p-3.5 sm:p-4 flex flex-col sm:flex-row items-stretch sm:items-center gap-3"
+          className="rounded-3xl bg-[#0A0A0F] border border-white/[0.08] p-3.5 sm:p-4 flex flex-col sm:flex-row items-stretch sm:items-center gap-3"
         >
           <div className="flex items-center gap-2 text-xs font-medium text-zinc-300 shrink-0">
             <Sparkles className="w-4 h-4 text-amber-400" />
@@ -1255,7 +1255,7 @@ export const HealthDashboard: React.FC<HealthDashboardProps> = ({
             value={noteInput}
             onChange={(e) => setNoteInput(e.target.value)}
             placeholder="Add a note for today (e.g. Evening walk together, post-workout weigh-in)..."
-            className="flex-1 min-h-[44px] bg-[#090A0F] border border-white/10 rounded-xl px-3.5 text-base sm:text-sm text-white placeholder:text-zinc-600 focus:outline-none focus:border-amber-400/60"
+            className="flex-1 min-h-[44px] bg-black border border-white/10 rounded-xl px-3.5 text-base sm:text-sm text-white placeholder:text-zinc-600 focus:outline-none focus:border-amber-400/60"
           />
           <button
             type="submit"
@@ -1272,9 +1272,9 @@ export const HealthDashboard: React.FC<HealthDashboardProps> = ({
           ══════════════════════════════════════════════════════════════════════ */}
       {isGoalsOpen && (
         <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/75 backdrop-blur-sm p-0 sm:p-4">
-          <div className="w-full sm:max-w-md max-h-[90dvh] flex flex-col rounded-t-3xl sm:rounded-3xl bg-[#12141C] border border-white/10 text-zinc-100 shadow-2xl overflow-hidden">
+          <div className="w-full sm:max-w-md max-h-[90dvh] flex flex-col rounded-t-3xl sm:rounded-3xl bg-[#0A0A0F] border border-white/10 text-zinc-100 shadow-2xl overflow-hidden">
             {/* Modal Header */}
-            <div className="shrink-0 p-4 sm:p-5 pb-3 border-b border-white/10 bg-[#12141C]">
+            <div className="shrink-0 p-4 sm:p-5 pb-3 border-b border-white/10 bg-[#0A0A0F]">
               <div className="w-10 h-1 bg-zinc-700 rounded-full mx-auto mb-3 sm:hidden" />
               <div className="flex items-center justify-between">
                 <div>
@@ -1307,12 +1307,12 @@ export const HealthDashboard: React.FC<HealthDashboardProps> = ({
                       maxLength={60}
                       value={goalName}
                       onChange={(e) => setGoalName(e.target.value)}
-                      className="w-full min-h-[44px] bg-[#090A0F] border border-white/10 rounded-xl px-3 text-base sm:text-sm text-white focus:outline-none focus:border-rose-500/60"
+                      className="w-full min-h-[44px] bg-black border border-white/10 rounded-xl px-3 text-base sm:text-sm text-white focus:outline-none focus:border-rose-500/60"
                     />
                   </div>
                   <div>
                     <label className="block text-xs text-zinc-400 mb-1">Weight Unit</label>
-                    <div className="grid grid-cols-2 gap-1 p-1 bg-[#090A0F] border border-white/10 rounded-xl">
+                    <div className="grid grid-cols-2 gap-1 p-1 bg-black border border-white/10 rounded-xl">
                       {(['kg', 'lbs'] as const).map((u) => (
                         <button
                           key={u}
@@ -1343,7 +1343,7 @@ export const HealthDashboard: React.FC<HealthDashboardProps> = ({
                       max="500"
                       value={goalStartWeight}
                       onChange={(e) => setGoalStartWeight(e.target.value)}
-                      className="w-full min-h-[44px] bg-[#090A0F] border border-white/10 rounded-xl px-3 text-base sm:text-sm font-mono tabular-nums text-white focus:outline-none focus:border-rose-500/60"
+                      className="w-full min-h-[44px] bg-black border border-white/10 rounded-xl px-3 text-base sm:text-sm font-mono tabular-nums text-white focus:outline-none focus:border-rose-500/60"
                     />
                   </div>
                   <div>
@@ -1357,7 +1357,7 @@ export const HealthDashboard: React.FC<HealthDashboardProps> = ({
                       max="500"
                       value={goalTargetWeight}
                       onChange={(e) => setGoalTargetWeight(e.target.value)}
-                      className="w-full min-h-[44px] bg-[#090A0F] border border-white/10 rounded-xl px-3 text-base sm:text-sm font-mono tabular-nums text-white focus:outline-none focus:border-rose-500/60"
+                      className="w-full min-h-[44px] bg-black border border-white/10 rounded-xl px-3 text-base sm:text-sm font-mono tabular-nums text-white focus:outline-none focus:border-rose-500/60"
                     />
                   </div>
                 </div>
@@ -1370,7 +1370,7 @@ export const HealthDashboard: React.FC<HealthDashboardProps> = ({
                     max="100000"
                     value={goalSteps}
                     onChange={(e) => setGoalSteps(e.target.value)}
-                    className="w-full min-h-[44px] bg-[#090A0F] border border-white/10 rounded-xl px-3 text-base sm:text-sm font-mono tabular-nums text-white focus:outline-none focus:border-emerald-500/60"
+                    className="w-full min-h-[44px] bg-black border border-white/10 rounded-xl px-3 text-base sm:text-sm font-mono tabular-nums text-white focus:outline-none focus:border-emerald-500/60"
                   />
                 </div>
 
@@ -1383,7 +1383,7 @@ export const HealthDashboard: React.FC<HealthDashboardProps> = ({
                       max="24"
                       value={goalSleepHours}
                       onChange={(e) => setGoalSleepHours(e.target.value)}
-                      className="w-full min-h-[44px] bg-[#090A0F] border border-white/10 rounded-xl px-3 text-base sm:text-sm font-mono tabular-nums text-white focus:outline-none focus:border-indigo-500/60"
+                      className="w-full min-h-[44px] bg-black border border-white/10 rounded-xl px-3 text-base sm:text-sm font-mono tabular-nums text-white focus:outline-none focus:border-indigo-500/60"
                     />
                   </div>
                   <div>
@@ -1394,7 +1394,7 @@ export const HealthDashboard: React.FC<HealthDashboardProps> = ({
                       max="59"
                       value={goalSleepMins}
                       onChange={(e) => setGoalSleepMins(e.target.value)}
-                      className="w-full min-h-[44px] bg-[#090A0F] border border-white/10 rounded-xl px-3 text-base sm:text-sm font-mono tabular-nums text-white focus:outline-none focus:border-indigo-500/60"
+                      className="w-full min-h-[44px] bg-black border border-white/10 rounded-xl px-3 text-base sm:text-sm font-mono tabular-nums text-white focus:outline-none focus:border-indigo-500/60"
                     />
                   </div>
                 </div>
@@ -1410,13 +1410,13 @@ export const HealthDashboard: React.FC<HealthDashboardProps> = ({
                     step="50"
                     value={goalWaterMl}
                     onChange={(e) => setGoalWaterMl(e.target.value)}
-                    className="w-full min-h-[44px] bg-[#090A0F] border border-white/10 rounded-xl px-3 text-base sm:text-sm font-mono tabular-nums text-white focus:outline-none focus:border-sky-500/60"
+                    className="w-full min-h-[44px] bg-black border border-white/10 rounded-xl px-3 text-base sm:text-sm font-mono tabular-nums text-white focus:outline-none focus:border-sky-500/60"
                   />
                 </div>
               </div>
 
               {/* Sticky Footer: 50/50 balanced 48px buttons */}
-              <div className="shrink-0 p-4 border-t border-white/10 bg-[#12141C] grid grid-cols-2 gap-3 w-full">
+              <div className="shrink-0 p-4 border-t border-white/10 bg-[#0A0A0F] grid grid-cols-2 gap-3 w-full">
                 <button
                   type="button"
                   onClick={() => setIsGoalsOpen(false)}

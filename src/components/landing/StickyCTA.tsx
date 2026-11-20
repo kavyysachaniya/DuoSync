@@ -24,7 +24,7 @@ export const StickyCTA: React.FC<StickyCTAProps> = ({
         pointerEvents: isVisible ? 'auto' : 'none',
         willChange: 'transform, opacity',
       }}
-      className="fixed bottom-0 inset-x-0 z-40 bg-[#07070A]/85 backdrop-blur-2xl border-t border-white/[0.08] px-5 py-3 pb-[max(0.75rem,env(safe-area-inset-bottom,0px))] flex items-center justify-between gap-3 max-w-[390px] mx-auto select-none"
+      className="fixed bottom-0 inset-x-0 z-40 bg-[#0A0A0F]/90 backdrop-blur-2xl border-t border-white/[0.08] px-5 py-3 pb-[max(0.75rem,env(safe-area-inset-bottom,0px))] flex items-center justify-between gap-3 max-w-[390px] mx-auto select-none"
     >
       <span className="text-sm font-light text-white/85 tracking-tight">
         Start together.

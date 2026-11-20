@@ -45,7 +45,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onAuthSuccess }) => {
   };
 
   return (
-    <div className="relative min-h-screen bg-[#07070A] text-zinc-100 selection:bg-white/20 selection:text-white overflow-x-clip font-sans">
+    <div className="relative min-h-screen bg-black text-zinc-100 selection:bg-white/20 selection:text-white overflow-x-clip font-sans">
       {/* Minimal Ethereal Aurora Background from React Bits (Clean, non-rainbow silver/white light) */}
       <div className="fixed inset-0 pointer-events-none overflow-hidden z-0">
         <Aurora

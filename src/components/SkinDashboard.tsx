@@ -668,7 +668,7 @@ export const SkinDashboard: React.FC<SkinDashboardProps> = ({
 
       {/* 2. SEGMENTED CONTROL (Skincare / Haircare / Bodycare) + Round White "+" Button */}
       <div className="flex items-center justify-between gap-2.5">
-        <div className="flex-1 flex items-center p-1 rounded-full bg-[#12141C] border border-white/10 shadow-lg">
+        <div className="flex-1 flex items-center p-1 rounded-full bg-[#0A0A0F] border border-white/10 shadow-lg">
           {(['skincare', 'haircare', 'bodycare'] as CareSegment[]).map((seg) => {
             const meta = SEGMENT_META[seg];
             const isActive = activeSegment === seg;
@@ -802,7 +802,7 @@ export const SkinDashboard: React.FC<SkinDashboardProps> = ({
               initial={{ opacity: 0, scale: 0.96, y: 16 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.96, y: 16 }}
-              className="w-full max-w-lg max-h-[92dvh] flex flex-col rounded-t-3xl sm:rounded-3xl bg-[#12141C] border border-white/10 text-zinc-100 shadow-2xl overflow-hidden"
+              className="w-full max-w-lg max-h-[92dvh] flex flex-col rounded-t-3xl sm:rounded-3xl bg-[#0A0A0F] border border-white/10 text-zinc-100 shadow-2xl overflow-hidden"
             >
               {/* Header */}
               <div className="shrink-0 p-4 sm:p-5 pb-3 border-b border-white/10 flex items-center justify-between">
@@ -906,7 +906,7 @@ export const SkinDashboard: React.FC<SkinDashboardProps> = ({
                 </div>
 
                 {/* Routine Application Calendar & "Mark applied" Button */}
-                <div className="rounded-2xl bg-[#090A0F] border border-white/8 p-4 space-y-3">
+                <div className="rounded-2xl bg-black border border-white/8 p-4 space-y-3">
                   <div className="flex items-center justify-between">
                     <span className="text-xs font-semibold text-white">Routine Usage</span>
                     <span className="text-xs font-mono text-zinc-400">
@@ -1001,21 +1001,21 @@ export const SkinDashboard: React.FC<SkinDashboardProps> = ({
 
                 {/* Financials & Savings Grid */}
                 <div className="grid grid-cols-3 gap-2.5">
-                  <div className="rounded-2xl bg-[#090A0F] border border-white/8 p-3 space-y-1">
+                  <div className="rounded-2xl bg-black border border-white/8 p-3 space-y-1">
                     <span className="text-[10px] text-zinc-400 font-mono block">Price Paid</span>
                     <span className="text-base font-bold text-white font-mono block">
                       {currency}{selectedProductForDetail.pricePaid || 0}
                     </span>
                   </div>
 
-                  <div className="rounded-2xl bg-[#090A0F] border border-white/8 p-3 space-y-1">
+                  <div className="rounded-2xl bg-black border border-white/8 p-3 space-y-1">
                     <span className="text-[10px] text-zinc-400 font-mono block">MRP / Orig</span>
                     <span className="text-base font-bold text-zinc-400 font-mono block">
                       {currency}{selectedProductForDetail.originalPrice || 0}
                     </span>
                   </div>
 
-                  <div className="rounded-2xl bg-[#090A0F] border border-white/8 p-3 space-y-1">
+                  <div className="rounded-2xl bg-black border border-white/8 p-3 space-y-1">
                     <span className="text-[10px] text-zinc-400 font-mono block">Discount</span>
                     <span className="text-base font-bold text-emerald-400 font-mono block">
                       {selectedProductForDetail.originalPrice > selectedProductForDetail.pricePaid
@@ -1030,7 +1030,7 @@ export const SkinDashboard: React.FC<SkinDashboardProps> = ({
                 </div>
 
                 {/* Key Dates & Quantity */}
-                <div className="rounded-2xl bg-[#090A0F] border border-white/8 p-4 space-y-2.5 text-xs">
+                <div className="rounded-2xl bg-black border border-white/8 p-4 space-y-2.5 text-xs">
                   <div className="flex items-center justify-between">
                     <span className="text-zinc-400">Status</span>
                     <span className="font-semibold text-white capitalize">
@@ -1133,7 +1133,7 @@ export const SkinDashboard: React.FC<SkinDashboardProps> = ({
               initial={{ opacity: 0, scale: 0.96, y: 16 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.96, y: 16 }}
-              className="w-full sm:max-w-lg max-h-[92dvh] flex flex-col rounded-t-3xl sm:rounded-3xl bg-[#12141C] border border-white/10 text-zinc-100 shadow-2xl overflow-hidden"
+              className="w-full sm:max-w-lg max-h-[92dvh] flex flex-col rounded-t-3xl sm:rounded-3xl bg-[#0A0A0F] border border-white/10 text-zinc-100 shadow-2xl overflow-hidden"
             >
               {/* Modal Header */}
               <div className="shrink-0 p-4 sm:p-5 pb-3 border-b border-white/10 flex items-center justify-between">
@@ -1159,7 +1159,7 @@ export const SkinDashboard: React.FC<SkinDashboardProps> = ({
               <form onSubmit={handleSaveProductSubmit} className="flex-1 flex flex-col min-h-0 overflow-hidden">
                 <div className="overflow-y-auto overscroll-contain flex-1 p-4 sm:p-5 space-y-4 no-scrollbar">
                   {/* Dedicated 1:1 Product Photo Upload & Preview Card */}
-                  <div className="p-3.5 rounded-2xl bg-[#090A0F] border border-white/10 space-y-3">
+                  <div className="p-3.5 rounded-2xl bg-black border border-white/10 space-y-3">
                     <div className="flex items-center justify-between">
                       <label className="text-xs font-semibold text-zinc-200 flex items-center gap-1.5">
                         <PhotoUploadIcon className="w-4 h-4 text-rose-400" />
@@ -1225,7 +1225,7 @@ export const SkinDashboard: React.FC<SkinDashboardProps> = ({
                             setFormImageUrl(e.target.value);
                             setFormThumbnailUrl(e.target.value);
                           }}
-                          className="w-full min-h-[34px] bg-[#12141C] border border-white/10 rounded-xl px-3 text-[11px] text-zinc-300 placeholder:text-zinc-600 focus:outline-none focus:border-rose-400 transition-colors font-mono"
+                          className="w-full min-h-[34px] bg-black border border-white/10 rounded-xl px-3 text-[11px] text-zinc-300 placeholder:text-zinc-600 focus:outline-none focus:border-rose-400 transition-colors font-mono"
                         />
                       </div>
                     </div>
@@ -1234,7 +1234,7 @@ export const SkinDashboard: React.FC<SkinDashboardProps> = ({
                   {/* Care Segment Selector */}
                   <div>
                     <label className="block text-xs font-semibold text-zinc-300 mb-1.5">Care Segment</label>
-                    <div className="grid grid-cols-3 gap-1.5 p-1 bg-[#090A0F] border border-white/10 rounded-2xl">
+                    <div className="grid grid-cols-3 gap-1.5 p-1 bg-black border border-white/10 rounded-2xl">
                       {(['skincare', 'haircare', 'bodycare'] as CareSegment[]).map((seg) => {
                         const isSelected = formSegment === seg;
                         return (
@@ -1272,7 +1272,7 @@ export const SkinDashboard: React.FC<SkinDashboardProps> = ({
                         placeholder="e.g. CeraVe, The Ordinary..."
                         value={formBrand}
                         onChange={(e) => setFormBrand(e.target.value)}
-                        className="w-full min-h-[44px] bg-[#090A0F] border border-white/10 rounded-2xl px-3.5 text-xs text-white placeholder:text-zinc-600 focus:outline-none focus:border-rose-400 transition-colors"
+                        className="w-full min-h-[44px] bg-black border border-white/10 rounded-2xl px-3.5 text-xs text-white placeholder:text-zinc-600 focus:outline-none focus:border-rose-400 transition-colors"
                       />
                     </div>
                     <div className="space-y-1">
@@ -1284,7 +1284,7 @@ export const SkinDashboard: React.FC<SkinDashboardProps> = ({
                         placeholder="e.g. Daily Facial Cleanser..."
                         value={formName}
                         onChange={(e) => setFormName(e.target.value)}
-                        className="w-full min-h-[44px] bg-[#090A0F] border border-white/10 rounded-2xl px-3.5 text-xs text-white placeholder:text-zinc-600 focus:outline-none focus:border-rose-400 transition-colors"
+                        className="w-full min-h-[44px] bg-black border border-white/10 rounded-2xl px-3.5 text-xs text-white placeholder:text-zinc-600 focus:outline-none focus:border-rose-400 transition-colors"
                       />
                     </div>
                   </div>
@@ -1304,7 +1304,7 @@ export const SkinDashboard: React.FC<SkinDashboardProps> = ({
                             className={`min-h-[34px] px-3 rounded-xl text-xs font-semibold whitespace-nowrap transition-colors flex items-center gap-1.5 ${
                               isSelected
                                 ? 'bg-rose-500 text-white shadow-md'
-                                : 'bg-[#090A0F] text-zinc-400 border border-white/6 hover:text-white'
+                                : 'bg-black text-zinc-400 border border-white/6 hover:text-white'
                             }`}
                           >
                             <CatIcon className="w-3.5 h-3.5 shrink-0" />
@@ -1325,7 +1325,7 @@ export const SkinDashboard: React.FC<SkinDashboardProps> = ({
                         className={`min-h-[44px] rounded-2xl text-xs font-semibold transition-all ${
                           formScheduleType === 'daily'
                             ? 'bg-rose-500 text-white shadow-md shadow-rose-500/20'
-                            : 'bg-[#090A0F] text-zinc-400 border border-white/6'
+                            : 'bg-black text-zinc-400 border border-white/6'
                         }`}
                       >
                         Daily Use
@@ -1336,7 +1336,7 @@ export const SkinDashboard: React.FC<SkinDashboardProps> = ({
                         className={`min-h-[44px] rounded-2xl text-xs font-semibold transition-all ${
                           formScheduleType === 'weekly'
                             ? 'bg-rose-500 text-white shadow-md shadow-rose-500/20'
-                            : 'bg-[#090A0F] text-zinc-400 border border-white/6'
+                            : 'bg-black text-zinc-400 border border-white/6'
                         }`}
                       >
                         Weekly Scheduled Days
@@ -1345,7 +1345,7 @@ export const SkinDashboard: React.FC<SkinDashboardProps> = ({
 
                     {/* If Weekly: Weekday Picker */}
                     {formScheduleType === 'weekly' && (
-                      <div className="p-3 rounded-2xl bg-[#090A0F] border border-white/8 space-y-2">
+                      <div className="p-3 rounded-2xl bg-black border border-white/8 space-y-2">
                         <span className="text-[11px] text-zinc-400 block font-medium">
                           Select days to apply this product:
                         </span>
@@ -1361,7 +1361,7 @@ export const SkinDashboard: React.FC<SkinDashboardProps> = ({
                                   isSelected
                                     ? 'bg-rose-500 text-white shadow-md'
                                     : 'bg-zinc-900 text-zinc-500 hover:text-white border border-white/6'
-                                }`}
+                                  }`}
                               >
                                 {opt.shortLabel[0]}
                               </button>
@@ -1382,7 +1382,7 @@ export const SkinDashboard: React.FC<SkinDashboardProps> = ({
                         className={`min-h-[40px] rounded-xl text-xs font-semibold transition-colors ${
                           formProfileSlot === profile.slot
                             ? 'bg-sky-500 text-white'
-                            : 'bg-[#090A0F] text-zinc-400 border border-white/6'
+                            : 'bg-black text-zinc-400 border border-white/6'
                         }`}
                       >
                         {profile.name}
@@ -1393,7 +1393,7 @@ export const SkinDashboard: React.FC<SkinDashboardProps> = ({
                         className={`min-h-[40px] rounded-xl text-xs font-semibold transition-colors ${
                           formProfileSlot === partnerProfile.slot
                             ? 'bg-rose-500 text-white'
-                            : 'bg-[#090A0F] text-zinc-400 border border-white/6'
+                            : 'bg-black text-zinc-400 border border-white/6'
                         }`}
                       >
                         {partnerProfile.name}
@@ -1404,7 +1404,7 @@ export const SkinDashboard: React.FC<SkinDashboardProps> = ({
                         className={`min-h-[40px] rounded-xl text-xs font-semibold transition-colors ${
                           formProfileSlot === 'shared'
                             ? 'bg-amber-500 text-zinc-950 font-bold'
-                            : 'bg-[#090A0F] text-zinc-400 border border-white/6'
+                            : 'bg-black text-zinc-400 border border-white/6'
                         }`}
                       >
                         Shared
@@ -1423,7 +1423,7 @@ export const SkinDashboard: React.FC<SkinDashboardProps> = ({
                         placeholder="0.00"
                         value={formPricePaid}
                         onChange={(e) => setFormPricePaid(e.target.value)}
-                        className="w-full min-h-[44px] bg-[#090A0F] border border-white/10 rounded-2xl px-3 text-xs font-mono text-white focus:outline-none focus:border-rose-400"
+                        className="w-full min-h-[44px] bg-black border border-white/10 rounded-2xl px-3 text-xs font-mono text-white focus:outline-none focus:border-rose-400"
                       />
                     </div>
                     <div className="space-y-1">
@@ -1435,7 +1435,7 @@ export const SkinDashboard: React.FC<SkinDashboardProps> = ({
                         placeholder="0.00"
                         value={formOriginalPrice}
                         onChange={(e) => setFormOriginalPrice(e.target.value)}
-                        className="w-full min-h-[44px] bg-[#090A0F] border border-white/10 rounded-2xl px-3 text-xs font-mono text-white focus:outline-none focus:border-rose-400"
+                        className="w-full min-h-[44px] bg-black border border-white/10 rounded-2xl px-3 text-xs font-mono text-white focus:outline-none focus:border-rose-400"
                       />
                     </div>
                     <div className="space-y-1">
@@ -1446,7 +1446,7 @@ export const SkinDashboard: React.FC<SkinDashboardProps> = ({
                         max="99"
                         value={formQuantity}
                         onChange={(e) => setFormQuantity(e.target.value)}
-                        className="w-full min-h-[44px] bg-[#090A0F] border border-white/10 rounded-2xl px-3 text-xs font-mono text-white focus:outline-none focus:border-rose-400"
+                        className="w-full min-h-[44px] bg-black border border-white/10 rounded-2xl px-3 text-xs font-mono text-white focus:outline-none focus:border-rose-400"
                       />
                     </div>
                   </div>
@@ -1459,7 +1459,7 @@ export const SkinDashboard: React.FC<SkinDashboardProps> = ({
                         type="date"
                         value={formOrderedDate}
                         onChange={(e) => setFormOrderedDate(e.target.value)}
-                        className="w-full min-h-[44px] bg-[#090A0F] border border-white/10 rounded-2xl px-2 text-xs font-mono text-white focus:outline-none focus:border-rose-400"
+                        className="w-full min-h-[44px] bg-black border border-white/10 rounded-2xl px-2 text-xs font-mono text-white focus:outline-none focus:border-rose-400"
                       />
                     </div>
                     <div className="space-y-1">
@@ -1468,7 +1468,7 @@ export const SkinDashboard: React.FC<SkinDashboardProps> = ({
                         type="date"
                         value={formOpenedDate}
                         onChange={(e) => setFormOpenedDate(e.target.value)}
-                        className="w-full min-h-[44px] bg-[#090A0F] border border-white/10 rounded-2xl px-2 text-xs font-mono text-white focus:outline-none focus:border-rose-400"
+                        className="w-full min-h-[44px] bg-black border border-white/10 rounded-2xl px-2 text-xs font-mono text-white focus:outline-none focus:border-rose-400"
                       />
                     </div>
                     <div className="space-y-1">
@@ -1477,7 +1477,7 @@ export const SkinDashboard: React.FC<SkinDashboardProps> = ({
                         type="date"
                         value={formExpiryDate}
                         onChange={(e) => setFormExpiryDate(e.target.value)}
-                        className="w-full min-h-[44px] bg-[#090A0F] border border-white/10 rounded-2xl px-2 text-xs font-mono text-white focus:outline-none focus:border-rose-400"
+                        className="w-full min-h-[44px] bg-black border border-white/10 rounded-2xl px-2 text-xs font-mono text-white focus:outline-none focus:border-rose-400"
                       />
                     </div>
                   </div>
@@ -1494,7 +1494,7 @@ export const SkinDashboard: React.FC<SkinDashboardProps> = ({
                           className={`min-h-[40px] rounded-xl text-xs font-semibold capitalize transition-colors ${
                             formStatus === st
                               ? 'bg-white text-zinc-950 font-bold shadow-sm'
-                              : 'bg-[#090A0F] text-zinc-400 border border-white/6'
+                              : 'bg-black text-zinc-400 border border-white/6'
                           }`}
                         >
                           {st.replace('_', ' ')}
@@ -1512,7 +1512,7 @@ export const SkinDashboard: React.FC<SkinDashboardProps> = ({
                         placeholder="e.g. Buy 1 Get 1 Free, Nykaa Pink Friday 30% Off..."
                         value={formSaleInfo}
                         onChange={(e) => setFormSaleInfo(e.target.value)}
-                        className="w-full min-h-[44px] bg-[#090A0F] border border-white/10 rounded-2xl px-3.5 text-xs text-white placeholder:text-zinc-600 focus:outline-none focus:border-rose-400"
+                        className="w-full min-h-[44px] bg-black border border-white/10 rounded-2xl px-3.5 text-xs text-white placeholder:text-zinc-600 focus:outline-none focus:border-rose-400"
                       />
                     </div>
                     <div className="space-y-1">
@@ -1522,14 +1522,14 @@ export const SkinDashboard: React.FC<SkinDashboardProps> = ({
                         placeholder="e.g. Patch test first, apply on damp skin..."
                         value={formNotes}
                         onChange={(e) => setFormNotes(e.target.value)}
-                        className="w-full p-3 bg-[#090A0F] border border-white/10 rounded-2xl text-xs text-white placeholder:text-zinc-600 focus:outline-none focus:border-rose-400 resize-none"
+                        className="w-full p-3 bg-black border border-white/10 rounded-2xl text-xs text-white placeholder:text-zinc-600 focus:outline-none focus:border-rose-400 resize-none"
                       />
                     </div>
                   </div>
                 </div>
 
                 {/* Modal Footer */}
-                <div className="shrink-0 p-4 border-t border-white/10 bg-[#12141C] flex items-center justify-end gap-2">
+                <div className="shrink-0 p-4 border-t border-white/10 bg-[#0A0A0F] flex items-center justify-end gap-2">
                   <button
                     type="button"
                     onClick={() => setIsProductModalOpen(false)}
