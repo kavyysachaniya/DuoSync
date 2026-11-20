@@ -4,7 +4,7 @@ import path from 'path';
 import fs from 'fs';
 
 const EDGE_PATH = 'C:\\Program Files (x86)\\Microsoft\\Edge\\Application\\msedge.exe';
-const SCREENSHOT_DIR = path.resolve('audit-screenshots');
+const SCREENSHOT_DIR = path.resolve('docs', 'screenshots');
 
 if (!fs.existsSync(SCREENSHOT_DIR)) {
   fs.mkdirSync(SCREENSHOT_DIR, { recursive: true });
@@ -377,7 +377,11 @@ async function runComprehensiveAudit() {
       }
     }
 
-    const reportPath = path.resolve('audit-verification-matrix.json');
+    const auditDir = path.resolve('docs', 'audit');
+    if (!fs.existsSync(auditDir)) {
+      fs.mkdirSync(auditDir, { recursive: true });
+    }
+    const reportPath = path.resolve(auditDir, 'audit-verification-matrix.json');
     fs.writeFileSync(reportPath, JSON.stringify(verificationMatrix, null, 2));
     console.log(`\n🎉 Verification matrix written to ${reportPath}`);
 

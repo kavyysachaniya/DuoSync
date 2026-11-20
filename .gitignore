@@ -6,3 +6,8 @@ coverage/
 *.log
 .env*
 !.env.example
+
+# Local audit output
+audit-screenshots/
+audit-report.json
+audit-verification-matrix.json
