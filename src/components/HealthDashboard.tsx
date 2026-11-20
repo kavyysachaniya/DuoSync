@@ -23,6 +23,7 @@ import {
 } from '../types';
 import { CircularProgressRing } from './CircularProgressRing';
 import { DuoDatePicker } from './ui/DuoDatePicker';
+import { ScreenHeader } from './shared';
 
 interface HealthDashboardProps {
   profile: PartnerProfileView;
@@ -355,69 +356,62 @@ export const HealthDashboard: React.FC<HealthDashboardProps> = ({
           Fills 100dvh minus header, top card, and floating bottom nav with NO peeking!
           ══════════════════════════════════════════════════════════════════════ */}
       <div
-        className="snap-start flex flex-col gap-2.5 sm:gap-3 scroll-mt-[68px] sm:scroll-mt-[76px] h-[calc(100dvh-9.75rem-env(safe-area-inset-bottom,0px))] sm:h-[calc(100dvh-7.5rem)]"
+        className="snap-start flex flex-col gap-4 scroll-mt-[68px] sm:scroll-mt-[76px] h-[calc(100dvh-9.75rem-env(safe-area-inset-bottom,0px))] sm:h-[calc(100dvh-7.5rem)]"
       >
-        {/* 1. TOP CARD ("Kavy's Dashboard") */}
-        <div className="shrink-0 rounded-3xl bg-[#12141C] border border-white/8 p-3 sm:p-3.5 space-y-1.5">
-          <div className="flex items-center justify-between gap-2">
-            <div className="space-y-0.5 min-w-0 flex-1">
-              <div className="flex items-center gap-2">
-                <h1 className="text-lg sm:text-2xl font-bold tracking-tight text-white leading-tight truncate">
-                  {profile.name}’s Daily Health
-                </h1>
-                {savedToast && (
-                  <span className="text-[11px] font-mono text-emerald-400 font-semibold flex items-center gap-1 bg-emerald-500/10 px-2 py-0.5 rounded-full shrink-0">
-                    <Check className="w-3 h-3" />
-                    {savedToast}
-                  </span>
-                )}
-              </div>
-              <p className="text-[11px] sm:text-xs text-zinc-400 truncate">
-                Track and sync your daily vitals in real time
-              </p>
+        {/* 1. PERSONAL HEADER (Matching Skin and Fits) */}
+        <ScreenHeader
+          eyebrow="DAILY HEALTH STUDIO"
+          title={`${profile.name}’s Daily Health`}
+          subtitle="Track and sync your daily vitals in real time."
+          badge={
+            savedToast ? (
+              <span className="text-[11px] font-mono text-emerald-400 font-semibold flex items-center gap-1 bg-emerald-500/10 px-2 py-0.5 rounded-full shrink-0">
+                <Check className="w-3 h-3" />
+                {savedToast}
+              </span>
+            ) : undefined
+          }
+        />
+
+        {/* 2. BUTTON ROW (Switch to Partner + Targets, 16px gap below header) */}
+        <div className="flex items-center gap-2.5 sm:gap-3 w-full">
+          {/* Left: Switch to Partner (60% / flex: 6) */}
+          <button
+            type="button"
+            onClick={onSwitchToPartner}
+            style={{ flex: 6 }}
+            className="h-11 sm:h-12 min-h-[44px] px-3 sm:px-3.5 rounded-full bg-[#12141C] hover:bg-white/5 border border-white/10 text-left flex items-center gap-2 sm:gap-2.5 transition-colors overflow-hidden active:scale-95 cursor-pointer shadow-sm"
+          >
+            <div className="w-7 h-7 rounded-full bg-white/5 flex items-center justify-center text-xs font-bold text-zinc-200 shrink-0">
+              {partnerProfile.name.slice(0, 1).toUpperCase()}
             </div>
-          </div>
-
-          {/* Single Row: Left 60%, Right 40% with 12px gap */}
-          <div className="flex items-center gap-3 w-full pt-0.5">
-            {/* Left: Switch to Partner (60% / flex: 6) */}
-            <button
-              type="button"
-              onClick={onSwitchToPartner}
-              style={{ flex: 6 }}
-              className="h-12 min-h-[48px] px-3 rounded-2xl bg-zinc-900 hover:bg-zinc-800/90 border border-white/10 text-left flex items-center gap-2.5 transition-colors overflow-hidden active:scale-95 cursor-pointer"
-            >
-              <div className="w-7 h-7 rounded-xl bg-white/5 flex items-center justify-center text-xs font-bold text-zinc-200 shrink-0">
-                {partnerProfile.name.slice(0, 1).toUpperCase()}
+            <div className="min-w-0 flex-1">
+              <div className="text-xs font-semibold text-white truncate">
+                Switch to {partnerProfile.name}
               </div>
-              <div className="min-w-0 flex-1">
-                <div className="text-xs font-medium text-white truncate">
-                  Switch to {partnerProfile.name}
-                </div>
-                <div className="text-[10px] font-mono tabular-nums text-zinc-400 truncate">
-                  Today:{' '}
-                  {partnerTodayLog?.steps
-                    ? `${partnerTodayLog.steps.toLocaleString()} steps`
-                    : 'No steps yet'}{' '}
-                  ·{' '}
-                  {partnerTodayLog?.waterMl
-                    ? `${(partnerTodayLog.waterMl / 1000).toFixed(1)}L`
-                    : '0L'}
-                </div>
+              <div className="text-[10px] font-mono tabular-nums text-white/50 truncate">
+                Today:{' '}
+                {partnerTodayLog?.steps
+                  ? `${partnerTodayLog.steps.toLocaleString()} steps`
+                  : 'No steps yet'}{' '}
+                ·{' '}
+                {partnerTodayLog?.waterMl
+                  ? `${(partnerTodayLog.waterMl / 1000).toFixed(1)}L`
+                  : '0L'}
               </div>
-            </button>
+            </div>
+          </button>
 
-            {/* Right: Targets (40% / flex: 4) */}
-            <button
-              type="button"
-              onClick={() => setIsGoalsOpen(true)}
-              style={{ flex: 4 }}
-              className="h-12 min-h-[48px] px-3 rounded-2xl bg-white/8 hover:bg-white/12 border border-white/10 text-xs font-semibold text-white flex items-center justify-center gap-2 transition-colors overflow-hidden active:scale-95 cursor-pointer"
-            >
-              <SlidersHorizontal className="w-4 h-4 text-rose-400 shrink-0" />
-              <span className="truncate">Targets</span>
-            </button>
-          </div>
+          {/* Right: Targets (40% / flex: 4) */}
+          <button
+            type="button"
+            onClick={() => setIsGoalsOpen(true)}
+            style={{ flex: 4 }}
+            className="h-11 sm:h-12 min-h-[44px] px-3.5 rounded-full bg-[#12141C] hover:bg-white/5 border border-white/10 text-xs font-semibold text-white flex items-center justify-center gap-2 transition-colors overflow-hidden active:scale-95 cursor-pointer shadow-sm"
+          >
+            <SlidersHorizontal className="w-4 h-4 text-rose-400 shrink-0" />
+            <span className="truncate">Targets</span>
+          </button>
         </div>
 
         {/* 2. SECOND CARD (date strip + 2x2 progress rings) */}

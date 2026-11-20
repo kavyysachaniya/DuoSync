@@ -5,6 +5,7 @@ interface ScreenHeaderProps {
   eyebrow: string;
   title: string;
   subtitle: string;
+  badge?: React.ReactNode;
   className?: string;
 }
 
@@ -12,14 +13,18 @@ export const ScreenHeader: React.FC<ScreenHeaderProps> = ({
   eyebrow,
   title,
   subtitle,
+  badge,
   className = '',
 }) => {
   return (
     <div className={`space-y-1 ${className}`}>
-      {/* Small rose eyebrow, text-only (no icons) */}
-      <span className="text-[11px] sm:text-xs font-semibold text-rose-400 tracking-wider uppercase block">
-        {eyebrow}
-      </span>
+      {/* Small rose eyebrow, text-only (no icons) with optional right badge */}
+      <div className="flex items-center justify-between gap-2">
+        <span className="text-[11px] sm:text-xs font-semibold text-rose-400 tracking-wider uppercase block">
+          {eyebrow}
+        </span>
+        {badge && <div className="shrink-0">{badge}</div>}
+      </div>
 
       {/* Large Title with soft 200ms crossfade when partner changes */}
       <div className="h-8 sm:h-9 relative overflow-hidden flex items-center">

@@ -1,4 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
+import { createPortal } from 'react-dom';
 import {
   AlertCircle,
   AlertTriangle,
@@ -796,89 +797,93 @@ export const AccountModal: React.FC<AccountModalProps> = ({
         </div>
       </div>
 
-      {/* Logout Confirmation Dialog */}
-      {showLogoutConfirm && (
-        <div className="fixed inset-0 z-60 flex items-center justify-center p-4 bg-black/85 backdrop-blur-md">
-          <div className="w-full max-w-sm rounded-3xl bg-[#12141C] border border-red-500/30 p-5 space-y-4 shadow-2xl animate-in fade-in zoom-in-95">
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-full bg-red-500/15 border border-red-500/30 flex items-center justify-center text-red-400 shrink-0">
-                <AlertTriangle className="w-5 h-5" />
+      {/* Logout Confirmation Dialog (Rendered via portal so fixed positioning centers in viewport regardless of scroll) */}
+      {showLogoutConfirm &&
+        createPortal(
+          <div className="fixed inset-0 z-70 flex items-center justify-center p-4 bg-black/85 backdrop-blur-md animate-in fade-in">
+            <div className="w-full max-w-sm rounded-3xl bg-[#12141C] border border-red-500/30 p-5 space-y-4 shadow-2xl animate-in fade-in zoom-in-95">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-full bg-red-500/15 border border-red-500/30 flex items-center justify-center text-red-400 shrink-0">
+                  <AlertTriangle className="w-5 h-5" />
+                </div>
+                <div>
+                  <h4 className="text-sm font-bold text-white">Confirm Log Out</h4>
+                  <p className="text-xs text-zinc-400 mt-0.5">
+                    Are you sure you want to log out of DuoSync?
+                  </p>
+                </div>
               </div>
-              <div>
-                <h4 className="text-sm font-bold text-white">Confirm Log Out</h4>
-                <p className="text-xs text-zinc-400 mt-0.5">
-                  Are you sure you want to log out of DuoSync?
+              <p className="text-xs text-zinc-400 leading-relaxed bg-[#090A0F] rounded-xl p-3 border border-white/6">
+                You will need your login credentials to re-access this shared workspace on this device.
+              </p>
+              <div className="grid grid-cols-2 gap-2 pt-1">
+                <button
+                  type="button"
+                  onClick={() => setShowLogoutConfirm(false)}
+                  className="min-h-[44px] rounded-xl bg-white/5 hover:bg-white/10 text-xs font-semibold text-zinc-300 transition-colors cursor-pointer"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setShowLogoutConfirm(false);
+                    onClose();
+                    onSignOut();
+                  }}
+                  className="min-h-[44px] rounded-xl bg-red-600 hover:bg-red-500 text-xs font-semibold text-white shadow-lg shadow-red-600/30 transition-colors cursor-pointer"
+                >
+                  Yes, Log Out
+                </button>
+              </div>
+            </div>
+          </div>,
+          document.body
+        )}
+
+      {/* Privacy / Terms Sub-Modal (Rendered via portal so fixed positioning centers in viewport) */}
+      {policyModal &&
+        createPortal(
+          <div className="fixed inset-0 z-70 flex items-center justify-center p-4 bg-black/85 backdrop-blur-md animate-in fade-in">
+            <div className="w-full max-w-md rounded-3xl bg-[#12141C] border border-white/10 p-5 space-y-4 shadow-2xl animate-in fade-in zoom-in-95">
+              <div className="flex items-center justify-between pb-2 border-b border-white/8">
+                <h4 className="text-sm font-bold text-white capitalize">
+                  {policyModal === 'privacy' ? 'Privacy Policy' : 'Terms of Service'}
+                </h4>
+                <button
+                  type="button"
+                  onClick={() => setPolicyModal(null)}
+                  className="w-8 h-8 rounded-full bg-white/5 text-zinc-400 hover:text-white flex items-center justify-center cursor-pointer"
+                >
+                  <X className="w-4 h-4" />
+                </button>
+              </div>
+              <div className="text-xs text-zinc-400 leading-relaxed max-h-60 overflow-y-auto space-y-2 pr-1">
+                <p>
+                  DuoSync stores your shared health vitals, skincare routines, and wardrobe fits in a
+                  private encrypted PostgreSQL database hosted on Neon Cloud.
+                </p>
+                <p>
+                  Your data is only accessible to you and your paired partner using your workspace
+                  pairing code and encrypted authentication tokens. We do not sell or monetize personal
+                  health or care data.
+                </p>
+                <p>
+                  By using DuoSync, you agree to keep your account credentials secure and respect your
+                  partner’s shared logs.
                 </p>
               </div>
-            </div>
-            <p className="text-xs text-zinc-400 leading-relaxed bg-[#090A0F] rounded-xl p-3 border border-white/6">
-              You will need your login credentials to re-access this shared workspace on this device.
-            </p>
-            <div className="grid grid-cols-2 gap-2 pt-1">
-              <button
-                type="button"
-                onClick={() => setShowLogoutConfirm(false)}
-                className="min-h-[44px] rounded-xl bg-white/5 hover:bg-white/10 text-xs font-semibold text-zinc-300 transition-colors cursor-pointer"
-              >
-                Cancel
-              </button>
-              <button
-                type="button"
-                onClick={() => {
-                  setShowLogoutConfirm(false);
-                  onClose();
-                  onSignOut();
-                }}
-                className="min-h-[44px] rounded-xl bg-red-600 hover:bg-red-500 text-xs font-semibold text-white shadow-lg shadow-red-600/30 transition-colors cursor-pointer"
-              >
-                Yes, Log Out
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Privacy / Terms Sub-Modal */}
-      {policyModal && (
-        <div className="fixed inset-0 z-60 flex items-center justify-center p-4 bg-black/85 backdrop-blur-md">
-          <div className="w-full max-w-md rounded-3xl bg-[#12141C] border border-white/10 p-5 space-y-4 shadow-2xl animate-in fade-in">
-            <div className="flex items-center justify-between pb-2 border-b border-white/8">
-              <h4 className="text-sm font-bold text-white capitalize">
-                {policyModal === 'privacy' ? 'Privacy Policy' : 'Terms of Service'}
-              </h4>
               <button
                 type="button"
                 onClick={() => setPolicyModal(null)}
-                className="w-8 h-8 rounded-full bg-white/5 text-zinc-400 hover:text-white flex items-center justify-center cursor-pointer"
+                className="w-full min-h-[40px] rounded-xl bg-white/10 hover:bg-white/15 text-xs font-semibold text-white transition-colors cursor-pointer"
               >
-                <X className="w-4 h-4" />
+                Close
               </button>
             </div>
-            <div className="text-xs text-zinc-400 leading-relaxed max-h-60 overflow-y-auto space-y-2 pr-1">
-              <p>
-                DuoSync stores your shared health vitals, skincare routines, and wardrobe fits in a
-                private encrypted PostgreSQL database hosted on Neon Cloud.
-              </p>
-              <p>
-                Your data is only accessible to you and your paired partner using your workspace
-                pairing code and encrypted authentication tokens. We do not sell or monetize personal
-                health or care data.
-              </p>
-              <p>
-                By using DuoSync, you agree to keep your account credentials secure and respect your
-                partner’s shared logs.
-              </p>
-            </div>
-            <button
-              type="button"
-              onClick={() => setPolicyModal(null)}
-              className="w-full min-h-[40px] rounded-xl bg-white/10 hover:bg-white/15 text-xs font-semibold text-white transition-colors cursor-pointer"
-            >
-              Close
-            </button>
-          </div>
-        </div>
-      )}
+          </div>,
+          document.body
+        )}
     </div>
   );
 };
