@@ -3,6 +3,7 @@ import {
   motion,
   useScroll,
   useTransform,
+  useSpring,
   useInView,
   useReducedMotion,
 } from 'motion/react';
@@ -27,10 +28,10 @@ export const FeatureChapters: React.FC<FeatureChaptersProps> = ({
   const [activeChapter, setActiveChapter] = useState(0);
 
   // In-view detection for active indicator & background glow
-  const isCh1InView = useInView(ch1Ref, { amount: 0.45 });
-  const isCh2InView = useInView(ch2Ref, { amount: 0.45 });
-  const isCh3InView = useInView(ch3Ref, { amount: 0.45 });
-  const isContainerInView = useInView(containerRef, { amount: 0.15 });
+  const isCh1InView = useInView(ch1Ref, { amount: 0.4, margin: '-10% 0px -10% 0px' });
+  const isCh2InView = useInView(ch2Ref, { amount: 0.4, margin: '-10% 0px -10% 0px' });
+  const isCh3InView = useInView(ch3Ref, { amount: 0.4, margin: '-10% 0px -10% 0px' });
+  const isContainerInView = useInView(containerRef, { amount: 0.1 });
 
   useEffect(() => {
     let next = activeChapter;
@@ -48,29 +49,35 @@ export const FeatureChapters: React.FC<FeatureChaptersProps> = ({
     }
   }, [isCh1InView, isCh2InView, isCh3InView, activeChapter, onActiveChapterChange]);
 
-  // CHAPTER 1 SCROLL: Begins animating the moment it enters from the bottom ('start end' -> 'center center')
+  // Spring physics configuration for silky smooth scrubbing in both directions
+  const springOptions = { stiffness: 95, damping: 26, mass: 0.22, restDelta: 0.001 };
+
+  // CHAPTER 1 SCROLL: Begins animating as it enters from the bottom, scrubs smoothly both ways
   const { scrollYProgress: scroll1 } = useScroll({
     target: ch1Ref,
     offset: ['start end', 'center center'],
   });
-  const ch1Y = useTransform(scroll1, [0, 0.85], [48, 0]);
-  const ch1Opacity = useTransform(scroll1, [0, 0.4], [0.2, 1]);
+  const smooth1 = useSpring(scroll1, springOptions);
+  const ch1Y = useTransform(smooth1, [0, 0.4], [14, 0]);
+  const ch1Opacity = useTransform(smooth1, [0, 0.25], [0.35, 1]);
 
-  // CHAPTER 2 SCROLL: Begins animating the moment it enters from the bottom
+  // CHAPTER 2 SCROLL: Begins animating as it enters from the bottom, scrubs smoothly both ways
   const { scrollYProgress: scroll2 } = useScroll({
     target: ch2Ref,
     offset: ['start end', 'center center'],
   });
-  const ch2Y = useTransform(scroll2, [0, 0.85], [48, 0]);
-  const ch2Opacity = useTransform(scroll2, [0, 0.4], [0.2, 1]);
+  const smooth2 = useSpring(scroll2, springOptions);
+  const ch2Y = useTransform(smooth2, [0, 0.4], [14, 0]);
+  const ch2Opacity = useTransform(smooth2, [0, 0.25], [0.35, 1]);
 
-  // CHAPTER 3 SCROLL: Begins animating the moment it enters from the bottom
+  // CHAPTER 3 SCROLL: Begins animating as it enters from the bottom, scrubs smoothly both ways
   const { scrollYProgress: scroll3 } = useScroll({
     target: ch3Ref,
     offset: ['start end', 'center center'],
   });
-  const ch3Y = useTransform(scroll3, [0, 0.85], [48, 0]);
-  const ch3Opacity = useTransform(scroll3, [0, 0.4], [0.2, 1]);
+  const smooth3 = useSpring(scroll3, springOptions);
+  const ch3Y = useTransform(smooth3, [0, 0.4], [14, 0]);
+  const ch3Opacity = useTransform(smooth3, [0, 0.25], [0.35, 1]);
 
   // Tap-to-jump smooth scrolling directly to a chapter
   const scrollToChapter = (index: number) => {
@@ -91,7 +98,7 @@ export const FeatureChapters: React.FC<FeatureChaptersProps> = ({
       <section
         ref={ch1Ref}
         aria-label="Chapter 1: Daily Rings"
-        className="w-full min-h-[92dvh] flex items-center justify-center py-10 px-4 snap-center"
+        className="w-full min-h-[92dvh] flex items-center justify-center py-10 px-4"
       >
         <motion.div
           style={{
@@ -101,7 +108,7 @@ export const FeatureChapters: React.FC<FeatureChaptersProps> = ({
           }}
           className="w-full max-w-[390px] mx-auto flex items-center justify-center"
         >
-          <ChapterRings progress={scroll1} />
+          <ChapterRings progress={smooth1} />
         </motion.div>
       </section>
 
@@ -109,7 +116,7 @@ export const FeatureChapters: React.FC<FeatureChaptersProps> = ({
       <section
         ref={ch2Ref}
         aria-label="Chapter 2: Care Routine"
-        className="w-full min-h-[92dvh] flex items-center justify-center py-10 px-4 snap-center"
+        className="w-full min-h-[92dvh] flex items-center justify-center py-10 px-4"
       >
         <motion.div
           style={{
@@ -119,7 +126,7 @@ export const FeatureChapters: React.FC<FeatureChaptersProps> = ({
           }}
           className="w-full max-w-[390px] mx-auto flex items-center justify-center"
         >
-          <ChapterRoutine progress={scroll2} />
+          <ChapterRoutine progress={smooth2} />
         </motion.div>
       </section>
 
@@ -127,7 +134,7 @@ export const FeatureChapters: React.FC<FeatureChaptersProps> = ({
       <section
         ref={ch3Ref}
         aria-label="Chapter 3: Digital Closet"
-        className="w-full min-h-[92dvh] flex items-center justify-center py-10 px-4 snap-center"
+        className="w-full min-h-[92dvh] flex items-center justify-center py-10 px-4"
       >
         <motion.div
           style={{
@@ -137,7 +144,7 @@ export const FeatureChapters: React.FC<FeatureChaptersProps> = ({
           }}
           className="w-full max-w-[390px] mx-auto flex items-center justify-center"
         >
-          <ChapterFits progress={scroll3} />
+          <ChapterFits progress={smooth3} />
         </motion.div>
       </section>
     </div>

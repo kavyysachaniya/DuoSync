@@ -1,5 +1,5 @@
 import React, { useRef } from 'react';
-import { motion, useScroll, useTransform, useReducedMotion } from 'motion/react';
+import { motion, useScroll, useTransform, useSpring, useReducedMotion } from 'motion/react';
 
 export const SyncSection: React.FC = () => {
   const sectionRef = useRef<HTMLDivElement>(null);
@@ -10,8 +10,15 @@ export const SyncSection: React.FC = () => {
     offset: ['start end', 'end start'],
   });
 
+  const smoothProgress = useSpring(scrollYProgress, {
+    stiffness: 90,
+    damping: 26,
+    mass: 0.22,
+    restDelta: 0.001,
+  });
+
   // Harmonious, synchronized levitation together
-  const phoneY = useTransform(scrollYProgress, [0, 0.5, 1], [14, 0, -14]);
+  const phoneY = useTransform(smoothProgress, [0, 0.5, 1], [10, 0, -10]);
 
   return (
     <section

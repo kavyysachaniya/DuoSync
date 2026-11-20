@@ -38,117 +38,7 @@ import {
   WardrobeSeason,
 } from '../types';
 
-// Curated preview seed items for DuoSync (shown when wardrobe is first viewed)
-export const PREVIEW_SEED_ITEMS: WardrobeItemDoc[] = [
-  {
-    id: 'seed_1',
-    workspaceId: 'shared',
-    profileSlot: 'partner1',
-    name: 'Black Oxford Shirt',
-    brand: 'Westside',
-    category: 'Tops',
-    color: 'Black',
-    size: 'M',
-    occasion: 'Casual',
-    season: 'All Season',
-    notes: 'Crisp casual button-up',
-    imageUrl: '',
-    thumbnailUrl: '',
-    updatedByUid: '',
-    createdAt: new Date().toISOString() as any,
-    updatedAt: new Date().toISOString() as any,
-  },
-  {
-    id: 'seed_2',
-    workspaceId: 'shared',
-    profileSlot: 'partner1',
-    name: 'Slim Fit Blue Jeans',
-    brand: "Levi's",
-    category: 'Bottoms',
-    color: 'Navy Blue',
-    size: '32',
-    occasion: 'Casual',
-    season: 'All Season',
-    notes: 'Classic denim',
-    imageUrl: '',
-    thumbnailUrl: '',
-    updatedByUid: '',
-    createdAt: new Date().toISOString() as any,
-    updatedAt: new Date().toISOString() as any,
-  },
-  {
-    id: 'seed_3',
-    workspaceId: 'shared',
-    profileSlot: 'partner1',
-    name: 'Air Force 1 White',
-    brand: 'Nike',
-    category: 'Footwear',
-    color: 'White',
-    size: 'UK 9',
-    occasion: 'Casual',
-    season: 'All Season',
-    notes: 'Clean leather sneakers',
-    imageUrl: '',
-    thumbnailUrl: '',
-    updatedByUid: '',
-    createdAt: new Date().toISOString() as any,
-    updatedAt: new Date().toISOString() as any,
-  },
-  {
-    id: 'seed_4',
-    workspaceId: 'shared',
-    profileSlot: 'partner1',
-    name: 'Oversized Beige Hoodie',
-    brand: 'H&M',
-    category: 'Outerwear',
-    color: 'Beige / Cream',
-    size: 'L',
-    occasion: 'Casual',
-    season: 'Winter',
-    notes: 'Soft fleece hoodie',
-    imageUrl: '',
-    thumbnailUrl: '',
-    updatedByUid: '',
-    createdAt: new Date().toISOString() as any,
-    updatedAt: new Date().toISOString() as any,
-  },
-  {
-    id: 'seed_5',
-    workspaceId: 'shared',
-    profileSlot: 'partner1',
-    name: 'Linen Cream Shirt',
-    brand: 'Zara',
-    category: 'Tops',
-    color: 'Beige / Cream',
-    size: 'M',
-    occasion: 'Casual',
-    season: 'Summer',
-    notes: 'Breathable relaxed linen',
-    imageUrl: '',
-    thumbnailUrl: '',
-    updatedByUid: '',
-    createdAt: new Date().toISOString() as any,
-    updatedAt: new Date().toISOString() as any,
-  },
-  {
-    id: 'seed_6',
-    workspaceId: 'shared',
-    profileSlot: 'partner1',
-    name: 'Graphic Black Tee',
-    brand: 'Bewakoof',
-    category: 'Tops',
-    color: 'Black',
-    size: 'L',
-    occasion: 'College',
-    season: 'All Season',
-    notes: 'Heavyweight cotton graphic tee',
-    imageUrl: '',
-    thumbnailUrl: '',
-    updatedByUid: '',
-    createdAt: new Date().toISOString() as any,
-    updatedAt: new Date().toISOString() as any,
-  },
-];
+
 
 interface WardrobeDashboardProps {
   profile: PartnerProfileView;
@@ -185,21 +75,7 @@ const PRESET_COLORS = [
 
 const PRESET_SIZES = ['XS', 'S', 'M', 'L', 'XL', 'XXL', 'Free Size'];
 
-// Preset curated fashion silhouettes for instant photo placeholder selection
-const PRESET_IMAGE_TEMPLATES: { label: string; category: WardrobeCategory; iconName: string; bgGradient: string }[] = [
-  { label: 'Basic Tee', category: 'Tops', iconName: 'Shirt', bgGradient: 'from-zinc-800 to-zinc-900' },
-  { label: 'Button-Up Shirt', category: 'Tops', iconName: 'Shirt', bgGradient: 'from-blue-950 to-zinc-900' },
-  { label: 'Cozy Hoodie', category: 'Tops', iconName: 'Layers', bgGradient: 'from-indigo-950 to-zinc-900' },
-  { label: 'Straight Jeans', category: 'Bottoms', iconName: 'Tag', bgGradient: 'from-sky-950 to-zinc-900' },
-  { label: 'Tailored Trousers', category: 'Bottoms', iconName: 'Tag', bgGradient: 'from-stone-900 to-zinc-950' },
-  { label: 'Clean Sneakers', category: 'Footwear', iconName: 'Sparkles', bgGradient: 'from-emerald-950 to-zinc-900' },
-  { label: 'Leather Boots', category: 'Footwear', iconName: 'Sparkles', bgGradient: 'from-amber-950 to-zinc-900' },
-  { label: 'Tailored Blazer', category: 'Outerwear', iconName: 'Layers', bgGradient: 'from-purple-950 to-zinc-900' },
-  { label: 'Denim Jacket', category: 'Outerwear', iconName: 'Layers', bgGradient: 'from-cyan-950 to-zinc-900' },
-  { label: 'Classic Watch', category: 'Accessories', iconName: 'Tag', bgGradient: 'from-yellow-950 to-zinc-900' },
-  { label: 'Leather Bag', category: 'Accessories', iconName: 'Tag', bgGradient: 'from-rose-950 to-zinc-900' },
-  { label: 'Evening Dress', category: 'Dresses', iconName: 'Sparkles', bgGradient: 'from-pink-950 to-zinc-900' },
-];
+
 
 // Occasion badge color mapper
 function getOccasionColor(occasion: string) {
@@ -243,10 +119,6 @@ export const WardrobeDashboard: React.FC<WardrobeDashboardProps> = ({
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [isFilterSheetOpen, setIsFilterSheetOpen] = useState(false);
 
-  // Effective items: use real items, or seed preview pieces if wardrobe is empty
-  const effectiveItems = useMemo(() => {
-    return items.length > 0 ? items : PREVIEW_SEED_ITEMS;
-  }, [items]);
 
   // Item Modal State (Add / Edit)
   const [isItemModalOpen, setIsItemModalOpen] = useState(false);
@@ -287,23 +159,21 @@ export const WardrobeDashboard: React.FC<WardrobeDashboardProps> = ({
 
   // Filtered wardrobe items
   const filteredItems = useMemo(() => {
-    return effectiveItems.filter((item) => {
+    return items.filter((item) => {
       if (selectedCategory !== 'All' && item.category !== selectedCategory) return false;
       if (selectedOccasionFilter !== 'All' && item.occasion !== selectedOccasionFilter) return false;
       if (selectedColorFilter !== 'All' && !item.color.toLowerCase().includes(selectedColorFilter.toLowerCase()))
         return false;
 
-      if (items.length > 0) {
-        if (ownerFilter === 'me') {
-          if (item.profileSlot !== profile.slot) return false;
-        } else if (ownerFilter === 'partner') {
-          if (item.profileSlot !== partnerProfile.slot) return false;
-        } else if (ownerFilter === 'shared') {
-          if (item.profileSlot !== 'shared') return false;
-        } else {
-          // 'all' in active profile's view shows this profile's items + shared items
-          if (item.profileSlot !== profile.slot && item.profileSlot !== 'shared') return false;
-        }
+      if (ownerFilter === 'me') {
+        if (item.profileSlot !== profile.slot) return false;
+      } else if (ownerFilter === 'partner') {
+        if (item.profileSlot !== partnerProfile.slot) return false;
+      } else if (ownerFilter === 'shared') {
+        if (item.profileSlot !== 'shared') return false;
+      } else {
+        // 'all' in active profile's view shows this profile's items + shared items
+        if (item.profileSlot !== profile.slot && item.profileSlot !== 'shared') return false;
       }
 
       if (searchQuery.trim()) {
@@ -316,7 +186,7 @@ export const WardrobeDashboard: React.FC<WardrobeDashboardProps> = ({
       }
       return true;
     });
-  }, [effectiveItems, items.length, selectedCategory, selectedOccasionFilter, selectedColorFilter, ownerFilter, searchQuery, profile.slot, partnerProfile.slot]);
+  }, [items, selectedCategory, selectedOccasionFilter, selectedColorFilter, ownerFilter, searchQuery, profile.slot, partnerProfile.slot]);
 
   // Filtered outfits
   const filteredOutfits = useMemo(() => {
@@ -690,11 +560,11 @@ export const WardrobeDashboard: React.FC<WardrobeDashboardProps> = ({
           {/* 4. CATEGORY CHIP BAR (Directly on --bg, single row, ghost inactive, rose active) */}
           <ChipBar
             categories={[
-              { id: 'All', label: 'All', count: effectiveItems.length },
+              { id: 'All', label: 'All', count: items.length },
               ...WARDROBE_CATEGORIES.map((cat) => ({
                 id: cat,
                 label: cat,
-                count: effectiveItems.filter((i) => i.category === cat).length,
+                count: items.filter((i) => i.category === cat).length,
               })),
             ]}
             selectedCategory={selectedCategory}

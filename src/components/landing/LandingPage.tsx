@@ -21,11 +21,19 @@ interface LandingPageProps {
 export const LandingPage: React.FC<LandingPageProps> = ({ onAuthSuccess }) => {
   const shouldReduceMotion = useReducedMotion();
   const heroRef = useRef<HTMLDivElement>(null);
+  const finalCtaRef = useRef<HTMLDivElement>(null);
 
   // Detect when hero scrolls out of viewport to trigger StickyCTA
   const isHeroInView = useInView(heroRef, {
-    amount: 0.15,
+    amount: 0.25,
   });
+
+  // Detect when bottom CTA is in view so StickyCTA does not duplicate or obstruct the final CTA
+  const isFinalCtaInView = useInView(finalCtaRef, {
+    amount: 0.2,
+  });
+
+  const isStickyVisible = !isHeroInView && !isFinalCtaInView;
 
   // Auth Modal State
   const [authModalOpen, setAuthModalOpen] = useState(false);
@@ -37,7 +45,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onAuthSuccess }) => {
   };
 
   return (
-    <div className="relative min-h-screen bg-[#07070A] text-zinc-100 selection:bg-white/20 selection:text-white overflow-x-clip font-sans snap-y snap-proximity">
+    <div className="relative min-h-screen bg-[#07070A] text-zinc-100 selection:bg-white/20 selection:text-white overflow-x-clip font-sans">
       {/* Minimal Ethereal Aurora Background from React Bits (Clean, non-rainbow silver/white light) */}
       <div className="fixed inset-0 pointer-events-none overflow-hidden z-0">
         <Aurora
@@ -74,7 +82,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onAuthSuccess }) => {
         </div>
 
         {/* 4. FINAL CTA & FOOTER */}
-        <section className="w-full px-5 pt-8 pb-20 space-y-8 text-center select-none">
+        <section ref={finalCtaRef} className="w-full px-5 pt-8 pb-20 space-y-8 text-center select-none">
           <motion.div
             initial={{ opacity: 0, y: 12 }}
             whileInView={{ opacity: 1, y: 0 }}
@@ -108,9 +116,9 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onAuthSuccess }) => {
         </section>
       </div>
 
-      {/* 5. STICKY BOTTOM BAR (Appears when Hero scrolls out) */}
+      {/* 5. STICKY BOTTOM BAR (Smoothly slides in between Hero and Final CTA) */}
       <StickyCTA
-        isVisible={!isHeroInView}
+        isVisible={isStickyVisible}
         onGetStarted={() => openAuth('signup')}
       />
 
