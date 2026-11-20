@@ -45,6 +45,7 @@ interface WardrobeDashboardProps {
   partnerProfile: PartnerProfileView;
   items: WardrobeItemDoc[];
   outfits: OutfitDoc[];
+  wardrobeCategories?: string[];
   onSaveItem: (
     item: Omit<WardrobeItemDoc, 'id' | 'workspaceId' | 'updatedByUid' | 'createdAt' | 'updatedAt'>,
     existingId?: string
@@ -102,6 +103,7 @@ export const WardrobeDashboard: React.FC<WardrobeDashboardProps> = ({
   partnerProfile,
   items,
   outfits,
+  wardrobeCategories,
   onSaveItem,
   onDeleteItem,
   onSaveOutfit,
@@ -109,6 +111,13 @@ export const WardrobeDashboard: React.FC<WardrobeDashboardProps> = ({
 }) => {
   // Main view toggle: Closet vs Fits
   const [activeTab, setActiveTab] = useState<'closet' | 'fits' | 'builder'>('closet');
+
+  // Active categories from workspace or fallback defaults
+  const activeCategories = useMemo(() => {
+    return wardrobeCategories && wardrobeCategories.length > 0
+      ? wardrobeCategories
+      : WARDROBE_CATEGORIES;
+  }, [wardrobeCategories]);
 
   // Filters for Closet Inventory
   const [selectedCategory, setSelectedCategory] = useState<string>('All');
@@ -124,7 +133,7 @@ export const WardrobeDashboard: React.FC<WardrobeDashboardProps> = ({
   const [isItemModalOpen, setIsItemModalOpen] = useState(false);
   const [editingItemId, setEditingItemId] = useState<string | null>(null);
   const [formName, setFormName] = useState('');
-  const [formCategory, setFormCategory] = useState<WardrobeCategory>('Tops');
+  const [formCategory, setFormCategory] = useState<WardrobeCategory>(() => activeCategories[0] || 'Shirts');
   const [formBrand, setFormBrand] = useState('');
   const [formColor, setFormColor] = useState('Black');
   const [formSize, setFormSize] = useState('M');
@@ -305,7 +314,7 @@ export const WardrobeDashboard: React.FC<WardrobeDashboardProps> = ({
   const handleOpenAddItem = () => {
     setEditingItemId(null);
     setFormName('');
-    setFormCategory('Tops');
+    setFormCategory(activeCategories[0] || 'Shirts');
     setFormBrand('');
     setFormColor('Black');
     setFormSize('M');
@@ -504,7 +513,7 @@ export const WardrobeDashboard: React.FC<WardrobeDashboardProps> = ({
                 className="absolute inset-0 rounded-full bg-white shadow-md"
               />
             )}
-            <span className="relative z-10">Fits ({outfits.length})</span>
+            <span className="relative z-10">Fits</span>
           </button>
 
           <button
@@ -561,7 +570,7 @@ export const WardrobeDashboard: React.FC<WardrobeDashboardProps> = ({
           <ChipBar
             categories={[
               { id: 'All', label: 'All' },
-              ...WARDROBE_CATEGORIES.map((cat) => ({
+              ...activeCategories.map((cat) => ({
                 id: cat,
                 label: cat,
               })),
@@ -1000,7 +1009,7 @@ export const WardrobeDashboard: React.FC<WardrobeDashboardProps> = ({
 
                 {/* Category quick filter strip */}
                 <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar pt-1 pb-1">
-                  {['All', ...WARDROBE_CATEGORIES].map((cat) => (
+                  {['All', ...activeCategories].map((cat) => (
                     <button
                       key={cat}
                       type="button"
@@ -1139,7 +1148,7 @@ export const WardrobeDashboard: React.FC<WardrobeDashboardProps> = ({
                       <DuoDropdown
                         value={formCategory}
                         onChange={(val) => setFormCategory(val as WardrobeCategory)}
-                        options={WARDROBE_CATEGORIES.map((cat) => ({ value: cat, label: cat }))}
+                        options={activeCategories.map((cat) => ({ value: cat, label: cat }))}
                         searchable={true}
                       />
                     </div>

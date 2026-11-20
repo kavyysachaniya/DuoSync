@@ -503,24 +503,11 @@ export const HealthDashboard: React.FC<HealthDashboardProps> = ({
             })}
           </div>
 
-          {/* Helper Text Row */}
-          <div className="shrink-0 flex items-center justify-between text-xs text-zinc-400 py-1.5 px-0.5 border-t border-white/6">
-            <div className="flex items-center gap-1.5 font-medium text-zinc-300">
-              <Activity className="w-3.5 h-3.5 text-rose-400 shrink-0" />
-              <span>Tap a ring to jump to its card</span>
-            </div>
-            <span className="text-[10px] font-mono text-zinc-500 uppercase tracking-wider">
-              {selectedDate === todayDate ? 'Today’s Live' : selectedDateDisplay}
-            </span>
-          </div>
-
           {/* 2×2 Grid of Large Circular Progress Rings */}
-          <div className="flex-1 min-h-0 grid grid-cols-2 grid-rows-2 gap-2 sm:gap-3 pt-1">
+          <div className="flex-1 min-h-0 grid grid-cols-2 grid-rows-2 gap-2 sm:gap-3 pt-2">
             {/* 1. Weight Ring */}
-            <button
-              type="button"
-              onClick={() => scrollToCard('card-weight')}
-              className="w-full h-full min-h-0 rounded-2xl bg-black/60 hover:bg-black/90 border border-white/[0.06] hover:border-white/12 p-1.5 sm:p-2.5 flex flex-col items-center justify-center transition-all active:scale-95 group text-center cursor-pointer overflow-hidden"
+            <div
+              className="w-full h-full min-h-0 rounded-2xl bg-[#0A0A0F] border border-white/[0.08] p-1.5 sm:p-2.5 flex flex-col items-center justify-center text-center overflow-hidden"
             >
               <CircularProgressRing
                 percentage={weightPct}
@@ -541,13 +528,11 @@ export const HealthDashboard: React.FC<HealthDashboardProps> = ({
                 <span className="text-xs font-semibold text-zinc-200">Weight</span>
                 <span className="text-[10px] font-mono font-bold text-rose-400">· {weightPct}%</span>
               </div>
-            </button>
+            </div>
 
             {/* 2. Steps Ring */}
-            <button
-              type="button"
-              onClick={() => scrollToCard('card-steps')}
-              className="w-full h-full min-h-0 rounded-2xl bg-black/60 hover:bg-black/90 border border-white/[0.06] hover:border-white/12 p-1.5 sm:p-2.5 flex flex-col items-center justify-center transition-all active:scale-95 group text-center cursor-pointer overflow-hidden"
+            <div
+              className="w-full h-full min-h-0 rounded-2xl bg-[#0A0A0F] border border-white/[0.08] p-1.5 sm:p-2.5 flex flex-col items-center justify-center text-center overflow-hidden"
             >
               <CircularProgressRing
                 percentage={stepsPct}
@@ -572,13 +557,11 @@ export const HealthDashboard: React.FC<HealthDashboardProps> = ({
                 <span className="text-xs font-semibold text-zinc-200">Steps</span>
                 <span className="text-[10px] font-mono font-bold text-emerald-400">· {stepsPct}%</span>
               </div>
-            </button>
+            </div>
 
             {/* 3. Sleep Ring */}
-            <button
-              type="button"
-              onClick={() => scrollToCard('card-sleep')}
-              className="w-full h-full min-h-0 rounded-2xl bg-black/60 hover:bg-black/90 border border-white/[0.06] hover:border-white/12 p-1.5 sm:p-2.5 flex flex-col items-center justify-center transition-all active:scale-95 group text-center cursor-pointer overflow-hidden"
+            <div
+              className="w-full h-full min-h-0 rounded-2xl bg-[#0A0A0F] border border-white/[0.08] p-1.5 sm:p-2.5 flex flex-col items-center justify-center text-center overflow-hidden"
             >
               <CircularProgressRing
                 percentage={sleepPct}
@@ -599,13 +582,11 @@ export const HealthDashboard: React.FC<HealthDashboardProps> = ({
                 <span className="text-xs font-semibold text-zinc-200">Sleep</span>
                 <span className="text-[10px] font-mono font-bold text-indigo-400">· {sleepPct}%</span>
               </div>
-            </button>
+            </div>
 
             {/* 4. Water Ring */}
-            <button
-              type="button"
-              onClick={() => scrollToCard('card-water')}
-              className="w-full h-full min-h-0 rounded-2xl bg-black/60 hover:bg-black/90 border border-white/[0.06] hover:border-white/12 p-1.5 sm:p-2.5 flex flex-col items-center justify-center transition-all active:scale-95 group text-center cursor-pointer overflow-hidden"
+            <div
+              className="w-full h-full min-h-0 rounded-2xl bg-[#0A0A0F] border border-white/[0.08] p-1.5 sm:p-2.5 flex flex-col items-center justify-center text-center overflow-hidden"
             >
               <CircularProgressRing
                 percentage={waterPct}
@@ -626,7 +607,7 @@ export const HealthDashboard: React.FC<HealthDashboardProps> = ({
                 <span className="text-xs font-semibold text-zinc-200">Water</span>
                 <span className="text-[10px] font-mono font-bold text-sky-400">· {waterPct}%</span>
               </div>
-            </button>
+            </div>
           </div>
         </div>
       </div>

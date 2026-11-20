@@ -396,14 +396,18 @@ export const ShampooBottleNavIcon: React.FC<IconProps> = ({ className = 'w-4 h-4
     className={className}
     aria-hidden="true"
   >
-    {/* Pump top nozzle & vertical stem */}
-    <path d="M10 2h5" />
-    <path d="M12 2v4" />
-    <path d="M8 6h8" />
-    {/* Bottle shoulders and body */}
-    <rect x="7" y="9" width="10" height="12" rx="2.5" />
-    {/* Clean horizontal label accents */}
-    <line x1="10" y1="13" x2="14" y2="13" />
+    {/* Pump dispenser nozzle pointing left */}
+    <path d="M8.5 2.5h5.5" />
+    {/* Pump nozzle downward spout tip */}
+    <path d="M8.5 2.5v1.2" />
+    {/* Pump central stem */}
+    <path d="M12 2.5v2.5" />
+    {/* Pump collar / neck cap */}
+    <rect x="9.5" y="5" width="5" height="2.5" rx="0.5" />
+    {/* Bottle shoulders & body (seamlessly connected under cap) */}
+    <path d="M9.5 7.5H7.5A2.5 2.5 0 0 0 5 10v10a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V10a2.5 2.5 0 0 0-2.5-2.5h-2" />
+    {/* Minimalist shelf label lines */}
+    <line x1="9" y1="13" x2="15" y2="13" />
     <line x1="10" y1="16" x2="14" y2="16" />
   </svg>
 );

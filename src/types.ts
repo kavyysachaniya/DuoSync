@@ -86,6 +86,7 @@ export interface WorkspaceDoc {
   skincareCategories: string[];
   haircareCategories: string[];
   bodycareCategories: string[];
+  wardrobeCategories?: string[];
   productIds: string[];
 
   createdAt: Timestamp;
@@ -187,24 +188,38 @@ export interface RoutineCompletionDoc {
   updatedAt?: Timestamp;
 }
 
-export type WardrobeCategory =
-  | 'Tops'
-  | 'Bottoms'
-  | 'Footwear'
-  | 'Outerwear'
-  | 'Accessories'
-  | 'Dresses'
-  | 'Activewear';
+export type WardrobeCategory = string;
 
-export const WARDROBE_CATEGORIES: WardrobeCategory[] = [
-  'Tops',
-  'Bottoms',
-  'Footwear',
-  'Outerwear',
+export const DEFAULT_WARDROBE_CATEGORIES: string[] = [
+  // Tops & Upper Wear
+  'Shirts',
+  'T-Shirts',
+  'Polos',
+  'Hoodies & Sweats',
+  'Knitwear & Sweaters',
+  // Bottoms & Lower Wear
+  'Jeans',
+  'Trousers & Pants',
+  'Chinos',
+  'Shorts',
+  'Cargo Pants',
+  'Skirts',
+  // Winter & Outerwear
+  'Jackets',
+  'Coats & Trench',
+  'Puffers & Parkas',
+  'Blazers & Suits',
+  // Footwear
+  'Sneakers',
+  'Boots',
+  'Loafers & Formals',
+  // Accessories & Essentials
   'Accessories',
-  'Dresses',
-  'Activewear',
+  'Bags & Backpacks',
+  'Watches',
 ];
+
+export const WARDROBE_CATEGORIES: string[] = DEFAULT_WARDROBE_CATEGORIES;
 
 export type WardrobeOccasion =
   | 'Casual'

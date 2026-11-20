@@ -16,6 +16,7 @@ import {
   DEFAULT_BODYCARE_CATEGORIES,
   DEFAULT_HAIRCARE_CATEGORIES,
   DEFAULT_SKINCARE_CATEGORIES,
+  DEFAULT_WARDROBE_CATEGORIES,
   FitnessAppId,
   formatLocalDate,
   HealthLogDoc,
@@ -80,6 +81,19 @@ function mapToWorkspaceDoc(ws: any, members: any[], pairingCode: string): Worksp
     skincareCategories: ws.skincare_categories || DEFAULT_SKINCARE_CATEGORIES,
     haircareCategories: ws.haircare_categories || DEFAULT_HAIRCARE_CATEGORIES,
     bodycareCategories: ws.bodycare_categories || DEFAULT_BODYCARE_CATEGORIES,
+    wardrobeCategories: (() => {
+      if (ws.wardrobe_categories && Array.isArray(ws.wardrobe_categories) && ws.wardrobe_categories.length > 0) {
+        return ws.wardrobe_categories;
+      }
+      try {
+        const cached = localStorage.getItem(`duosync_wardrobe_categories_${ws.id}`);
+        if (cached) {
+          const parsed = JSON.parse(cached);
+          if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+        }
+      } catch {}
+      return DEFAULT_WARDROBE_CATEGORIES;
+    })(),
     productIds: ws.product_ids || [],
     createdAt: ws.created_at as any,
     updatedAt: ws.updated_at as any,
@@ -860,9 +874,24 @@ export default function App() {
 
       if (res.workspace && res.members) {
         const wsDoc = mapToWorkspaceDoc(res.workspace, res.members, workspace.pairingCode);
+        if (submission.wardrobeCategories && submission.wardrobeCategories.length > 0) {
+          wsDoc.wardrobeCategories = submission.wardrobeCategories;
+          try {
+            localStorage.setItem(`duosync_wardrobe_categories_${workspace.id}`, JSON.stringify(submission.wardrobeCategories));
+          } catch {}
+        }
         setWorkspace(wsDoc);
       } else {
-        setWorkspace((prev) => (prev ? { ...prev, onboardingCompleted: true } : null));
+        setWorkspace((prev) => (prev ? {
+          ...prev,
+          onboardingCompleted: true,
+          wardrobeCategories: submission.wardrobeCategories || prev.wardrobeCategories || DEFAULT_WARDROBE_CATEGORIES,
+        } : null));
+        if (submission.wardrobeCategories && submission.wardrobeCategories.length > 0) {
+          try {
+            localStorage.setItem(`duosync_wardrobe_categories_${workspace.id}`, JSON.stringify(submission.wardrobeCategories));
+          } catch {}
+        }
       }
 
       setManualWizardOpen(false);
@@ -1040,6 +1069,7 @@ export default function App() {
         initialSkincareCategories={workspace.skincareCategories}
         initialHaircareCategories={workspace.haircareCategories}
         initialBodycareCategories={workspace.bodycareCategories}
+        initialWardrobeCategories={workspace.wardrobeCategories}
         pairingCode={workspace.pairingCode}
         onComplete={handleOnboardingComplete}
         onCancel={() => setManualWizardOpen(false)}
@@ -1074,60 +1104,51 @@ export default function App() {
         {/* Top Navbar Pill: Hidden on mobile, visible on tablet/desktop */}
         <nav
           aria-label="Primary View Switcher"
-          className="hidden sm:flex items-center p-1 rounded-full bg-[#0A0A0F] border border-white/10"
+          className="hidden sm:flex relative items-center p-1 rounded-full bg-[#0A0A0F] border border-white/10 overflow-hidden"
         >
+          <motion.div
+            className="absolute top-1 bottom-1 rounded-full bg-white shadow-sm pointer-events-none"
+            style={{
+              width: 'calc((100% - 8px) / 3)',
+              left: '4px',
+            }}
+            animate={{
+              x: activeSection === 'health' ? '0%' : activeSection === 'skin' ? '100%' : '200%',
+            }}
+            transition={{ type: 'spring', damping: 28, stiffness: 350 }}
+          />
+
           <button
             type="button"
             onClick={() => setActiveSection('health')}
-            className={`relative min-h-[34px] sm:min-h-[36px] px-3.5 sm:px-5 py-1 rounded-full text-xs font-semibold transition-colors whitespace-nowrap shrink-0 flex items-center gap-1.5 ${
+            className={`relative min-h-[34px] sm:min-h-[36px] px-3.5 sm:px-5 py-1 rounded-full text-xs font-semibold transition-colors whitespace-nowrap shrink-0 flex items-center gap-1.5 z-10 ${
               activeSection === 'health' ? 'text-zinc-950 font-bold' : 'text-white/60 hover:text-white'
             }`}
           >
-            {activeSection === 'health' && (
-              <motion.span
-                layoutId="topNavPill"
-                transition={{ duration: 0.18, ease: [0.16, 1, 0.3, 1] }}
-                className="absolute inset-0 rounded-full bg-white shadow-sm"
-              />
-            )}
-            <Activity className="w-3.5 h-3.5 relative z-10" strokeWidth={1.5} />
-            <span className="relative z-10">Health</span>
+            <Activity className="w-3.5 h-3.5" strokeWidth={1.5} />
+            <span>Health</span>
           </button>
 
           <button
             type="button"
             onClick={() => setActiveSection('skin')}
-            className={`relative min-h-[34px] sm:min-h-[36px] px-3.5 sm:px-5 py-1 rounded-full text-xs font-semibold transition-colors whitespace-nowrap shrink-0 flex items-center gap-1.5 ${
+            className={`relative min-h-[34px] sm:min-h-[36px] px-3.5 sm:px-5 py-1 rounded-full text-xs font-semibold transition-colors whitespace-nowrap shrink-0 flex items-center gap-1.5 z-10 ${
               activeSection === 'skin' ? 'text-zinc-950 font-bold' : 'text-white/60 hover:text-white'
             }`}
           >
-            {activeSection === 'skin' && (
-              <motion.span
-                layoutId="topNavPill"
-                transition={{ duration: 0.18, ease: [0.16, 1, 0.3, 1] }}
-                className="absolute inset-0 rounded-full bg-white shadow-sm"
-              />
-            )}
-            <ShampooBottleNavIcon className="w-3.5 h-3.5 relative z-10" />
-            <span className="relative z-10">Skin</span>
+            <ShampooBottleNavIcon className="w-3.5 h-3.5" />
+            <span>Skin</span>
           </button>
 
           <button
             type="button"
             onClick={() => setActiveSection('wardrobe')}
-            className={`relative min-h-[34px] sm:min-h-[36px] px-3.5 sm:px-5 py-1 rounded-full text-xs font-semibold transition-colors whitespace-nowrap shrink-0 flex items-center gap-1.5 ${
+            className={`relative min-h-[34px] sm:min-h-[36px] px-3.5 sm:px-5 py-1 rounded-full text-xs font-semibold transition-colors whitespace-nowrap shrink-0 flex items-center gap-1.5 z-10 ${
               activeSection === 'wardrobe' ? 'text-zinc-950 font-bold' : 'text-white/60 hover:text-white'
             }`}
           >
-            {activeSection === 'wardrobe' && (
-              <motion.span
-                layoutId="topNavPill"
-                transition={{ duration: 0.18, ease: [0.16, 1, 0.3, 1] }}
-                className="absolute inset-0 rounded-full bg-white shadow-sm"
-              />
-            )}
-            <CollaredShirtNavIcon className="w-3.5 h-3.5 relative z-10" />
-            <span className="relative z-10">Fits</span>
+            <CollaredShirtNavIcon className="w-3.5 h-3.5" />
+            <span>Fits</span>
           </button>
         </nav>
 
@@ -1241,6 +1262,7 @@ export default function App() {
                 partnerProfile={otherProfile}
                 items={Object.values(wardrobeItemsMap)}
                 outfits={Object.values(outfitsMap)}
+                wardrobeCategories={workspace.wardrobeCategories}
                 onSaveItem={handleSaveWardrobeItem}
                 onDeleteItem={handleDeleteWardrobeItem}
                 onSaveOutfit={handleSaveOutfit}
@@ -1271,59 +1293,51 @@ export default function App() {
 
       {/* Mobile-Only Floating Bottom Navbar Pill [ Health | Skin | Fits ] */}
       <div className="sm:hidden fixed bottom-[max(0.75rem,env(safe-area-inset-bottom,0px))] inset-x-0 mx-auto w-[min(92%,360px)] z-40">
-        <div className="bg-[#0A0A0F]/95 backdrop-blur-2xl border border-white/12 shadow-2xl shadow-black rounded-full p-1.5 flex items-center justify-between gap-1">
+        <div className="relative bg-[#0A0A0F]/95 backdrop-blur-2xl border border-white/12 shadow-2xl shadow-black rounded-full p-1.5 flex items-center justify-between gap-1 overflow-hidden">
+          {/* Smooth hardware-accelerated horizontal sliding indicator (purely horizontal, zero vertical bounce) */}
+          <motion.div
+            className="absolute top-1.5 bottom-1.5 rounded-full bg-white shadow-md pointer-events-none"
+            style={{
+              width: 'calc((100% - 12px) / 3)',
+              left: '6px',
+            }}
+            animate={{
+              x: activeSection === 'health' ? '0%' : activeSection === 'skin' ? '100%' : '200%',
+            }}
+            transition={{ type: 'spring', damping: 28, stiffness: 350 }}
+          />
+
           <button
             type="button"
             onClick={() => setActiveSection('health')}
-            className={`relative flex-1 min-h-[46px] rounded-full text-xs font-semibold flex items-center justify-center gap-1.5 transition-colors ${
+            className={`relative flex-1 min-h-[46px] rounded-full text-xs font-semibold flex items-center justify-center gap-1.5 transition-colors z-10 ${
               activeSection === 'health' ? 'text-zinc-950 font-bold' : 'text-white/60 hover:text-white'
             }`}
           >
-            {activeSection === 'health' && (
-              <motion.span
-                layoutId="mobileNavPill"
-                transition={{ type: 'spring', damping: 25, stiffness: 350 }}
-                className="absolute inset-0 rounded-full bg-white shadow-md"
-              />
-            )}
-            <Activity className="w-4 h-4 relative z-10" strokeWidth={1.5} />
-            <span className="relative z-10 text-xs">Health</span>
+            <Activity className="w-4 h-4" strokeWidth={1.5} />
+            <span className="text-xs">Health</span>
           </button>
 
           <button
             type="button"
             onClick={() => setActiveSection('skin')}
-            className={`relative flex-1 min-h-[46px] rounded-full text-xs font-semibold flex items-center justify-center gap-1.5 transition-colors ${
+            className={`relative flex-1 min-h-[46px] rounded-full text-xs font-semibold flex items-center justify-center gap-1.5 transition-colors z-10 ${
               activeSection === 'skin' ? 'text-zinc-950 font-bold' : 'text-white/60 hover:text-white'
             }`}
           >
-            {activeSection === 'skin' && (
-              <motion.span
-                layoutId="mobileNavPill"
-                transition={{ type: 'spring', damping: 25, stiffness: 350 }}
-                className="absolute inset-0 rounded-full bg-white shadow-md"
-              />
-            )}
-            <ShampooBottleNavIcon className="w-4 h-4 relative z-10" />
-            <span className="relative z-10 text-xs">Skin</span>
+            <ShampooBottleNavIcon className="w-4 h-4" />
+            <span className="text-xs">Skin</span>
           </button>
 
           <button
             type="button"
             onClick={() => setActiveSection('wardrobe')}
-            className={`relative flex-1 min-h-[46px] rounded-full text-xs font-semibold flex items-center justify-center gap-1.5 transition-colors ${
+            className={`relative flex-1 min-h-[46px] rounded-full text-xs font-semibold flex items-center justify-center gap-1.5 transition-colors z-10 ${
               activeSection === 'wardrobe' ? 'text-zinc-950 font-bold' : 'text-white/60 hover:text-white'
             }`}
           >
-            {activeSection === 'wardrobe' && (
-              <motion.span
-                layoutId="mobileNavPill"
-                transition={{ type: 'spring', damping: 25, stiffness: 350 }}
-                className="absolute inset-0 rounded-full bg-white shadow-md"
-              />
-            )}
-            <CollaredShirtNavIcon className="w-4 h-4 relative z-10" />
-            <span className="relative z-10 text-xs">Fits</span>
+            <CollaredShirtNavIcon className="w-4 h-4" />
+            <span className="text-xs">Fits</span>
           </button>
         </div>
       </div>

@@ -7,11 +7,13 @@ import {
   Droplet,
   Droplets,
   Footprints,
+  Layers,
   Link2,
   Moon,
   Plus,
   Scale,
   Sparkles,
+  Tag,
   User,
   Users,
   Wind,
@@ -20,9 +22,11 @@ import {
   DEFAULT_BODYCARE_CATEGORIES,
   DEFAULT_HAIRCARE_CATEGORIES,
   DEFAULT_SKINCARE_CATEGORIES,
+  DEFAULT_WARDROBE_CATEGORIES,
   FitnessAppId,
   formatSleepDuration,
 } from '../types';
+import { CollaredShirtNavIcon } from './SkinIcons';
 
 export interface OnboardingSubmission {
   mode: 'create_or_update' | 'join_partner_code';
@@ -42,6 +46,7 @@ export interface OnboardingSubmission {
   skincareCategories: string[];
   haircareCategories: string[];
   bodycareCategories: string[];
+  wardrobeCategories?: string[];
 }
 
 interface OnboardingWizardProps {
@@ -59,6 +64,7 @@ interface OnboardingWizardProps {
   initialSkincareCategories?: string[];
   initialHaircareCategories?: string[];
   initialBodycareCategories?: string[];
+  initialWardrobeCategories?: string[];
   pairingCode?: string;
   onComplete: (data: OnboardingSubmission) => Promise<void>;
   onCancel?: () => void;
@@ -81,11 +87,12 @@ export const OnboardingWizard: React.FC<OnboardingWizardProps> = ({
   initialSkincareCategories,
   initialHaircareCategories,
   initialBodycareCategories,
+  initialWardrobeCategories,
   pairingCode,
   onComplete,
   onCancel,
 }) => {
-  const [step, setStep] = useState<1 | 2 | 3 | 4>(1);
+  const [step, setStep] = useState<1 | 2 | 3 | 4 | 5>(1);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -170,6 +177,14 @@ export const OnboardingWizard: React.FC<OnboardingWizardProps> = ({
   const [customHaircareInput, setCustomHaircareInput] = useState('');
   const [customBodycareInput, setCustomBodycareInput] = useState('');
 
+  // Step 5: Wardrobe & Style Categories
+  const [wardrobeCats, setWardrobeCats] = useState<string[]>(
+    initialWardrobeCategories && initialWardrobeCategories.length > 0
+      ? initialWardrobeCategories
+      : DEFAULT_WARDROBE_CATEGORIES
+  );
+  const [customWardrobeInput, setCustomWardrobeInput] = useState('');
+
   const toggleCategory = (
     list: string[],
     setList: React.Dispatch<React.SetStateAction<string[]>>,
@@ -234,6 +249,8 @@ export const OnboardingWizard: React.FC<OnboardingWizardProps> = ({
         return;
       }
       setStep(4);
+    } else if (step === 4) {
+      setStep(5);
     }
   };
 
@@ -271,6 +288,8 @@ export const OnboardingWizard: React.FC<OnboardingWizardProps> = ({
           haircareCats.length > 0 ? haircareCats : DEFAULT_HAIRCARE_CATEGORIES,
         bodycareCategories:
           bodycareCats.length > 0 ? bodycareCats : DEFAULT_BODYCARE_CATEGORIES,
+        wardrobeCategories:
+          wardrobeCats.length > 0 ? wardrobeCats : DEFAULT_WARDROBE_CATEGORIES,
       });
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Could not save your setup. Please try again.');
@@ -290,7 +309,7 @@ export const OnboardingWizard: React.FC<OnboardingWizardProps> = ({
             </span>
             <span className="text-xs text-zinc-500">·</span>
             <span className="text-xs text-zinc-400 font-mono tabular-nums">
-              Step {step} of 4
+              Step {step} of 5
             </span>
           </div>
 
@@ -305,9 +324,9 @@ export const OnboardingWizard: React.FC<OnboardingWizardProps> = ({
           )}
         </div>
 
-        {/* 4-Step Progress Bar */}
-        <div className="grid grid-cols-4 gap-1.5">
-          {[1, 2, 3, 4].map((idx) => (
+        {/* 5-Step Progress Bar */}
+        <div className="grid grid-cols-5 gap-1.5">
+          {[1, 2, 3, 4, 5].map((idx) => (
             <div
               key={idx}
               className={`h-1.5 rounded-full transition-colors ${
@@ -691,7 +710,7 @@ export const OnboardingWizard: React.FC<OnboardingWizardProps> = ({
 
           {/* STEP 4: SKINCARE, HAIRCARE & BODYCARE ROUTINE QUESTIONNAIRE */}
           {step === 4 && (
-            <form onSubmit={handleFinish} className="space-y-5">
+            <div className="space-y-5">
               <div className="space-y-1">
                 <div className="text-xs font-medium text-amber-400 flex items-center gap-1.5">
                   <Sparkles className="w-4 h-4" />
@@ -710,7 +729,7 @@ export const OnboardingWizard: React.FC<OnboardingWizardProps> = ({
                 <div className="rounded-2xl bg-black border border-white/10 p-3.5 space-y-2.5">
                   <span className="text-xs font-semibold text-rose-400 flex items-center gap-1.5">
                     <Sparkles className="w-3.5 h-3.5" />
-                    <span>1. Skincare Categories ({skincareCats.length})</span>
+                    <span>1. Skincare Categories</span>
                   </span>
                   <div className="flex flex-wrap gap-1.5">
                     {Array.from(new Set([...DEFAULT_SKINCARE_CATEGORIES, ...skincareCats])).map(
@@ -742,7 +761,7 @@ export const OnboardingWizard: React.FC<OnboardingWizardProps> = ({
                       onChange={(e) => setCustomSkincareInput(e.target.value)}
                       onKeyDown={(e) => {
                         if (e.key === 'Enter') {
-                           e.preventDefault();
+                          e.preventDefault();
                           addCustomCategory(
                             customSkincareInput,
                             setCustomSkincareInput,
@@ -776,7 +795,7 @@ export const OnboardingWizard: React.FC<OnboardingWizardProps> = ({
                 <div className="rounded-2xl bg-black border border-white/10 p-3.5 space-y-2.5">
                   <span className="text-xs font-semibold text-amber-400 flex items-center gap-1.5">
                     <Wind className="w-3.5 h-3.5" />
-                    <span>2. Haircare Categories ({haircareCats.length})</span>
+                    <span>2. Haircare Categories</span>
                   </span>
                   <div className="flex flex-wrap gap-1.5">
                     {Array.from(new Set([...DEFAULT_HAIRCARE_CATEGORIES, ...haircareCats])).map(
@@ -842,7 +861,7 @@ export const OnboardingWizard: React.FC<OnboardingWizardProps> = ({
                 <div className="rounded-2xl bg-black border border-white/10 p-3.5 space-y-2.5">
                   <span className="text-xs font-semibold text-sky-400 flex items-center gap-1.5">
                     <Droplet className="w-3.5 h-3.5" />
-                    <span>3. Bodycare Categories ({bodycareCats.length})</span>
+                    <span>3. Bodycare Categories</span>
                   </span>
                   <div className="flex flex-wrap gap-1.5">
                     {Array.from(new Set([...DEFAULT_BODYCARE_CATEGORIES, ...bodycareCats])).map(
@@ -918,9 +937,225 @@ export const OnboardingWizard: React.FC<OnboardingWizardProps> = ({
                 </button>
 
                 <button
-                  type="submit"
-                  disabled={submitting}
+                  type="button"
+                  onClick={handleNextStep}
                   className="flex-1 sm:flex-initial min-h-[48px] px-6 rounded-2xl bg-white text-zinc-950 hover:bg-zinc-200 text-xs sm:text-sm font-semibold flex items-center justify-center gap-2 transition-colors"
+                >
+                  <span>Continue</span>
+                  <ArrowRight className="w-4 h-4" />
+                </button>
+              </div>
+            </div>
+          )}
+
+          {/* STEP 5: WARDROBE & STYLE ESSENTIALS */}
+          {step === 5 && (
+            <div className="space-y-5">
+              <div className="space-y-1">
+                <div className="text-xs font-medium text-rose-400 flex items-center gap-1.5">
+                  <CollaredShirtNavIcon className="w-4 h-4" />
+                  <span>Step 5 · Wardrobe & Style Studio</span>
+                </div>
+                <h1 className="text-xl sm:text-2xl font-bold text-white tracking-tight">
+                  Curate your wardrobe categories
+                </h1>
+                <p className="text-xs text-zinc-400">
+                  Select and personalize the clothing categories you and your partner wear. Classify shirts, tees, jackets, pants and accessories to organize your daily fits.
+                </p>
+              </div>
+
+              <div className="space-y-4 max-h-[min(52dvh,28rem)] overflow-y-auto pr-1 overscroll-contain no-scrollbar">
+                {/* 1. Tops & Upper Wear */}
+                <div className="rounded-2xl bg-black border border-white/10 p-3.5 space-y-2.5">
+                  <span className="text-xs font-semibold text-rose-400 flex items-center gap-1.5">
+                    <CollaredShirtNavIcon className="w-3.5 h-3.5" />
+                    <span>1. Tops, Shirts & Sweaters</span>
+                  </span>
+                  <div className="flex flex-wrap gap-1.5">
+                    {['Shirts', 'T-Shirts', 'Polos', 'Hoodies & Sweats', 'Knitwear & Sweaters'].map((cat) => {
+                      const active = wardrobeCats.includes(cat);
+                      return (
+                        <button
+                          key={cat}
+                          type="button"
+                          onClick={() => toggleCategory(wardrobeCats, setWardrobeCats, cat)}
+                          className={`min-h-[38px] px-3.5 py-1.5 rounded-xl text-xs font-medium transition-colors flex items-center gap-1.5 ${
+                            active
+                              ? 'bg-rose-500 text-white font-semibold'
+                              : 'bg-zinc-900 text-zinc-400 hover:text-white border border-white/6'
+                          }`}
+                        >
+                          {active && <Check className="w-3 h-3" />}
+                          <span>{cat}</span>
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+
+                {/* 2. Bottoms & Lower Wear */}
+                <div className="rounded-2xl bg-black border border-white/10 p-3.5 space-y-2.5">
+                  <span className="text-xs font-semibold text-amber-400 flex items-center gap-1.5">
+                    <Tag className="w-3.5 h-3.5" />
+                    <span>2. Bottoms, Jeans & Trousers</span>
+                  </span>
+                  <div className="flex flex-wrap gap-1.5">
+                    {['Jeans', 'Trousers & Pants', 'Chinos', 'Shorts', 'Cargo Pants', 'Skirts'].map((cat) => {
+                      const active = wardrobeCats.includes(cat);
+                      return (
+                        <button
+                          key={cat}
+                          type="button"
+                          onClick={() => toggleCategory(wardrobeCats, setWardrobeCats, cat)}
+                          className={`min-h-[38px] px-3.5 py-1.5 rounded-xl text-xs font-medium transition-colors flex items-center gap-1.5 ${
+                            active
+                              ? 'bg-amber-500 text-zinc-950 font-semibold'
+                              : 'bg-zinc-900 text-zinc-400 hover:text-white border border-white/6'
+                          }`}
+                        >
+                          {active && <Check className="w-3 h-3" />}
+                          <span>{cat}</span>
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+
+                {/* 3. Winter & Outerwear */}
+                <div className="rounded-2xl bg-black border border-white/10 p-3.5 space-y-2.5">
+                  <span className="text-xs font-semibold text-sky-400 flex items-center gap-1.5">
+                    <Layers className="w-3.5 h-3.5" />
+                    <span>3. Winter Wear & Outerwear</span>
+                  </span>
+                  <div className="flex flex-wrap gap-1.5">
+                    {['Jackets', 'Coats & Trench', 'Puffers & Parkas', 'Blazers & Suits'].map((cat) => {
+                      const active = wardrobeCats.includes(cat);
+                      return (
+                        <button
+                          key={cat}
+                          type="button"
+                          onClick={() => toggleCategory(wardrobeCats, setWardrobeCats, cat)}
+                          className={`min-h-[38px] px-3.5 py-1.5 rounded-xl text-xs font-medium transition-colors flex items-center gap-1.5 ${
+                            active
+                              ? 'bg-sky-400 text-zinc-950 font-semibold'
+                              : 'bg-zinc-900 text-zinc-400 hover:text-white border border-white/6'
+                          }`}
+                        >
+                          {active && <Check className="w-3 h-3" />}
+                          <span>{cat}</span>
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+
+                {/* 4. Footwear & Accessories */}
+                <div className="rounded-2xl bg-black border border-white/10 p-3.5 space-y-2.5">
+                  <span className="text-xs font-semibold text-violet-400 flex items-center gap-1.5">
+                    <Sparkles className="w-3.5 h-3.5" />
+                    <span>4. Footwear & Accessories</span>
+                  </span>
+                  <div className="flex flex-wrap gap-1.5">
+                    {['Sneakers', 'Boots', 'Loafers & Formals', 'Accessories', 'Bags & Backpacks', 'Watches'].map((cat) => {
+                      const active = wardrobeCats.includes(cat);
+                      return (
+                        <button
+                          key={cat}
+                          type="button"
+                          onClick={() => toggleCategory(wardrobeCats, setWardrobeCats, cat)}
+                          className={`min-h-[38px] px-3.5 py-1.5 rounded-xl text-xs font-medium transition-colors flex items-center gap-1.5 ${
+                            active
+                              ? 'bg-violet-500 text-white font-semibold'
+                              : 'bg-zinc-900 text-zinc-400 hover:text-white border border-white/6'
+                          }`}
+                        >
+                          {active && <Check className="w-3 h-3" />}
+                          <span>{cat}</span>
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+
+                {/* Custom Categories & Add Input */}
+                <div className="rounded-2xl bg-black border border-white/10 p-3.5 space-y-2.5">
+                  <span className="text-xs font-semibold text-zinc-300 flex items-center gap-1.5">
+                    <Plus className="w-3.5 h-3.5" />
+                    <span>Add Custom Wardrobe Category</span>
+                  </span>
+
+                  {wardrobeCats.filter((c) => !DEFAULT_WARDROBE_CATEGORIES.includes(c)).length > 0 && (
+                    <div className="flex flex-wrap gap-1.5 pb-1">
+                      {wardrobeCats.filter((c) => !DEFAULT_WARDROBE_CATEGORIES.includes(c)).map((cat) => (
+                        <button
+                          key={cat}
+                          type="button"
+                          onClick={() => toggleCategory(wardrobeCats, setWardrobeCats, cat)}
+                          className="min-h-[38px] px-3.5 py-1.5 rounded-xl text-xs font-semibold bg-rose-500 text-white flex items-center gap-1.5"
+                        >
+                          <Check className="w-3 h-3" />
+                          <span>{cat}</span>
+                        </button>
+                      ))}
+                    </div>
+                  )}
+
+                  <div className="flex items-center gap-2 pt-1">
+                    <input
+                      type="text"
+                      maxLength={50}
+                      value={customWardrobeInput}
+                      onChange={(e) => setCustomWardrobeInput(e.target.value)}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter') {
+                          e.preventDefault();
+                          addCustomCategory(
+                            customWardrobeInput,
+                            setCustomWardrobeInput,
+                            wardrobeCats,
+                            setWardrobeCats
+                          );
+                        }
+                      }}
+                      placeholder="Add custom category (e.g. Kurtas, Sweatpants)..."
+                      className="flex-1 min-h-[44px] bg-black border border-white/10 rounded-xl px-3 text-base sm:text-xs text-white placeholder:text-zinc-600 focus:outline-none focus:border-white/30"
+                    />
+                    <button
+                      type="button"
+                      onClick={() =>
+                        addCustomCategory(
+                          customWardrobeInput,
+                          setCustomWardrobeInput,
+                          wardrobeCats,
+                          setWardrobeCats
+                        )
+                      }
+                      className="min-h-[44px] px-4 rounded-xl bg-white/10 hover:bg-white/15 text-xs font-semibold text-white flex items-center justify-center gap-1 shrink-0"
+                    >
+                      <Plus className="w-3.5 h-3.5" />
+                      <span>Add</span>
+                    </button>
+                  </div>
+                </div>
+              </div>
+
+              {error && <p className="text-xs text-rose-400">{error}</p>}
+
+              <div className="flex items-center justify-between gap-3 pt-2 border-t border-white/10">
+                <button
+                  type="button"
+                  onClick={() => setStep(4)}
+                  className="min-h-[46px] px-4 rounded-2xl bg-white/5 hover:bg-white/10 text-xs font-medium text-zinc-300 flex items-center gap-2 transition-colors"
+                >
+                  <ArrowLeft className="w-4 h-4" />
+                  <span>Back</span>
+                </button>
+
+                <button
+                  type="button"
+                  disabled={submitting}
+                  onClick={handleFinish}
+                  className="flex-1 sm:flex-initial min-h-[48px] px-6 rounded-2xl bg-white text-zinc-950 hover:bg-zinc-200 text-xs sm:text-sm font-semibold flex items-center justify-center gap-2 transition-colors disabled:opacity-50"
                 >
                   <Check className="w-4 h-4" />
                   <span>
@@ -928,7 +1163,7 @@ export const OnboardingWizard: React.FC<OnboardingWizardProps> = ({
                   </span>
                 </button>
               </div>
-            </form>
+            </div>
           )}
 
           {/* Navigation Footer for Steps 1-3 */}

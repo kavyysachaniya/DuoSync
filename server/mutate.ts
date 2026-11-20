@@ -735,6 +735,19 @@ mutateRouter.post('/onboarding', requireAuth, async (req: AuthenticatedRequest, 
       WHERE id = ${targetWsId}
     `;
 
+    const wardrobeCats = submission?.wardrobeCategories || null;
+    if (wardrobeCats) {
+      try {
+        await sql`
+          UPDATE public.workspaces
+          SET wardrobe_categories = ${wardrobeCats}
+          WHERE id = ${targetWsId}
+        `;
+      } catch {
+        // Table may not have wardrobe_categories column yet; client persists in local storage
+      }
+    }
+
     // 5. Save baseline health log with workspace-prefixed unique ID
     if (submission?.currentWeight) {
       const today = new Date().toISOString().split('T')[0];
