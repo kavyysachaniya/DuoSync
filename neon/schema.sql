@@ -29,6 +29,7 @@ CREATE TABLE IF NOT EXISTS public.workspaces (
   skincare_categories TEXT[] NOT NULL DEFAULT ARRAY['Cleanser','Toner','Serum','Moisturizer','Sunscreen','Lip Care'],
   haircare_categories TEXT[] NOT NULL DEFAULT ARRAY['Shampoo','Conditioner','Hair Mask','Hair Serum','Scalp Oil'],
   bodycare_categories TEXT[] NOT NULL DEFAULT ARRAY['Body Wash','Body Lotion','Body Scrub','Deodorant'],
+  wardrobe_categories TEXT[] NOT NULL DEFAULT ARRAY['Shirts','T-Shirts','Polos','Hoodies & Sweats','Knitwear & Sweaters','Jeans','Trousers & Pants','Chinos','Shorts','Cargo Pants','Skirts','Jackets','Coats & Trench','Puffers & Parkas','Blazers & Suits','Sneakers','Boots','Loafers & Formals','Accessories','Bags & Backpacks','Watches'],
   product_ids TEXT[] NOT NULL DEFAULT '{}',
   last_sync_timestamp BIGINT NOT NULL DEFAULT (EXTRACT(EPOCH FROM now()) * 1000)::BIGINT,
   created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
@@ -116,6 +117,8 @@ CREATE TABLE IF NOT EXISTS public.care_products (
   schedule_type TEXT NOT NULL DEFAULT 'daily' CHECK (schedule_type IN ('daily', 'weekly')),
   scheduled_days TEXT[] NOT NULL DEFAULT '{}',
   notes TEXT NOT NULL DEFAULT '',
+  image_url TEXT NOT NULL DEFAULT '',
+  thumbnail_url TEXT NOT NULL DEFAULT '',
   updated_by_id UUID REFERENCES public.users(id) ON DELETE SET NULL,
   created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
   updated_at TIMESTAMPTZ NOT NULL DEFAULT now()

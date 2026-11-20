@@ -1,5 +1,5 @@
 import { Router, Response } from 'express';
-import { getDb, isDbConfigured } from './db.js';
+import { getDb, isDbConfigured, ensureSchema } from './db.js';
 import { AuthenticatedRequest, requireAuth } from './auth.js';
 
 export const mutateRouter = Router();
@@ -202,16 +202,17 @@ mutateRouter.post('/care-product', requireAuth, async (req: AuthenticatedRequest
       `;
     } catch (colErr: any) {
       if (colErr?.message?.includes('image_url') || colErr?.message?.includes('thumbnail_url')) {
+        await ensureSchema(sql);
         await sql`
           INSERT INTO public.care_products (
             id, workspace_id, profile_slot, segment, sub_category, name, brand, quantity,
             ordered_date, opened_date, expiry_date, sale_info, price_paid, original_price,
-            status, routine_time, schedule_type, scheduled_days, notes, updated_by_id, updated_at
+            status, routine_time, schedule_type, scheduled_days, notes, image_url, thumbnail_url, updated_by_id, updated_at
           ) VALUES (
             ${id}, ${targetWsId}, ${profileSlot}, ${segment}, ${subCategory}, ${name}, ${brand},
             ${Number(quantity) || 1}, ${orderedDate}, ${openedDate}, ${expiryDate}, ${saleInfo},
             ${Number(pricePaid) || 0}, ${Number(originalPrice) || 0}, ${status}, ${routineTime},
-            ${scheduleType}, ${scheduledDays}, ${notes}, ${req.user?.userId || null}, now()
+            ${scheduleType}, ${scheduledDays}, ${notes}, ${imageUrl || ''}, ${thumbnailUrl || imageUrl || ''}, ${req.user?.userId || null}, now()
           )
           ON CONFLICT (id)
           DO UPDATE SET
@@ -232,6 +233,8 @@ mutateRouter.post('/care-product', requireAuth, async (req: AuthenticatedRequest
             schedule_type = EXCLUDED.schedule_type,
             scheduled_days = EXCLUDED.scheduled_days,
             notes = EXCLUDED.notes,
+            image_url = EXCLUDED.image_url,
+            thumbnail_url = EXCLUDED.thumbnail_url,
             updated_by_id = EXCLUDED.updated_by_id,
             updated_at = now()
         `;

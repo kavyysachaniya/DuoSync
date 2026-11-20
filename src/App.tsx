@@ -100,6 +100,46 @@ function mapToWorkspaceDoc(ws: any, members: any[], pairingCode: string): Worksp
   };
 }
 
+function getCachedProductImage(id: string): string {
+  if (typeof localStorage === 'undefined') return '';
+  try {
+    return localStorage.getItem(`duosync_img_care_${id}`) || '';
+  } catch {
+    return '';
+  }
+}
+
+function setCachedProductImage(id: string, url: string) {
+  if (typeof localStorage === 'undefined') return;
+  try {
+    if (url) {
+      localStorage.setItem(`duosync_img_care_${id}`, url);
+    } else {
+      localStorage.removeItem(`duosync_img_care_${id}`);
+    }
+  } catch {}
+}
+
+function getCachedWardrobeImage(id: string): string {
+  if (typeof localStorage === 'undefined') return '';
+  try {
+    return localStorage.getItem(`duosync_img_wardrobe_${id}`) || '';
+  } catch {
+    return '';
+  }
+}
+
+function setCachedWardrobeImage(id: string, url: string) {
+  if (typeof localStorage === 'undefined') return;
+  try {
+    if (url) {
+      localStorage.setItem(`duosync_img_wardrobe_${id}`, url);
+    } else {
+      localStorage.removeItem(`duosync_img_wardrobe_${id}`);
+    }
+  } catch {}
+}
+
 export default function App() {
   const todayDate = useMemo(() => formatLocalDate(new Date()), []);
 
@@ -250,6 +290,12 @@ export default function App() {
       // Map care products
       const cpMap: Record<string, CareProductDoc> = {};
       data.careProducts?.forEach((row: any) => {
+        const cachedImg = getCachedProductImage(row.id);
+        const resolvedImage = row.image_url || cachedImg || '';
+        const resolvedThumb = row.thumbnail_url || row.image_url || cachedImg || '';
+        if (resolvedImage) {
+          setCachedProductImage(row.id, resolvedImage);
+        }
         cpMap[row.id] = {
           id: row.id,
           workspaceId: row.workspace_id,
@@ -269,8 +315,8 @@ export default function App() {
           routineTime: row.routine_time,
           scheduleType: row.schedule_type || 'daily',
           scheduledDays: row.scheduled_days || [],
-          imageUrl: row.image_url || '',
-          thumbnailUrl: row.thumbnail_url || row.image_url || '',
+          imageUrl: resolvedImage,
+          thumbnailUrl: resolvedThumb,
           notes: row.notes || '',
           updatedByUid: row.updated_by_id || '',
           createdAt: row.created_at,
@@ -300,6 +346,12 @@ export default function App() {
       // Map wardrobe items
       const wiMap: Record<string, WardrobeItemDoc> = {};
       data.wardrobeItems?.forEach((row: any) => {
+        const cachedImg = getCachedWardrobeImage(row.id);
+        const resolvedImage = row.image_url || cachedImg || '';
+        const resolvedThumb = row.thumbnail_url || row.image_url || cachedImg || '';
+        if (resolvedImage) {
+          setCachedWardrobeImage(row.id, resolvedImage);
+        }
         wiMap[row.id] = {
           id: row.id,
           workspaceId: row.workspace_id,
@@ -311,8 +363,8 @@ export default function App() {
           size: row.size || '',
           season: row.season || 'All Season',
           occasion: row.occasion || 'Casual',
-          imageUrl: row.image_url || '',
-          thumbnailUrl: row.thumbnail_url || row.image_url || '',
+          imageUrl: resolvedImage,
+          thumbnailUrl: resolvedThumb,
           notes: row.notes || '',
           updatedByUid: row.updated_by_id || '',
           createdAt: row.created_at,
@@ -607,6 +659,9 @@ export default function App() {
 
     // Optimistic update
     setCareProductsMap((prev) => ({ ...prev, [productId]: newProd }));
+    if (newProd.imageUrl) {
+      setCachedProductImage(productId, newProd.imageUrl);
+    }
 
     try {
       const res = await api.mutate.saveCareProduct({
@@ -622,6 +677,8 @@ export default function App() {
   // 4. Delete Care Product
   const handleDeleteProduct = async (productId: string) => {
     if (!authUser || !workspace) return;
+
+    setCachedProductImage(productId, '');
 
     // Optimistic deletion
     setCareProductsMap((prev) => {
@@ -694,6 +751,9 @@ export default function App() {
 
     // Optimistic update
     setWardrobeItemsMap((prev) => ({ ...prev, [itemId]: newItem }));
+    if (newItem.imageUrl) {
+      setCachedWardrobeImage(itemId, newItem.imageUrl);
+    }
 
     try {
       const res = await api.mutate.saveWardrobeItem({
@@ -709,6 +769,8 @@ export default function App() {
   // 7. Delete Wardrobe Item
   const handleDeleteWardrobeItem = async (itemId: string) => {
     if (!authUser || !workspace) return;
+
+    setCachedWardrobeImage(itemId, '');
 
     // Optimistic deletion
     setWardrobeItemsMap((prev) => {

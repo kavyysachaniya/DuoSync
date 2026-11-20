@@ -19,6 +19,21 @@ export const isDbConfigured = Boolean(
 );
 
 let cachedSql: NeonQueryFunction<false, false> | null = null;
+let schemaEnsured = false;
+
+export async function ensureSchema(sql?: NeonQueryFunction<false, false>): Promise<void> {
+  if (schemaEnsured) return;
+  schemaEnsured = true;
+  try {
+    const db = sql || getDb();
+    await db`ALTER TABLE public.care_products ADD COLUMN IF NOT EXISTS image_url TEXT DEFAULT ''`;
+    await db`ALTER TABLE public.care_products ADD COLUMN IF NOT EXISTS thumbnail_url TEXT DEFAULT ''`;
+    await db`ALTER TABLE public.workspaces ADD COLUMN IF NOT EXISTS wardrobe_categories TEXT[] DEFAULT ARRAY['Shirts','T-Shirts','Polos','Hoodies & Sweats','Knitwear & Sweaters','Jeans','Trousers & Pants','Chinos','Shorts','Cargo Pants','Skirts','Jackets','Coats & Trench','Puffers & Parkas','Blazers & Suits','Sneakers','Boots','Loafers & Formals','Accessories','Bags & Backpacks','Watches']`;
+  } catch (err) {
+    console.warn('Schema ensure notice:', err);
+    schemaEnsured = false;
+  }
+}
 
 export function getDb(): NeonQueryFunction<false, false> {
   const conn = process.env.DATABASE_URL || process.env.NEON_DATABASE_URL || connectionString;
@@ -29,6 +44,8 @@ export function getDb(): NeonQueryFunction<false, false> {
   }
   if (!cachedSql) {
     cachedSql = neon(conn);
+    // Asynchronously ensure columns in background on startup
+    ensureSchema(cachedSql).catch(() => {});
   }
   return cachedSql;
 }
