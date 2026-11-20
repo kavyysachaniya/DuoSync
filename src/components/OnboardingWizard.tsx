@@ -46,9 +46,19 @@ export interface OnboardingSubmission {
 
 interface OnboardingWizardProps {
   initialName: string;
+  initialRole?: string;
   initialPartnerName?: string;
   initialCurrency?: string;
   initialFitnessApp?: FitnessAppId;
+  initialWeightUnit?: 'kg' | 'lbs';
+  initialCurrentWeight?: number;
+  initialTargetWeight?: number;
+  initialStepsGoal?: number;
+  initialSleepGoalMinutes?: number;
+  initialWaterGoalMl?: number;
+  initialSkincareCategories?: string[];
+  initialHaircareCategories?: string[];
+  initialBodycareCategories?: string[];
   pairingCode?: string;
   onComplete: (data: OnboardingSubmission) => Promise<void>;
   onCancel?: () => void;
@@ -58,9 +68,19 @@ const CURRENCIES = ['₹', '$', '€', '£', '¥', 'A$'];
 
 export const OnboardingWizard: React.FC<OnboardingWizardProps> = ({
   initialName,
+  initialRole = 'My Routine',
   initialPartnerName = 'Partner',
   initialCurrency = '₹',
   initialFitnessApp = 'manual',
+  initialWeightUnit = 'kg',
+  initialCurrentWeight,
+  initialTargetWeight,
+  initialStepsGoal,
+  initialSleepGoalMinutes,
+  initialWaterGoalMl,
+  initialSkincareCategories,
+  initialHaircareCategories,
+  initialBodycareCategories,
   pairingCode,
   onComplete,
   onCancel,
@@ -71,7 +91,7 @@ export const OnboardingWizard: React.FC<OnboardingWizardProps> = ({
 
   // Step 1: Identity, Partner Connection & Preferred Fitness App
   const [myName, setMyName] = useState(initialName || '');
-  const [myRole, setMyRole] = useState('My Routine');
+  const [myRole, setMyRole] = useState(initialRole || 'My Routine');
   const [currency, setCurrency] = useState(initialCurrency || '₹');
   const [fitnessApp, setFitnessApp] = useState<FitnessAppId>(initialFitnessApp || 'manual');
   const [setupMode, setSetupMode] = useState<'own_workspace' | 'join_code'>('own_workspace');
@@ -81,38 +101,70 @@ export const OnboardingWizard: React.FC<OnboardingWizardProps> = ({
   const [partnerCodeInput, setPartnerCodeInput] = useState('');
 
   // Step 2: Weight & Body Baseline
-  const [weightUnit, setWeightUnit] = useState<'kg' | 'lbs'>('kg');
-  const [currentWeight, setCurrentWeight] = useState('65.0');
-  const [targetWeight, setTargetWeight] = useState('62.0');
+  const [weightUnit, setWeightUnit] = useState<'kg' | 'lbs'>(initialWeightUnit || 'kg');
+  const [currentWeight, setCurrentWeight] = useState(
+    initialCurrentWeight !== undefined && initialCurrentWeight > 0
+      ? String(initialCurrentWeight)
+      : '65.0'
+  );
+  const [targetWeight, setTargetWeight] = useState(
+    initialTargetWeight !== undefined && initialTargetWeight > 0
+      ? String(initialTargetWeight)
+      : '62.0'
+  );
 
   // Step 3: Daily Health Goals (Steps, Sleep, Water)
-  const [stepsGoal, setStepsGoal] = useState('8500');
-  const [sleepHours, setSleepHours] = useState('8');
-  const [sleepMins, setSleepMins] = useState('0');
-  const [waterGoalMl, setWaterGoalMl] = useState('2500');
+  const [stepsGoal, setStepsGoal] = useState(
+    initialStepsGoal !== undefined && initialStepsGoal > 0 ? String(initialStepsGoal) : '8500'
+  );
+  const [sleepHours, setSleepHours] = useState(
+    initialSleepGoalMinutes !== undefined
+      ? String(Math.floor(initialSleepGoalMinutes / 60))
+      : '8'
+  );
+  const [sleepMins, setSleepMins] = useState(
+    initialSleepGoalMinutes !== undefined ? String(initialSleepGoalMinutes % 60) : '0'
+  );
+  const [waterGoalMl, setWaterGoalMl] = useState(
+    initialWaterGoalMl !== undefined && initialWaterGoalMl > 0
+      ? String(initialWaterGoalMl)
+      : '2500'
+  );
 
   // Step 4: Routine Categories (Skincare, Haircare, Bodycare)
-  const [skincareCats, setSkincareCats] = useState<string[]>([
-    'Cleanser',
-    'Toner',
-    'Serum',
-    'Moisturizer',
-    'Sunscreen',
-    'Lip Care',
-  ]);
-  const [haircareCats, setHaircareCats] = useState<string[]>([
-    'Shampoo',
-    'Conditioner',
-    'Hair Mask',
-    'Hair Serum',
-    'Scalp Oil',
-  ]);
-  const [bodycareCats, setBodycareCats] = useState<string[]>([
-    'Body Wash',
-    'Body Lotion',
-    'Body Scrub',
-    'Deodorant',
-  ]);
+  const [skincareCats, setSkincareCats] = useState<string[]>(
+    initialSkincareCategories && initialSkincareCategories.length > 0
+      ? initialSkincareCategories
+      : [
+          'Cleanser',
+          'Toner',
+          'Serum',
+          'Moisturizer',
+          'Sunscreen',
+          'Lip Care',
+        ]
+  );
+  const [haircareCats, setHaircareCats] = useState<string[]>(
+    initialHaircareCategories && initialHaircareCategories.length > 0
+      ? initialHaircareCategories
+      : [
+          'Shampoo',
+          'Conditioner',
+          'Hair Mask',
+          'Hair Serum',
+          'Scalp Oil',
+        ]
+  );
+  const [bodycareCats, setBodycareCats] = useState<string[]>(
+    initialBodycareCategories && initialBodycareCategories.length > 0
+      ? initialBodycareCategories
+      : [
+          'Body Wash',
+          'Body Lotion',
+          'Body Scrub',
+          'Deodorant',
+        ]
+  );
 
   const [customSkincareInput, setCustomSkincareInput] = useState('');
   const [customHaircareInput, setCustomHaircareInput] = useState('');

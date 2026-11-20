@@ -34,6 +34,7 @@ import { HealthDashboard } from './components/HealthDashboard';
 import { SkinDashboard } from './components/SkinDashboard';
 import { WardrobeDashboard } from './components/WardrobeDashboard';
 import { PartnerModal } from './components/PartnerModal';
+import { AccountModal } from './components/AccountModal';
 import { OnboardingSubmission, OnboardingWizard } from './components/OnboardingWizard';
 import { AuthCard } from './components/AuthCard';
 import { api, AuthResponse, setStoredToken } from './services/apiClient';
@@ -114,6 +115,7 @@ export default function App() {
 
   // Modals
   const [isPartnerModalOpen, setIsPartnerModalOpen] = useState(false);
+  const [isAccountModalOpen, setIsAccountModalOpen] = useState(false);
 
   // Date State for Health Dashboard
   const [selectedDate, setSelectedDate] = useState<string>(todayDate);
@@ -1173,25 +1175,35 @@ export default function App() {
 
           <button
             type="button"
-            onClick={handleSignOut}
+            onClick={() => window.location.reload()}
             className="w-full min-h-[40px] rounded-xl bg-[#090A0F] hover:bg-white/5 border border-white/10 text-xs font-medium text-zinc-400 hover:text-white flex items-center justify-center gap-1.5 transition-colors"
           >
-            <LogOut className="w-3.5 h-3.5" />
-            <span>Sign Out</span>
+            <RotateCcw className="w-3.5 h-3.5" />
+            <span>Retry Connection</span>
           </button>
         </div>
       </div>
     );
   }
 
-  // Onboarding Wizard for New Accounts (or Manually Triggered)
+  // Onboarding Wizard for New Accounts (or Manually Triggered via Account Settings)
   if (!userDoc.onboardingCompleted || !workspace.onboardingCompleted || manualWizardOpen) {
     return (
       <OnboardingWizard
-        initialName={userDoc.displayName || workspace.partner1Name}
-        initialPartnerName={workspace.partner2Name}
+        initialName={activeProfile.name || userDoc.displayName || workspace.partner1Name}
+        initialRole={activeProfile.role}
+        initialPartnerName={otherProfile.name || workspace.partner2Name}
         initialCurrency={workspace.currency}
-        initialFitnessApp="manual"
+        initialFitnessApp={activeProfile.fitnessApp || 'manual'}
+        initialWeightUnit={activeProfile.weightUnit}
+        initialCurrentWeight={activeProfile.startWeight}
+        initialTargetWeight={activeProfile.targetWeight}
+        initialStepsGoal={activeProfile.stepsGoal}
+        initialSleepGoalMinutes={activeProfile.sleepGoalMinutes}
+        initialWaterGoalMl={activeProfile.waterGoalMl}
+        initialSkincareCategories={workspace.skincareCategories}
+        initialHaircareCategories={workspace.haircareCategories}
+        initialBodycareCategories={workspace.bodycareCategories}
         pairingCode={workspace.pairingCode}
         onComplete={handleOnboardingComplete}
         onCancel={() => setManualWizardOpen(false)}
@@ -1317,12 +1329,17 @@ export default function App() {
 
           <button
             type="button"
-            onClick={handleSignOut}
-            className="min-w-[36px] min-h-[36px] rounded-full bg-[#12141C] hover:bg-white/10 border border-white/10 flex items-center justify-center text-zinc-400 hover:text-white transition-colors shrink-0"
-            title="Sign Out"
-            aria-label="Sign Out"
+            onClick={() => setIsAccountModalOpen(true)}
+            className="min-h-[36px] px-2.5 sm:px-3 rounded-full bg-[#12141C] hover:bg-white/10 border border-white/10 flex items-center justify-center gap-1.5 text-xs font-medium text-zinc-300 hover:text-white transition-colors shrink-0 active:scale-95"
+            title="Account & Profile Settings"
+            aria-label="Account & Profile Settings"
           >
-            <LogOut className="w-3.5 h-3.5" />
+            <div className="w-5 h-5 rounded-full bg-gradient-to-tr from-rose-500 to-indigo-500 flex items-center justify-center text-[10px] font-bold text-white uppercase shrink-0">
+              {(userDoc.displayName || 'U')[0]}
+            </div>
+            <span className="hidden sm:inline text-xs font-medium max-w-[80px] truncate">
+              Account
+            </span>
           </button>
         </div>
       </header>
@@ -1471,6 +1488,28 @@ export default function App() {
         onOpenOnboardingWizard={() => setManualWizardOpen(true)}
         onUpdateWorkspaceIdentities={handleUpdateWorkspaceIdentities}
         onDeleteAllUserData={handleDeleteAllUserData}
+      />
+
+      {/* Account Profile & Preferences Modal */}
+      <AccountModal
+        isOpen={isAccountModalOpen}
+        onClose={() => setIsAccountModalOpen(false)}
+        authUser={authUser}
+        userDoc={userDoc}
+        workspace={workspace}
+        activeProfile={activeProfile}
+        onOpenEditOnboarding={() => setManualWizardOpen(true)}
+        onUpdateCurrency={async (curr) => {
+          await handleUpdateWorkspaceIdentities({
+            currency: curr,
+            partner1Name: workspace.partner1Name,
+            partner1Role: workspace.partner1Role,
+            partner2Name: workspace.partner2Name,
+            partner2Role: workspace.partner2Role,
+            defaultSlot: userDoc.defaultSlot,
+          });
+        }}
+        onSignOut={handleSignOut}
       />
     </div>
   );
