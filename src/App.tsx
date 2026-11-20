@@ -1250,6 +1250,7 @@ export default function App() {
           className="hidden sm:flex relative items-center p-1 rounded-full bg-[#0A0A0F] border border-white/10 overflow-hidden"
         >
           <motion.div
+            initial={false}
             className="absolute top-1 bottom-1 rounded-full bg-white shadow-sm pointer-events-none"
             style={{
               width: 'calc((100% - 8px) / 3)',
@@ -1258,7 +1259,7 @@ export default function App() {
             animate={{
               x: activeSection === 'health' ? '0%' : activeSection === 'skin' ? '100%' : '200%',
             }}
-            transition={{ type: 'spring', damping: 28, stiffness: 350 }}
+            transition={{ type: 'spring', damping: 32, stiffness: 220, mass: 0.8 }}
           />
 
           <button
@@ -1343,15 +1344,15 @@ export default function App() {
 
       {/* Main Content Area */}
       <main className="max-w-6xl w-full mx-auto flex-1 px-3 sm:px-6 pt-3 sm:pt-5 pb-[calc(5.5rem+env(safe-area-inset-bottom,0px))] sm:pb-12 min-w-0">
-        <AnimatePresence mode="wait">
-          {activeSection === 'health' ? (
-            <motion.div
-              key={`health-${activeSlot}`}
-              initial={{ opacity: 0, y: 6 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -6 }}
-              transition={{ duration: 0.16, ease: [0.16, 1, 0.3, 1] }}
-            >
+        <AnimatePresence mode="popLayout" initial={false}>
+          <motion.div
+            key={activeSection}
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.3, ease: [0.22, 1, 0.36, 1] }}
+          >
+            {activeSection === 'health' ? (
               <HealthDashboard
                 profile={activeProfile}
                 partnerProfile={otherProfile}
@@ -1366,15 +1367,7 @@ export default function App() {
                   setActiveSlot((prev) => (prev === 'partner2' ? 'partner1' : 'partner2'))
                 }
               />
-            </motion.div>
-          ) : activeSection === 'skin' ? (
-            <motion.div
-              key="skin-shelf"
-              initial={{ opacity: 0, y: 6 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -6 }}
-              transition={{ duration: 0.16, ease: [0.16, 1, 0.3, 1] }}
-            >
+            ) : activeSection === 'skin' ? (
               <SkinDashboard
                 profile={activeProfile}
                 partnerProfile={otherProfile}
@@ -1391,15 +1384,7 @@ export default function App() {
                 onAddSubCategory={handleAddSubCategory}
                 onRemoveSubCategory={handleRemoveSubCategory}
               />
-            </motion.div>
-          ) : (
-            <motion.div
-              key="wardrobe-fits"
-              initial={{ opacity: 0, y: 6 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -6 }}
-              transition={{ duration: 0.16, ease: [0.16, 1, 0.3, 1] }}
-            >
+            ) : (
               <WardrobeDashboard
                 profile={activeProfile}
                 partnerProfile={otherProfile}
@@ -1411,8 +1396,8 @@ export default function App() {
                 onSaveOutfit={handleSaveOutfit}
                 onDeleteOutfit={handleDeleteOutfit}
               />
-            </motion.div>
-          )}
+            )}
+          </motion.div>
         </AnimatePresence>
       </main>
 
@@ -1439,6 +1424,7 @@ export default function App() {
         <div className="relative bg-[#0A0A0F]/95 backdrop-blur-2xl border border-white/12 shadow-2xl shadow-black rounded-full p-1.5 flex items-center justify-between gap-1 overflow-hidden">
           {/* Smooth hardware-accelerated horizontal sliding indicator (purely horizontal, zero vertical bounce) */}
           <motion.div
+            initial={false}
             className="absolute top-1.5 bottom-1.5 rounded-full bg-white shadow-md pointer-events-none"
             style={{
               width: 'calc((100% - 12px) / 3)',
@@ -1447,7 +1433,7 @@ export default function App() {
             animate={{
               x: activeSection === 'health' ? '0%' : activeSection === 'skin' ? '100%' : '200%',
             }}
-            transition={{ type: 'spring', damping: 28, stiffness: 350 }}
+            transition={{ type: 'spring', damping: 32, stiffness: 220, mass: 0.8 }}
           />
 
           <button

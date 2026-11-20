@@ -712,7 +712,7 @@ export const SkinDashboard: React.FC<SkinDashboardProps> = ({
                 {isActive && (
                   <motion.span
                     layoutId="skinSegmentPill"
-                    transition={{ type: 'spring', damping: 25, stiffness: 350 }}
+                    transition={{ type: 'spring', damping: 30, stiffness: 220, mass: 0.8 }}
                     className="absolute inset-0 rounded-full bg-white shadow-md"
                   />
                 )}

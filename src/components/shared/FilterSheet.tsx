@@ -69,7 +69,7 @@ export const FilterSheet: React.FC<FilterSheetProps> = ({
             initial={{ y: '100%', opacity: 0.5 }}
             animate={{ y: 0, opacity: 1 }}
             exit={{ y: '100%', opacity: 0 }}
-            transition={{ type: 'spring', damping: 28, stiffness: 350 }}
+            transition={{ type: 'spring', damping: 32, stiffness: 220, mass: 0.8 }}
             className="relative z-10 w-full max-w-md rounded-t-[28px] sm:rounded-[28px] bg-[#0E0E13] border border-white/[0.12] p-5 sm:p-6 space-y-5 max-h-[85vh] overflow-y-auto no-scrollbar shadow-2xl"
           >
             {/* Header */}

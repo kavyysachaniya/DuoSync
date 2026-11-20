@@ -499,7 +499,7 @@ export const WardrobeDashboard: React.FC<WardrobeDashboardProps> = ({
             {activeTab === 'closet' && (
               <motion.span
                 layoutId="closetNavPill"
-                transition={{ type: 'spring', damping: 25, stiffness: 350 }}
+                transition={{ type: 'spring', damping: 30, stiffness: 220, mass: 0.8 }}
                 className="absolute inset-0 rounded-full bg-white shadow-md"
               />
             )}
@@ -516,7 +516,7 @@ export const WardrobeDashboard: React.FC<WardrobeDashboardProps> = ({
             {activeTab === 'fits' && (
               <motion.span
                 layoutId="closetNavPill"
-                transition={{ type: 'spring', damping: 25, stiffness: 350 }}
+                transition={{ type: 'spring', damping: 30, stiffness: 220, mass: 0.8 }}
                 className="absolute inset-0 rounded-full bg-white shadow-md"
               />
             )}
@@ -533,7 +533,7 @@ export const WardrobeDashboard: React.FC<WardrobeDashboardProps> = ({
             {activeTab === 'builder' && (
               <motion.span
                 layoutId="closetNavPill"
-                transition={{ type: 'spring', damping: 25, stiffness: 350 }}
+                transition={{ type: 'spring', damping: 30, stiffness: 220, mass: 0.8 }}
                 className="absolute inset-0 rounded-full bg-white shadow-md"
               />
             )}
