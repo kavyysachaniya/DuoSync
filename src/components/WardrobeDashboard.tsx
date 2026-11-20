@@ -471,6 +471,7 @@ export const WardrobeDashboard: React.FC<WardrobeDashboardProps> = ({
             initial={{ opacity: 0, y: -16 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -16 }}
+            transition={{ duration: 0.35, ease: [0.16, 1, 0.3, 1] }}
             className="fixed top-18 right-4 sm:right-8 z-50 px-4 py-2.5 rounded-2xl bg-zinc-900 border border-white/20 text-white text-xs font-semibold shadow-2xl flex items-center gap-2"
           >
             <span className="w-2 h-2 rounded-full bg-rose-400" />
@@ -499,7 +500,7 @@ export const WardrobeDashboard: React.FC<WardrobeDashboardProps> = ({
             {activeTab === 'closet' && (
               <motion.span
                 layoutId="closetNavPill"
-                transition={{ type: 'spring', damping: 30, stiffness: 220, mass: 0.8 }}
+                transition={{ duration: 0.42, ease: [0.16, 1, 0.3, 1] }}
                 className="absolute inset-0 rounded-full bg-white shadow-md"
               />
             )}
@@ -516,7 +517,7 @@ export const WardrobeDashboard: React.FC<WardrobeDashboardProps> = ({
             {activeTab === 'fits' && (
               <motion.span
                 layoutId="closetNavPill"
-                transition={{ type: 'spring', damping: 30, stiffness: 220, mass: 0.8 }}
+                transition={{ duration: 0.42, ease: [0.16, 1, 0.3, 1] }}
                 className="absolute inset-0 rounded-full bg-white shadow-md"
               />
             )}
@@ -533,7 +534,7 @@ export const WardrobeDashboard: React.FC<WardrobeDashboardProps> = ({
             {activeTab === 'builder' && (
               <motion.span
                 layoutId="closetNavPill"
-                transition={{ type: 'spring', damping: 30, stiffness: 220, mass: 0.8 }}
+                transition={{ duration: 0.42, ease: [0.16, 1, 0.3, 1] }}
                 className="absolute inset-0 rounded-full bg-white shadow-md"
               />
             )}
@@ -1105,7 +1106,7 @@ export const WardrobeDashboard: React.FC<WardrobeDashboardProps> = ({
               initial={{ opacity: 0, scale: 0.98, y: 12 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.98, y: 12 }}
-              transition={{ duration: 0.18, ease: [0.16, 1, 0.3, 1] }}
+              transition={{ duration: 0.32, ease: [0.16, 1, 0.3, 1] }}
               className="w-full h-full sm:h-auto sm:max-w-xl sm:max-h-[90dvh] flex flex-col rounded-none sm:rounded-3xl bg-[#0A0A0F] sm:border sm:border-white/10 text-zinc-100 shadow-2xl overflow-hidden"
             >
               {/* Modal Header */}

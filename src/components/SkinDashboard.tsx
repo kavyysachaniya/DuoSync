@@ -712,7 +712,7 @@ export const SkinDashboard: React.FC<SkinDashboardProps> = ({
                 {isActive && (
                   <motion.span
                     layoutId="skinSegmentPill"
-                    transition={{ type: 'spring', damping: 30, stiffness: 220, mass: 0.8 }}
+                    transition={{ duration: 0.42, ease: [0.16, 1, 0.3, 1] }}
                     className="absolute inset-0 rounded-full bg-white shadow-md"
                   />
                 )}
@@ -826,6 +826,7 @@ export const SkinDashboard: React.FC<SkinDashboardProps> = ({
               initial={{ opacity: 0, scale: 0.96, y: 16 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.96, y: 16 }}
+              transition={{ duration: 0.32, ease: [0.16, 1, 0.3, 1] }}
               className="w-full max-w-lg max-h-[92dvh] flex flex-col rounded-t-3xl sm:rounded-3xl bg-[#0A0A0F] border border-white/10 text-zinc-100 shadow-2xl overflow-hidden"
             >
               {/* Header */}
@@ -1157,7 +1158,7 @@ export const SkinDashboard: React.FC<SkinDashboardProps> = ({
               initial={{ opacity: 0, scale: 0.98, y: 16 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.98, y: 16 }}
-              transition={{ duration: 0.18, ease: [0.16, 1, 0.3, 1] }}
+              transition={{ duration: 0.32, ease: [0.16, 1, 0.3, 1] }}
               className="w-full h-full sm:h-auto sm:max-w-xl sm:max-h-[90dvh] flex flex-col rounded-none sm:rounded-3xl bg-[#0A0A0F] sm:border sm:border-white/10 text-zinc-100 shadow-2xl overflow-hidden"
             >
               {/* Modal Header */}

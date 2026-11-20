@@ -61,7 +61,7 @@ export const CircularProgressRing: React.FC<CircularProgressRingProps> = ({
             strokeDashoffset={strokeDashoffset}
             strokeLinecap="round"
             style={{
-              transition: 'stroke-dashoffset 550ms cubic-bezier(0.16, 1, 0.3, 1)',
+              transition: 'stroke-dashoffset 850ms cubic-bezier(0.16, 1, 0.3, 1)',
               filter: safePct > 0 ? `drop-shadow(0 0 6px ${color}40)` : 'none',
             }}
           />

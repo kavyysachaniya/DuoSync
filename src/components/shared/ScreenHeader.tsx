@@ -34,7 +34,7 @@ export const ScreenHeader: React.FC<ScreenHeaderProps> = ({
             initial={{ opacity: 0, y: 2 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -2 }}
-            transition={{ duration: 0.28, ease: [0.22, 1, 0.36, 1] }}
+            transition={{ duration: 0.35, ease: [0.16, 1, 0.3, 1] }}
             className="text-2xl sm:text-3xl font-light tracking-tight text-white truncate"
           >
             {title}

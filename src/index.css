@@ -23,17 +23,7 @@
     overflow-y: auto;
   }
 
-  /* Vertical scroll snap for Health dashboard screens */
-  html:has([data-scroll-snap]) {
-    scroll-snap-type: y proximity;
-    scroll-behavior: smooth;
-  }
 
-  @media (max-width: 639px) {
-    html:has([data-scroll-snap]) {
-      scroll-snap-type: y mandatory;
-    }
-  }
 
   body {
     min-height: 100vh;

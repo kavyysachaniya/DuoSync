@@ -140,16 +140,83 @@ function setCachedWardrobeImage(id: string, url: string) {
   } catch {}
 }
 
+const CACHE_KEY_AUTH_USER = 'duosync_cached_auth_user';
+const CACHE_KEY_USER_DOC = 'duosync_cached_user_doc';
+const CACHE_KEY_WORKSPACE = 'duosync_cached_workspace';
+
+function getCachedAuthUser(): AppUser | null {
+  if (typeof localStorage === 'undefined') return null;
+  try {
+    const raw = localStorage.getItem(CACHE_KEY_AUTH_USER);
+    return raw ? JSON.parse(raw) : null;
+  } catch {
+    return null;
+  }
+}
+
+function setCachedAuthUser(user: AppUser | null) {
+  if (typeof localStorage === 'undefined') return;
+  try {
+    if (user) localStorage.setItem(CACHE_KEY_AUTH_USER, JSON.stringify(user));
+    else localStorage.removeItem(CACHE_KEY_AUTH_USER);
+  } catch {}
+}
+
+function getCachedUserDoc(): UserDoc | null {
+  if (typeof localStorage === 'undefined') return null;
+  try {
+    const raw = localStorage.getItem(CACHE_KEY_USER_DOC);
+    return raw ? JSON.parse(raw) : null;
+  } catch {
+    return null;
+  }
+}
+
+function setCachedUserDoc(doc: UserDoc | null) {
+  if (typeof localStorage === 'undefined') return;
+  try {
+    if (doc) localStorage.setItem(CACHE_KEY_USER_DOC, JSON.stringify(doc));
+    else localStorage.removeItem(CACHE_KEY_USER_DOC);
+  } catch {}
+}
+
+function getCachedWorkspace(): WorkspaceDoc | null {
+  if (typeof localStorage === 'undefined') return null;
+  try {
+    const raw = localStorage.getItem(CACHE_KEY_WORKSPACE);
+    return raw ? JSON.parse(raw) : null;
+  } catch {
+    return null;
+  }
+}
+
+function setCachedWorkspace(ws: WorkspaceDoc | null) {
+  if (typeof localStorage === 'undefined') return;
+  try {
+    if (ws) localStorage.setItem(CACHE_KEY_WORKSPACE, JSON.stringify(ws));
+    else localStorage.removeItem(CACHE_KEY_WORKSPACE);
+  } catch {}
+}
+
 export default function App() {
   const todayDate = useMemo(() => formatLocalDate(new Date()), []);
 
-  // Authentication State
-  const [authUser, setAuthUser] = useState<AppUser | null>(null);
-  const [authReady, setAuthReady] = useState(false);
+  // Authentication State with Instant Local Hydration
+  const [authUser, setAuthUser] = useState<AppUser | null>(() => {
+    return api.auth.hasToken() ? getCachedAuthUser() : null;
+  });
+  const [authReady, setAuthReady] = useState<boolean>(() => {
+    if (!api.auth.hasToken()) return true;
+    return Boolean(getCachedAuthUser() && getCachedWorkspace());
+  });
 
-  // Workspace & Profile Documents
-  const [userDoc, setUserDoc] = useState<UserDoc | null>(null);
-  const [workspace, setWorkspace] = useState<WorkspaceDoc | null>(null);
+  // Workspace & Profile Documents with Instant Local Hydration
+  const [userDoc, setUserDoc] = useState<UserDoc | null>(() => {
+    return api.auth.hasToken() ? getCachedUserDoc() : null;
+  });
+  const [workspace, setWorkspace] = useState<WorkspaceDoc | null>(() => {
+    return api.auth.hasToken() ? getCachedWorkspace() : null;
+  });
   const [manualWizardOpen, setManualWizardOpen] = useState(false);
 
   // Sync Diagnostics & Error Handling
@@ -300,18 +367,23 @@ export default function App() {
         };
 
         setUserDoc(mappedUser);
-        setAuthUser({
+        setCachedUserDoc(mappedUser);
+
+        const newAuthUser: AppUser = {
           id: u.id,
           email: u.email,
           displayName: u.display_name,
           workspaceId: u.workspace_id || '',
           defaultSlot: mappedUser.defaultSlot,
           onboardingCompleted: mappedUser.onboardingCompleted,
-        });
+        };
+        setAuthUser(newAuthUser);
+        setCachedAuthUser(newAuthUser);
 
         if (res.workspace) {
           const wsDoc = mapToWorkspaceDoc(res.workspace, res.members, res.pairingCode);
           setWorkspace(wsDoc);
+          setCachedWorkspace(wsDoc);
           if (!hasInitializedSlot) {
             const savedSlot = typeof localStorage !== 'undefined' ? localStorage.getItem('duosync_active_slot') : null;
             if (savedSlot === 'partner1' || savedSlot === 'partner2') {
@@ -325,6 +397,9 @@ export default function App() {
       } catch (err) {
         console.warn('Session restoration failed:', err);
         api.auth.logout();
+        setCachedAuthUser(null);
+        setCachedUserDoc(null);
+        setCachedWorkspace(null);
         setAuthUser(null);
         setUserDoc(null);
         setWorkspace(null);
@@ -343,6 +418,7 @@ export default function App() {
       const data = await api.sync.getAll(workspaceId);
       const wsDoc = mapToWorkspaceDoc(data.workspace, data.members, data.pairingCode);
       setWorkspace(wsDoc);
+      setCachedWorkspace(wsDoc);
       lastSyncTimestampRef.current = data.timestamp;
 
       // Map health logs
@@ -534,18 +610,23 @@ export default function App() {
     };
 
     setUserDoc(mappedUser);
-    setAuthUser({
+    setCachedUserDoc(mappedUser);
+
+    const newAuthUser: AppUser = {
       id: u.id,
       email: u.email,
       displayName: u.display_name,
       workspaceId: u.workspace_id || '',
       defaultSlot: mappedUser.defaultSlot,
       onboardingCompleted: mappedUser.onboardingCompleted,
-    });
+    };
+    setAuthUser(newAuthUser);
+    setCachedAuthUser(newAuthUser);
 
     if (res.workspace) {
       const wsDoc = mapToWorkspaceDoc(res.workspace, res.members, res.pairingCode);
       setWorkspace(wsDoc);
+      setCachedWorkspace(wsDoc);
       setActiveSlot(mappedUser.defaultSlot || 'partner1');
       fetchFullWorkspaceState(wsDoc.id);
     }
@@ -554,6 +635,9 @@ export default function App() {
   // Sign out handler
   const handleSignOut = () => {
     api.auth.logout();
+    setCachedAuthUser(null);
+    setCachedUserDoc(null);
+    setCachedWorkspace(null);
     setAuthUser(null);
     setUserDoc(null);
     setWorkspace(null);
@@ -1069,38 +1153,41 @@ export default function App() {
 
     const myNewName = updates.defaultSlot === 'partner2' ? updates.partner2Name : updates.partner1Name;
 
-    setWorkspace((prev) =>
-      prev
-        ? {
-            ...prev,
-            currency: updates.currency,
-            partner1Name: updates.partner1Name,
-            partner1Role: updates.partner1Role,
-            partner2Name: updates.partner2Name,
-            partner2Role: updates.partner2Role,
-          }
-        : null
-    );
+    setWorkspace((prev) => {
+      if (!prev) return null;
+      const updated = {
+        ...prev,
+        currency: updates.currency,
+        partner1Name: updates.partner1Name,
+        partner1Role: updates.partner1Role,
+        partner2Name: updates.partner2Name,
+        partner2Role: updates.partner2Role,
+      };
+      setCachedWorkspace(updated);
+      return updated;
+    });
 
-    setUserDoc((prev) =>
-      prev
-        ? {
-            ...prev,
-            displayName: myNewName,
-            defaultSlot: updates.defaultSlot,
-          }
-        : null
-    );
+    setUserDoc((prev) => {
+      if (!prev) return null;
+      const updated = {
+        ...prev,
+        displayName: myNewName,
+        defaultSlot: updates.defaultSlot,
+      };
+      setCachedUserDoc(updated);
+      return updated;
+    });
 
-    setAuthUser((prev) =>
-      prev
-        ? {
-            ...prev,
-            displayName: myNewName,
-            defaultSlot: updates.defaultSlot,
-          }
-        : null
-    );
+    setAuthUser((prev) => {
+      if (!prev) return null;
+      const updated = {
+        ...prev,
+        displayName: myNewName,
+        defaultSlot: updates.defaultSlot,
+      };
+      setCachedAuthUser(updated);
+      return updated;
+    });
 
     try {
       await api.mutate.updatePartnerGoals({
@@ -1140,15 +1227,15 @@ export default function App() {
     }
   };
 
-  // Initial Loading Screen while checking JWT token
+  // Initial Loading Screen while checking JWT token (cold start with no cached session)
   if (!authReady) {
     return (
-      <div className="min-h-screen bg-black flex items-center justify-center p-6">
-        <div className="text-center space-y-2">
-          <div className="w-10 h-10 rounded-2xl bg-white/5 border border-white/10 flex items-center justify-center mx-auto animate-pulse">
-            <HeartHandshake className="w-5 h-5 text-rose-400" />
+      <div className="min-h-screen bg-black flex items-center justify-center p-6 select-none">
+        <div className="text-center space-y-3">
+          <div className="w-10 h-10 rounded-2xl bg-[#0A0A0F] border border-white/10 flex items-center justify-center mx-auto">
+            <span className="w-2 h-2 rounded-full bg-white animate-pulse" />
           </div>
-          <p className="text-xs text-zinc-400 font-medium">Loading DuoSync...</p>
+          <p className="text-[11px] font-mono tracking-wider text-zinc-500 uppercase">DuoSync</p>
         </div>
       </div>
     );
@@ -1159,36 +1246,38 @@ export default function App() {
     return <LandingPage onAuthSuccess={handleAuthSuccess} />;
   }
 
-  // Loading Dashboard State
+  // Loading Dashboard State (only shown on initial pairing or cold start without cache)
   if (!workspace || !userDoc || !activeProfile || !otherProfile || !partner1Profile || !partner2Profile) {
     return (
-      <div className="min-h-screen bg-black text-zinc-100 flex items-center justify-center p-4 sm:p-6">
-        <div className="w-full max-w-md rounded-3xl bg-[#0A0A0F] border border-white/[0.08] p-6 sm:p-8 text-center space-y-5 shadow-2xl">
-          <div className="w-12 h-12 rounded-2xl bg-white/5 border border-white/10 flex items-center justify-center mx-auto">
+      <div className="min-h-screen bg-black text-zinc-100 flex items-center justify-center p-4 sm:p-6 select-none">
+        <div className="w-full max-w-sm rounded-3xl bg-[#0A0A0F] border border-white/[0.08] p-6 text-center space-y-4 shadow-2xl">
+          <div className="w-10 h-10 rounded-2xl bg-white/5 border border-white/10 flex items-center justify-center mx-auto">
             {syncError ? (
-              <AlertCircle className="w-6 h-6 text-amber-400" />
+              <AlertCircle className="w-5 h-5 text-amber-400" />
             ) : (
-              <Sparkles className="w-6 h-6 text-rose-400 animate-pulse" />
+              <span className="w-2 h-2 rounded-full bg-white animate-pulse" />
             )}
           </div>
 
-          <div className="space-y-1.5">
-            <h3 className="text-base font-bold text-white">
-              {syncError ? 'Unable to Load Workspace' : 'Loading Your Dashboard...'}
+          <div className="space-y-1">
+            <h3 className="text-sm font-semibold text-white">
+              {syncError ? 'Unable to Load Workspace' : 'Preparing DuoSync...'}
             </h3>
             <p className="text-xs text-zinc-400 leading-relaxed">
-              {syncError || 'Synchronizing your vitals and care routines with Neon PostgreSQL.'}
+              {syncError || 'Setting up your private shared space.'}
             </p>
           </div>
 
-          <button
-            type="button"
-            onClick={() => window.location.reload()}
-            className="w-full min-h-[40px] rounded-xl bg-black hover:bg-white/5 border border-white/10 text-xs font-medium text-zinc-400 hover:text-white flex items-center justify-center gap-1.5 transition-colors"
-          >
-            <RotateCcw className="w-3.5 h-3.5" />
-            <span>Retry Connection</span>
-          </button>
+          {syncError && (
+            <button
+              type="button"
+              onClick={() => window.location.reload()}
+              className="w-full min-h-[38px] rounded-xl bg-black hover:bg-white/5 border border-white/10 text-xs font-medium text-zinc-300 hover:text-white flex items-center justify-center gap-1.5 transition-colors"
+            >
+              <RotateCcw className="w-3.5 h-3.5" />
+              <span>Retry Connection</span>
+            </button>
+          )}
         </div>
       </div>
     );
@@ -1259,7 +1348,7 @@ export default function App() {
             animate={{
               x: activeSection === 'health' ? '0%' : activeSection === 'skin' ? '100%' : '200%',
             }}
-            transition={{ type: 'spring', damping: 32, stiffness: 220, mass: 0.8 }}
+            transition={{ duration: 0.45, ease: [0.16, 1, 0.3, 1] }}
           />
 
           <button
@@ -1343,14 +1432,14 @@ export default function App() {
       </header>
 
       {/* Main Content Area */}
-      <main className="max-w-6xl w-full mx-auto flex-1 px-3 sm:px-6 pt-3 sm:pt-5 pb-[calc(5.5rem+env(safe-area-inset-bottom,0px))] sm:pb-12 min-w-0">
-        <AnimatePresence mode="popLayout" initial={false}>
+      <main className="max-w-6xl w-full mx-auto flex-1 px-3 sm:px-6 pt-3 sm:pt-5 pb-[calc(5.5rem+env(safe-area-inset-bottom,0px))] sm:pb-12 min-w-0 min-h-[calc(100dvh-9.5rem)]">
+        <AnimatePresence mode="wait" initial={false}>
           <motion.div
             key={activeSection}
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            transition={{ duration: 0.3, ease: [0.22, 1, 0.36, 1] }}
+            transition={{ duration: 0.32, ease: [0.16, 1, 0.3, 1] }}
           >
             {activeSection === 'health' ? (
               <HealthDashboard
@@ -1433,7 +1522,7 @@ export default function App() {
             animate={{
               x: activeSection === 'health' ? '0%' : activeSection === 'skin' ? '100%' : '200%',
             }}
-            transition={{ type: 'spring', damping: 32, stiffness: 220, mass: 0.8 }}
+            transition={{ duration: 0.45, ease: [0.16, 1, 0.3, 1] }}
           />
 
           <button
