@@ -437,16 +437,14 @@ export const HealthDashboard: React.FC<HealthDashboardProps> = ({
               )}
             </div>
             <div className="flex items-center gap-2 shrink-0">
-              <div className="w-28 sm:w-36">
-                <DuoDatePicker
-                  value={selectedDate}
-                  onChange={(val) => {
-                    if (val) onSelectDate(val);
-                  }}
-                  align="right"
-                  placeholder="Pick date..."
-                />
-              </div>
+              <DuoDatePicker
+                value={selectedDate}
+                onChange={(val) => {
+                  if (val) onSelectDate(val);
+                }}
+                align="right"
+                iconOnly
+              />
               {selectedDate !== todayDate && (
                 <button
                   type="button"

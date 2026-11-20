@@ -15,6 +15,7 @@ export interface DuoDatePickerProps {
   triggerClassName?: string;
   align?: 'left' | 'right';
   required?: boolean;
+  iconOnly?: boolean;
 }
 
 const MONTH_NAMES = [
@@ -67,6 +68,7 @@ export const DuoDatePicker: React.FC<DuoDatePickerProps> = ({
   triggerClassName = '',
   align = 'left',
   required = false,
+  iconOnly = false,
 }) => {
   const [isOpen, setIsOpen] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
@@ -246,59 +248,81 @@ export const DuoDatePicker: React.FC<DuoDatePickerProps> = ({
       )}
 
       {/* Trigger Button */}
-      <button
-        id={datePickerId}
-        type="button"
-        disabled={disabled}
-        onClick={() => setIsOpen((prev) => !prev)}
-        aria-haspopup="dialog"
-        aria-expanded={isOpen}
-        className={`w-full min-h-[44px] px-3.5 py-2.5 rounded-2xl bg-[#090A0F] border text-left text-sm flex items-center justify-between gap-2.5 transition-all outline-none ${
-          disabled
-            ? 'opacity-50 cursor-not-allowed border-white/5 bg-zinc-950 text-zinc-600'
-            : error
-            ? 'border-rose-500/50 hover:border-rose-500 focus:border-rose-500'
-            : isOpen
-            ? 'border-white/30 ring-1 ring-white/10 bg-[#12141C]'
-            : 'border-white/10 hover:border-white/20 hover:bg-[#0E1017]'
-        } ${triggerClassName}`}
-      >
-        <div className="flex items-center gap-2.5 truncate">
-          <CalendarIcon
-            className={`w-4 h-4 shrink-0 transition-colors ${
-              value ? 'text-rose-400' : 'text-zinc-500'
-            }`}
-          />
-          {value ? (
-            <span className="text-zinc-100 font-medium font-mono tabular-nums truncate">
-              {displayFormatted}
-            </span>
-          ) : (
-            <span className="text-zinc-500 font-normal truncate">{placeholder}</span>
-          )}
-        </div>
+      {iconOnly ? (
+        <button
+          id={datePickerId}
+          type="button"
+          disabled={disabled}
+          onClick={() => setIsOpen((prev) => !prev)}
+          aria-haspopup="dialog"
+          aria-expanded={isOpen}
+          aria-label="Open date calendar"
+          title="Open date calendar"
+          className={`w-10 h-10 min-w-[40px] min-h-[40px] rounded-2xl border flex items-center justify-center transition-all outline-none active:scale-95 cursor-pointer ${
+            disabled
+              ? 'opacity-50 cursor-not-allowed border-white/5 bg-zinc-950 text-zinc-600'
+              : isOpen
+              ? 'border-rose-500/50 bg-rose-500/15 text-rose-300 ring-1 ring-rose-500/30'
+              : 'border-white/10 bg-zinc-900 text-rose-400 hover:border-white/20 hover:bg-zinc-800 hover:text-rose-300'
+          } ${triggerClassName}`}
+        >
+          <CalendarIcon className="w-4 h-4" />
+        </button>
+      ) : (
+        <button
+          id={datePickerId}
+          type="button"
+          disabled={disabled}
+          onClick={() => setIsOpen((prev) => !prev)}
+          aria-haspopup="dialog"
+          aria-expanded={isOpen}
+          className={`w-full min-h-[44px] px-3.5 py-2.5 rounded-2xl bg-[#090A0F] border text-left text-sm flex items-center justify-between gap-2.5 transition-all outline-none ${
+            disabled
+              ? 'opacity-50 cursor-not-allowed border-white/5 bg-zinc-950 text-zinc-600'
+              : error
+              ? 'border-rose-500/50 hover:border-rose-500 focus:border-rose-500'
+              : isOpen
+              ? 'border-white/30 ring-1 ring-white/10 bg-[#12141C]'
+              : 'border-white/10 hover:border-white/20 hover:bg-[#0E1017]'
+          } ${triggerClassName}`}
+        >
+          <div className="flex items-center gap-2.5 truncate">
+            <CalendarIcon
+              className={`w-4 h-4 shrink-0 transition-colors ${
+                value ? 'text-rose-400' : 'text-zinc-500'
+              }`}
+            />
+            {value ? (
+              <span className="text-zinc-100 font-medium font-mono tabular-nums truncate">
+                {displayFormatted}
+              </span>
+            ) : (
+              <span className="text-zinc-500 font-normal truncate">{placeholder}</span>
+            )}
+          </div>
 
-        {/* Action Controls: Clear Selection or Chevron Indicator */}
-        <div className="flex items-center gap-1 shrink-0">
-          {clearable && value && !disabled && (
-            <span
-              role="button"
-              tabIndex={0}
-              onClick={handleClear}
-              onKeyDown={(e) => {
-                if (e.key === 'Enter' || e.key === ' ') {
-                  e.preventDefault();
-                  handleClear();
-                }
-              }}
-              title="Clear date selection"
-              className="p-1 rounded-lg text-zinc-400 hover:text-white hover:bg-white/10 transition-colors cursor-pointer"
-            >
-              <X className="w-3.5 h-3.5" />
-            </span>
-          )}
-        </div>
-      </button>
+          {/* Action Controls: Clear Selection or Chevron Indicator */}
+          <div className="flex items-center gap-1 shrink-0">
+            {clearable && value && !disabled && (
+              <span
+                role="button"
+                tabIndex={0}
+                onClick={handleClear}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' || e.key === ' ') {
+                    e.preventDefault();
+                    handleClear();
+                  }
+                }}
+                title="Clear date selection"
+                className="p-1 rounded-lg text-zinc-400 hover:text-white hover:bg-white/10 transition-colors cursor-pointer"
+              >
+                <X className="w-3.5 h-3.5" />
+              </span>
+            )}
+          </div>
+        </button>
+      )}
 
       {/* Helper text or validation error */}
       {error ? (
