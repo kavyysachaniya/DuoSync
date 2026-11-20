@@ -6,7 +6,6 @@ import {
   Droplet,
   HeartHandshake,
   RotateCcw,
-  Shirt,
   Sparkles,
   Users,
   Wind,
@@ -38,6 +37,7 @@ import { OnboardingSubmission, OnboardingWizard } from './components/OnboardingW
 import { AuthCard } from './components/AuthCard';
 import { LandingPage } from './components/landing/LandingPage';
 import { api, AuthResponse, setStoredToken } from './services/apiClient';
+import { ShampooBottleNavIcon, CollaredShirtNavIcon } from './components/SkinIcons';
 
 interface AppUser {
   id: string;
@@ -1059,9 +1059,16 @@ export default function App() {
             e.preventDefault();
             window.scrollTo({ top: 0, behavior: 'smooth' });
           }}
-          className="text-xs sm:text-lg font-bold tracking-tight text-white font-display whitespace-nowrap shrink-0"
+          className="flex items-center gap-2 select-none shrink-0 group"
+          title="DuoSync"
+          aria-label="DuoSync Home"
         >
-          DuoSync
+          <div className="w-4 h-4 rounded-full border border-white/25 flex items-center justify-center group-hover:border-white/50 transition-colors">
+            <span className="w-1.5 h-1.5 rounded-full bg-white" />
+          </div>
+          <span className="text-[17px] font-semibold tracking-[-0.025em] text-white whitespace-nowrap">
+            DuoSync
+          </span>
         </a>
 
         {/* Top Navbar Pill: Hidden on mobile, visible on tablet/desktop */}
@@ -1101,7 +1108,7 @@ export default function App() {
                 className="absolute inset-0 rounded-full bg-white shadow-sm"
               />
             )}
-            <Sparkles className="w-3.5 h-3.5 relative z-10" strokeWidth={1.5} />
+            <ShampooBottleNavIcon className="w-3.5 h-3.5 relative z-10" />
             <span className="relative z-10">Skin</span>
           </button>
 
@@ -1119,7 +1126,7 @@ export default function App() {
                 className="absolute inset-0 rounded-full bg-white shadow-sm"
               />
             )}
-            <Shirt className="w-3.5 h-3.5 relative z-10" strokeWidth={1.5} />
+            <CollaredShirtNavIcon className="w-3.5 h-3.5 relative z-10" />
             <span className="relative z-10">Fits</span>
           </button>
         </nav>
@@ -1297,7 +1304,7 @@ export default function App() {
                 className="absolute inset-0 rounded-full bg-white shadow-md"
               />
             )}
-            <Sparkles className="w-4 h-4 relative z-10" strokeWidth={1.5} />
+            <ShampooBottleNavIcon className="w-4 h-4 relative z-10" />
             <span className="relative z-10 text-xs">Skin</span>
           </button>
 
@@ -1315,7 +1322,7 @@ export default function App() {
                 className="absolute inset-0 rounded-full bg-white shadow-md"
               />
             )}
-            <Shirt className="w-4 h-4 relative z-10" strokeWidth={1.5} />
+            <CollaredShirtNavIcon className="w-4 h-4 relative z-10" />
             <span className="relative z-10 text-xs">Fits</span>
           </button>
         </div>

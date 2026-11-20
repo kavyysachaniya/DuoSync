@@ -725,75 +725,76 @@ export const AccountModal: React.FC<AccountModalProps> = ({
         </div>
 
         {/* 7. Danger Zone: Wipe Data & Log Out */}
-        <div className="space-y-2 pt-1">
+        <div className="space-y-5 pt-3">
           {onDeleteAllUserData && (
-            <div className="rounded-2xl bg-red-950/20 border border-red-500/20 p-3.5 space-y-2">
-              <div className="text-xs font-semibold text-rose-400">Danger Zone</div>
+            <div className="rounded-2xl bg-red-950/20 border border-red-500/20 p-4 space-y-3">
+              <div className="flex items-center gap-2 text-xs font-semibold text-rose-400">
+                <AlertTriangle className="w-4 h-4 text-rose-400 shrink-0" />
+                <span>Danger Zone</span>
+              </div>
               <p className="text-[11px] text-zinc-400 leading-relaxed">
                 Permanently delete all workspace data, vitals logs, routine completions, and reset your account.
               </p>
               {deleteError && (
-                <div className="text-xs text-rose-400 bg-rose-500/10 p-2 rounded-lg border border-rose-500/20">
+                <div className="text-xs text-rose-400 bg-rose-500/10 p-2.5 rounded-xl border border-rose-500/20">
                   {deleteError}
                 </div>
               )}
-              <div className="flex items-center gap-2">
-                <button
-                  type="button"
-                  onClick={async () => {
-                    if (!confirmDelete) {
-                      setConfirmDelete(true);
-                      return;
-                    }
-                    setDeletingData(true);
-                    setDeleteError(null);
-                    try {
-                      await onDeleteAllUserData();
-                    } catch (err) {
-                      setDeleteError(
-                        err instanceof Error ? err.message : 'Failed to delete user data.'
-                      );
-                      setDeletingData(false);
-                    }
-                  }}
-                  disabled={deletingData}
-                  className={`min-h-[44px] px-4 rounded-xl text-xs font-semibold transition-colors flex items-center gap-1.5 cursor-pointer ${
-                    confirmDelete
-                      ? 'bg-rose-600 hover:bg-rose-700 text-white'
-                      : 'bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 border border-rose-500/30'
-                  }`}
-                >
-                  <Trash2 className="w-3.5 h-3.5" />
-                  <span>
-                    {deletingData
-                      ? 'Deleting Everything...'
-                      : confirmDelete
-                      ? 'Confirm: Wipe All My Data'
-                      : 'Delete All My Data & Reset'}
-                  </span>
-                </button>
-                {confirmDelete && !deletingData && (
+              {confirmDelete ? (
+                <div className="grid grid-cols-2 gap-2 pt-1">
                   <button
                     type="button"
                     onClick={() => setConfirmDelete(false)}
-                    className="min-h-[44px] px-3 rounded-xl text-xs text-zinc-400 hover:text-white bg-black border border-white/10 cursor-pointer"
+                    disabled={deletingData}
+                    className="w-full min-h-[46px] rounded-xl text-xs font-semibold text-zinc-300 hover:text-white bg-black border border-white/10 flex items-center justify-center transition-colors cursor-pointer active:scale-95"
                   >
                     Cancel
                   </button>
-                )}
-              </div>
+                  <button
+                    type="button"
+                    onClick={async () => {
+                      setDeletingData(true);
+                      setDeleteError(null);
+                      try {
+                        await onDeleteAllUserData();
+                      } catch (err) {
+                        setDeleteError(
+                          err instanceof Error ? err.message : 'Failed to delete user data.'
+                        );
+                        setDeletingData(false);
+                      }
+                    }}
+                    disabled={deletingData}
+                    className="w-full min-h-[46px] rounded-xl text-xs font-semibold text-white bg-rose-600 hover:bg-rose-700 flex items-center justify-center gap-1.5 transition-colors cursor-pointer shadow-md shadow-rose-600/20 active:scale-95"
+                  >
+                    <Trash2 className="w-3.5 h-3.5" />
+                    <span>{deletingData ? 'Deleting...' : 'Confirm: Wipe All'}</span>
+                  </button>
+                </div>
+              ) : (
+                <button
+                  type="button"
+                  onClick={() => setConfirmDelete(true)}
+                  className="w-full min-h-[46px] px-4 rounded-xl text-xs sm:text-sm font-semibold transition-all flex items-center justify-center gap-2 cursor-pointer bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 border border-rose-500/30 active:scale-[0.99]"
+                >
+                  <Trash2 className="w-4 h-4" />
+                  <span>Delete All My Data & Reset</span>
+                </button>
+              )}
             </div>
           )}
 
-          {/* Log Out Button */}
-          <button
-            type="button"
-            onClick={() => setShowLogoutConfirm(true)}
-            className="w-full min-h-[48px] h-12 rounded-xl bg-red-500/10 hover:bg-red-500/20 border border-red-500/25 text-xs font-semibold text-red-400 hover:text-red-300 flex items-center justify-center gap-2 transition-all active:scale-[0.99] cursor-pointer"
-          >
-            <LogOut className="w-4 h-4" />
-            <span>Log Out</span>
-          </button>
+          {/* Log Out Button with distinct separation & padding */}
+          <div className="pt-2 border-t border-white/[0.08]">
+            <button
+              type="button"
+              onClick={() => setShowLogoutConfirm(true)}
+              className="w-full min-h-[48px] h-12 rounded-xl bg-zinc-900/90 hover:bg-zinc-800 border border-white/10 text-xs sm:text-sm font-semibold text-zinc-300 hover:text-white flex items-center justify-center gap-2 transition-all active:scale-[0.99] cursor-pointer shadow-sm"
+            >
+              <LogOut className="w-4 h-4 text-zinc-400" />
+              <span>Log Out</span>
+            </button>
+          </div>
         </div>
       </div>
 

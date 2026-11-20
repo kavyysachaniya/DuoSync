@@ -379,3 +379,57 @@ export function getCategoryIcon(categoryName: string, segment: string = 'skincar
   if (segment === 'bodycare') return BodycareSegmentIcon;
   return GeneralProductIcon;
 }
+
+// ══════════════════════════════════════════════════════════════════════════════
+// 5. NAVIGATION ICONS (Shampoo Bottle & Collared Shirt)
+// ══════════════════════════════════════════════════════════════════════════════
+
+/** Navigation Icon: Elegant Personal Care / Shampoo Pump Bottle for Skin */
+export const ShampooBottleNavIcon: React.FC<IconProps> = ({ className = 'w-4 h-4' }) => (
+  <svg
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth="1.6"
+    strokeLinecap="round"
+    strokeLinejoin="round"
+    className={className}
+    aria-hidden="true"
+  >
+    {/* Pump top nozzle & vertical stem */}
+    <path d="M10 2h5" />
+    <path d="M12 2v4" />
+    <path d="M8 6h8" />
+    {/* Bottle shoulders and body */}
+    <rect x="7" y="9" width="10" height="12" rx="2.5" />
+    {/* Clean horizontal label accents */}
+    <line x1="10" y1="13" x2="14" y2="13" />
+    <line x1="10" y1="16" x2="14" y2="16" />
+  </svg>
+);
+
+/** Navigation Icon: Collared Button-Down Shirt for Fits */
+export const CollaredShirtNavIcon: React.FC<IconProps> = ({ className = 'w-4 h-4' }) => (
+  <svg
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth="1.6"
+    strokeLinecap="round"
+    strokeLinejoin="round"
+    className={className}
+    aria-hidden="true"
+  >
+    {/* Shirt outer contour (shoulders, short sleeves, torso, bottom hem) */}
+    <path d="M20.38 3.46 16 2a4 4 0 0 1-8 0L3.62 3.46a2 2 0 0 0-1.34 2.23l.58 3.47a1 1 0 0 0 .99.84H6v10a2 2 0 0 0 2 2h8a2 2 0 0 0 2-2V10h2.15a1 1 0 0 0 .99-.84l.58-3.47a2 2 0 0 0-1.34-2.23z" />
+    {/* Collared lapels */}
+    <path d="M8.5 2.5 12 7.5 10.5 2.5" />
+    <path d="M15.5 2.5 12 7.5 13.5 2.5" />
+    {/* Center button placket */}
+    <line x1="12" y1="7.5" x2="12" y2="20" />
+    {/* Shirt buttons */}
+    <circle cx="12" cy="11.5" r="0.75" fill="currentColor" />
+    <circle cx="12" cy="15.5" r="0.75" fill="currentColor" />
+  </svg>
+);
+

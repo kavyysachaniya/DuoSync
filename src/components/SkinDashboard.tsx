@@ -748,11 +748,10 @@ export const SkinDashboard: React.FC<SkinDashboardProps> = ({
       {/* 4. CATEGORY CHIP BAR (Single row, ghost inactive, rose active, no icons) */}
       <ChipBar
         categories={[
-          { id: 'all', label: 'All', count: segmentProducts.length },
+          { id: 'all', label: 'All' },
           ...activeCategories.map((cat) => ({
             id: cat,
             label: cat,
-            count: segmentProducts.filter((p) => p.subCategory === cat).length,
           })),
         ]}
         selectedCategory={selectedSubCategory}

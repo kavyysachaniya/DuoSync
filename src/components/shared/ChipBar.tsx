@@ -38,15 +38,6 @@ export const ChipBar: React.FC<ChipBarProps> = ({
             }`}
           >
             <span>{cat.label}</span>
-            {typeof cat.count === 'number' && (
-              <span
-                className={`ml-1 text-[10px] font-mono ${
-                  isSelected ? 'text-white/80' : 'text-white/40'
-                }`}
-              >
-                ({cat.count})
-              </span>
-            )}
           </button>
         );
       })}

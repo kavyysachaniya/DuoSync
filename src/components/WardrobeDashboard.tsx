@@ -7,13 +7,13 @@ import {
   Layers,
   Loader2,
   Plus,
-  Shirt,
   Sparkles,
   Tag,
   Trash2,
   Upload,
   X,
 } from 'lucide-react';
+import { CollaredShirtNavIcon } from './SkinIcons';
 import { AnimatePresence, motion } from 'motion/react';
 import { DuoDropdown } from './ui/DuoDropdown';
 import { api } from '../services/apiClient';
@@ -560,11 +560,10 @@ export const WardrobeDashboard: React.FC<WardrobeDashboardProps> = ({
           {/* 4. CATEGORY CHIP BAR (Directly on --bg, single row, ghost inactive, rose active) */}
           <ChipBar
             categories={[
-              { id: 'All', label: 'All', count: items.length },
+              { id: 'All', label: 'All' },
               ...WARDROBE_CATEGORIES.map((cat) => ({
                 id: cat,
                 label: cat,
-                count: items.filter((i) => i.category === cat).length,
               })),
             ]}
             selectedCategory={selectedCategory}
@@ -962,7 +961,7 @@ export const WardrobeDashboard: React.FC<WardrobeDashboardProps> = ({
                               />
                             ) : (
                               <div className="w-8 h-8 rounded-lg bg-zinc-900 border border-white/6 flex items-center justify-center shrink-0">
-                                <Shirt className="w-4 h-4 text-zinc-500" />
+                                <CollaredShirtNavIcon className="w-4 h-4 text-zinc-500" />
                               </div>
                             )}
                             <div className="truncate">
@@ -1020,7 +1019,7 @@ export const WardrobeDashboard: React.FC<WardrobeDashboardProps> = ({
 
               {builderFilteredItems.length === 0 ? (
                 <div className="p-8 text-center text-xs text-zinc-400 bg-black rounded-2xl border border-white/6 space-y-2">
-                  <Shirt className="w-6 h-6 text-zinc-600 mx-auto" />
+                  <CollaredShirtNavIcon className="w-6 h-6 text-zinc-600 mx-auto" />
                   <p>No wardrobe items match this category.</p>
                 </div>
               ) : (
@@ -1055,7 +1054,7 @@ export const WardrobeDashboard: React.FC<WardrobeDashboardProps> = ({
                             />
                           ) : (
                             <div className="w-full h-full flex items-center justify-center text-zinc-600">
-                              <Shirt className="w-6 h-6" />
+                              <CollaredShirtNavIcon className="w-6 h-6" />
                             </div>
                           )}
                           <span className="absolute bottom-1.5 left-1.5 px-1.5 py-0.5 rounded bg-black/75 text-[9px] font-semibold text-white">
@@ -1083,7 +1082,6 @@ export const WardrobeDashboard: React.FC<WardrobeDashboardProps> = ({
       )}
 
       {/* CLOTHING ITEM ADD / EDIT MODAL */}
-      {/* CLOTHING ITEM ADD / EDIT MODAL */}
       <AnimatePresence>
         {isItemModalOpen && (
           <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 bg-black/80 backdrop-blur-sm">
@@ -1097,7 +1095,7 @@ export const WardrobeDashboard: React.FC<WardrobeDashboardProps> = ({
               <div className="shrink-0 p-4 sm:p-5 border-b border-white/10 bg-[#0A0A0F] flex items-center justify-between">
                 <div className="flex items-center gap-2.5">
                   <div className="w-9 h-9 rounded-xl bg-rose-500/15 border border-rose-500/30 flex items-center justify-center text-rose-400">
-                    <Shirt className="w-4 h-4" />
+                    <CollaredShirtNavIcon className="w-4 h-4" />
                   </div>
                   <div>
                     <h3 className="text-base font-bold text-white">
