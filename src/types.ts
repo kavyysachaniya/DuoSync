@@ -126,6 +126,8 @@ export interface CareProductDoc {
   routineTime: RoutineTime;
   scheduleType?: 'daily' | 'weekly';
   scheduledDays?: WeekDay[];
+  imageUrl?: string;
+  thumbnailUrl?: string;
   notes: string;
   updatedByUid: string;
   createdAt?: Timestamp;

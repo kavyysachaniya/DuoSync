@@ -14,7 +14,6 @@
     "migrate:supabase": "tsx scripts/migrate-firebase-to-supabase.ts"
   },
   "dependencies": {
-    "@google/genai": "^2.4.0",
     "@neondatabase/serverless": "^1.2.1",
     "@supabase/supabase-js": "^2.119.0",
     "@tailwindcss/vite": "^4.3.3",

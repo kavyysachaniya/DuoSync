@@ -6,7 +6,6 @@ import {
   Droplets,
   Footprints,
   Moon,
-  RefreshCw,
   Scale,
   SlidersHorizontal,
   Sparkles,
