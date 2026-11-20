@@ -1,4 +1,4 @@
-# DuoPulse Mobile UI/UX Audit & Verification Report
+# DuoSync Mobile UI/UX Audit & Verification Report
 
 Autonomous mobile-first UI/UX audit, remediation, and programmatic verification loop executed across all screens and viewport widths.
 
@@ -6,7 +6,7 @@ Autonomous mobile-first UI/UX audit, remediation, and programmatic verification 
 
 ## 1. Executive Summary
 
-- **App**: DuoPulse (Couples' Health & Care Tracker)
+- **App**: DuoSync (Couples' Health & Care Tracker)
 - **Theme**: Dark theme only (`#090A0F` base, `#12141C` cards, rose `#F43F5E` accent, DM Sans / Plus Jakarta Sans / JetBrains Mono typography).
 - **Core Problem Addressed**: Elimination of horizontal viewport overflow, clipped cards, off-screen modal buttons, touch targets under 44px, iOS form auto-zoom, and visual misalignment across compact mobile screens (320px–430px) while maintaining centering and balance on tablet (768px) and desktop (1280px).
 - **Outcome**: **100% of tested viewports and screens achieved 0px horizontal overflow (`docScrollWidth === innerWidth`), 0 clipped components, full touch-target compliance (>= 44px), and 0 iOS zoom-triggering form inputs.**

@@ -1,5 +1,5 @@
 -- ============================================================================
--- DuoSync / DuoPulse: Complete Normalized PostgreSQL Schema & RLS Policies
+-- DuoSync: Complete Normalized PostgreSQL Schema & RLS Policies
 -- Target: Supabase PostgreSQL, Supabase Auth, Supabase Realtime
 -- ============================================================================
 

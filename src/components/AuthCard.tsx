@@ -14,10 +14,11 @@ import { api, AuthResponse, setStoredToken } from '../services/apiClient';
 
 interface AuthCardProps {
   onSuccess?: (authData: AuthResponse) => void;
+  initialMode?: 'signin' | 'signup';
 }
 
-export const AuthCard: React.FC<AuthCardProps> = ({ onSuccess }) => {
-  const [authMode, setAuthMode] = useState<'signin' | 'signup'>('signin');
+export const AuthCard: React.FC<AuthCardProps> = ({ onSuccess, initialMode = 'signin' }) => {
+  const [authMode, setAuthMode] = useState<'signin' | 'signup'>(initialMode);
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');

@@ -1,6 +1,6 @@
-# DuoPulse — Vercel Deployment & Mobile PWA Setup Guide
+# DuoSync — Vercel Deployment & Mobile PWA Setup Guide
 
-DuoPulse is pre-configured with `/vercel.json` and `/public/manifest.json` so you can deploy it to **Vercel** in under 2 minutes and install it on both your phones as a native-like mobile app.
+DuoSync is pre-configured with `/vercel.json` and `/public/manifest.json` so you can deploy it to **Vercel** in under 2 minutes and install it on both your phones as a native-like mobile app.
 
 ---
 
@@ -9,12 +9,12 @@ DuoPulse is pre-configured with `/vercel.json` and `/public/manifest.json` so yo
 ### Option A — Deploy via GitHub (Recommended for Automatic Updates)
 1. Push this project repository to your **GitHub** account.
 2. Go to [https://vercel.com/new](https://vercel.com/new) and sign in.
-3. Click **Import** next to your DuoPulse repository.
+3. Click **Import** next to your DuoSync repository.
 4. Confirm the detected settings (Vercel automatically reads `vercel.json`):
    - **Framework Preset**: `Vite`
    - **Build Command**: `npm run build`
    - **Output Directory**: `dist`
-5. Click **Deploy**. Your live URL (e.g., `https://duopulse-sync.vercel.app`) will be ready in ~45 seconds.
+5. Click **Deploy**. Your live URL (e.g., `https://duosync18.vercel.app`) will be ready in ~45 seconds.
 
 ### Option B — Deploy Directly from Terminal (Vercel CLI)
 Run the following command in the project root:
@@ -26,7 +26,7 @@ npx vercel --prod
 
 ## Step 2: Authorize Your Vercel Domain in Firebase (`duosync-35b75`)
 
-Because DuoPulse is 100% login-based with **Google Sign-In** and **Firebase Firestore**, Firebase blocks sign-in popups from unknown domains until you whitelist your Vercel URL:
+Because DuoSync is 100% login-based with password authentication and JWTs:
 
 1. Open [Firebase Console — `duosync-35b75` Authentication Settings](https://console.firebase.google.com/project/duosync-35b75/authentication/settings).
 2. Under **Authorized domains**, click **Add domain** and paste your Vercel domain (for example: `your-app-name.vercel.app`).

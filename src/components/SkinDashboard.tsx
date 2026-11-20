@@ -1,18 +1,31 @@
-import React, { useMemo, useState } from 'react';
+import React, { useMemo, useRef, useState } from 'react';
 import {
   Calendar,
   Check,
   CheckCircle2,
-  Droplets,
   Edit3,
-  Package,
+  Loader2,
   Plus,
-  Sparkles,
   Trash2,
-  Wind,
   X,
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
+import { api } from '../services/apiClient';
+import { cropImageToSquare } from '../utils/imageCropper';
+import {
+  SkincareSegmentIcon,
+  HaircareSegmentIcon,
+  BodycareSegmentIcon,
+  getCategoryIcon,
+  ProductPhotoSilhouette,
+  CameraUploadIcon,
+  PhotoUploadIcon,
+  SunRoutineIcon,
+  MoonRoutineIcon,
+  SunMoonRoutineIcon,
+  WeeklyRoutineIcon,
+  EmptyCareShelfIcon,
+} from './SkinIcons';
 import {
   CareProductDoc,
   CareSegment,
@@ -57,17 +70,17 @@ const SEGMENT_META: Record<
 > = {
   skincare: {
     title: 'Skincare',
-    icon: Sparkles,
+    icon: SkincareSegmentIcon,
     accentColor: 'text-rose-400',
   },
   haircare: {
     title: 'Haircare',
-    icon: Wind,
+    icon: HaircareSegmentIcon,
     accentColor: 'text-amber-400',
   },
   bodycare: {
     title: 'Bodycare',
-    icon: Droplets,
+    icon: BodycareSegmentIcon,
     accentColor: 'text-sky-400',
   },
 };
@@ -132,14 +145,235 @@ export const SkinDashboard: React.FC<SkinDashboardProps> = ({
   const [formScheduledDays, setFormScheduledDays] = useState<WeekDay[]>(['wednesday', 'sunday']);
   const [formTimeOfDay, setFormTimeOfDay] = useState<'am' | 'pm' | 'both'>('both');
   const [formNotes, setFormNotes] = useState('');
+  const [formImageUrl, setFormImageUrl] = useState('');
+  const [formThumbnailUrl, setFormThumbnailUrl] = useState('');
+  const [isUploadingFormImage, setIsUploadingFormImage] = useState(false);
+  const [uploadingCardProductId, setUploadingCardProductId] = useState<string | null>(null);
+  const [isUploadingDetailImage, setIsUploadingDetailImage] = useState(false);
   const [productSaving, setProductSaving] = useState(false);
   const [toastMsg, setToastMsg] = useState<string | null>(null);
+
+  // Hidden file input references for 1:1 auto-crop photo uploads
+  const cardFileInputRef = useRef<HTMLInputElement | null>(null);
+  const detailFileInputRef = useRef<HTMLInputElement | null>(null);
+  const formFileInputRef = useRef<HTMLInputElement | null>(null);
+  const targetUploadProductIdRef = useRef<string | null>(null);
 
   const showToast = (msg: string) => {
     setToastMsg(msg);
     setTimeout(() => {
       setToastMsg((prev) => (prev === msg ? null : prev));
     }, 2000);
+  };
+
+  /**
+   * Reads an image file, automatically center-crops it into a 1:1 square on an HTML5 canvas,
+   * attempts to upload to object storage backend, with local cropped dataUrl fallback.
+   */
+  const processAndUploadFile = async (
+    file: File,
+    workspaceId?: string
+  ): Promise<{ imageUrl: string; thumbnailUrl: string }> => {
+    // 1. Center-crop automatically to 1:1 aspect ratio square using HTML5 canvas
+    const { dataUrl, filename } = await cropImageToSquare(file, 800, 0.88);
+
+    // 2. Attempt cloud upload to backend storage
+    try {
+      const wsId = workspaceId || products[0]?.workspaceId || 'shared';
+      const uploadRes = await api.upload.uploadImage(dataUrl, filename, wsId);
+      if (uploadRes?.imageUrl) {
+        return {
+          imageUrl: uploadRes.imageUrl,
+          thumbnailUrl: uploadRes.thumbnailUrl || uploadRes.imageUrl,
+        };
+      }
+    } catch (err) {
+      console.warn('Backend storage upload fallback to local 1:1 cropped data URL:', err);
+    }
+
+    // 3. Fallback to 1:1 cropped base64 data URL
+    return { imageUrl: dataUrl, thumbnailUrl: dataUrl };
+  };
+
+  // 1:1 Photo Upload directly from Product Card in 2x2 grid
+  const handleTriggerCardUpload = (e: React.MouseEvent, productId: string) => {
+    e.stopPropagation();
+    targetUploadProductIdRef.current = productId;
+    if (cardFileInputRef.current) {
+      cardFileInputRef.current.value = '';
+      cardFileInputRef.current.click();
+    }
+  };
+
+  const handleCardFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    const prodId = targetUploadProductIdRef.current;
+    if (!file || !prodId) return;
+
+    const targetProduct = products.find((p) => p.id === prodId);
+    if (!targetProduct) return;
+
+    try {
+      setUploadingCardProductId(prodId);
+      const { imageUrl, thumbnailUrl } = await processAndUploadFile(file, targetProduct.workspaceId);
+
+      await onSaveProduct(
+        {
+          profileSlot: targetProduct.profileSlot,
+          segment: targetProduct.segment,
+          subCategory: targetProduct.subCategory,
+          name: targetProduct.name,
+          brand: targetProduct.brand,
+          quantity: targetProduct.quantity,
+          orderedDate: targetProduct.orderedDate,
+          openedDate: targetProduct.openedDate,
+          expiryDate: targetProduct.expiryDate,
+          saleInfo: targetProduct.saleInfo,
+          pricePaid: targetProduct.pricePaid,
+          originalPrice: targetProduct.originalPrice,
+          status: targetProduct.status,
+          scheduleType: targetProduct.scheduleType,
+          scheduledDays: targetProduct.scheduledDays,
+          routineTime: targetProduct.routineTime,
+          notes: targetProduct.notes,
+          imageUrl,
+          thumbnailUrl,
+        },
+        targetProduct.id
+      );
+
+      if (selectedProductForDetail && selectedProductForDetail.id === prodId) {
+        setSelectedProductForDetail((prev) => (prev ? { ...prev, imageUrl, thumbnailUrl } : null));
+      }
+
+      showToast('1:1 Product photo updated!');
+    } catch (err: any) {
+      console.error('Card photo upload error:', err);
+      showToast(err?.message || 'Failed to process photo');
+    } finally {
+      setUploadingCardProductId(null);
+      targetUploadProductIdRef.current = null;
+    }
+  };
+
+  // 1:1 Photo Upload & Remove from Detail Modal
+  const handleDetailFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file || !selectedProductForDetail) return;
+
+    try {
+      setIsUploadingDetailImage(true);
+      const { imageUrl, thumbnailUrl } = await processAndUploadFile(
+        file,
+        selectedProductForDetail.workspaceId
+      );
+
+      await onSaveProduct(
+        {
+          profileSlot: selectedProductForDetail.profileSlot,
+          segment: selectedProductForDetail.segment,
+          subCategory: selectedProductForDetail.subCategory,
+          name: selectedProductForDetail.name,
+          brand: selectedProductForDetail.brand,
+          quantity: selectedProductForDetail.quantity,
+          orderedDate: selectedProductForDetail.orderedDate,
+          openedDate: selectedProductForDetail.openedDate,
+          expiryDate: selectedProductForDetail.expiryDate,
+          saleInfo: selectedProductForDetail.saleInfo,
+          pricePaid: selectedProductForDetail.pricePaid,
+          originalPrice: selectedProductForDetail.originalPrice,
+          status: selectedProductForDetail.status,
+          scheduleType: selectedProductForDetail.scheduleType,
+          scheduledDays: selectedProductForDetail.scheduledDays,
+          routineTime: selectedProductForDetail.routineTime,
+          notes: selectedProductForDetail.notes,
+          imageUrl,
+          thumbnailUrl,
+        },
+        selectedProductForDetail.id
+      );
+
+      setSelectedProductForDetail((prev) => (prev ? { ...prev, imageUrl, thumbnailUrl } : null));
+      showToast('1:1 Product photo updated!');
+    } catch (err: any) {
+      console.error('Detail photo upload error:', err);
+      showToast(err?.message || 'Failed to update photo');
+    } finally {
+      setIsUploadingDetailImage(false);
+    }
+  };
+
+  const handleDetailRemovePhoto = async () => {
+    if (!selectedProductForDetail) return;
+    try {
+      setIsUploadingDetailImage(true);
+      await onSaveProduct(
+        {
+          profileSlot: selectedProductForDetail.profileSlot,
+          segment: selectedProductForDetail.segment,
+          subCategory: selectedProductForDetail.subCategory,
+          name: selectedProductForDetail.name,
+          brand: selectedProductForDetail.brand,
+          quantity: selectedProductForDetail.quantity,
+          orderedDate: selectedProductForDetail.orderedDate,
+          openedDate: selectedProductForDetail.openedDate,
+          expiryDate: selectedProductForDetail.expiryDate,
+          saleInfo: selectedProductForDetail.saleInfo,
+          pricePaid: selectedProductForDetail.pricePaid,
+          originalPrice: selectedProductForDetail.originalPrice,
+          status: selectedProductForDetail.status,
+          scheduleType: selectedProductForDetail.scheduleType,
+          scheduledDays: selectedProductForDetail.scheduledDays,
+          routineTime: selectedProductForDetail.routineTime,
+          notes: selectedProductForDetail.notes,
+          imageUrl: '',
+          thumbnailUrl: '',
+        },
+        selectedProductForDetail.id
+      );
+
+      setSelectedProductForDetail((prev) => (prev ? { ...prev, imageUrl: '', thumbnailUrl: '' } : null));
+      showToast('Photo removed');
+    } catch (err: any) {
+      console.error('Remove photo error:', err);
+      showToast('Failed to remove photo');
+    } finally {
+      setIsUploadingDetailImage(false);
+    }
+  };
+
+  // 1:1 Photo Upload from Add / Edit Product Modal
+  const handleFormFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    try {
+      setIsUploadingFormImage(true);
+      // Auto crop to 1:1 square
+      const { dataUrl, filename } = await cropImageToSquare(file, 800, 0.88);
+      // Instant local preview
+      setFormImageUrl(dataUrl);
+      setFormThumbnailUrl(dataUrl);
+
+      // Cloud storage upload in background
+      try {
+        const wsId = products[0]?.workspaceId || 'shared';
+        const uploadRes = await api.upload.uploadImage(dataUrl, filename, wsId);
+        if (uploadRes?.imageUrl) {
+          setFormImageUrl(uploadRes.imageUrl);
+          setFormThumbnailUrl(uploadRes.thumbnailUrl || uploadRes.imageUrl);
+          showToast('1:1 Photo cropped & uploaded!');
+        }
+      } catch (uploadErr) {
+        console.warn('Backend upload fallback:', uploadErr);
+        showToast('1:1 Photo cropped locally!');
+      }
+    } catch (err: any) {
+      console.error('Form photo error:', err);
+      showToast(err?.message || 'Failed to process image');
+    } finally {
+      setIsUploadingFormImage(false);
+    }
   };
 
   const categoriesBySegment: Record<CareSegment, string[]> = useMemo(
@@ -276,6 +510,8 @@ export const SkinDashboard: React.FC<SkinDashboardProps> = ({
     setFormScheduledDays(['wednesday', 'sunday']);
     setFormTimeOfDay('both');
     setFormNotes('');
+    setFormImageUrl('');
+    setFormThumbnailUrl('');
     setIsProductModalOpen(true);
   };
 
@@ -309,6 +545,8 @@ export const SkinDashboard: React.FC<SkinDashboardProps> = ({
         : (prod.routineTime as 'am' | 'pm' | 'both') || 'both'
     );
     setFormNotes(prod.notes);
+    setFormImageUrl(prod.imageUrl || '');
+    setFormThumbnailUrl(prod.thumbnailUrl || prod.imageUrl || '');
     setIsProductModalOpen(true);
   };
 
@@ -346,6 +584,8 @@ export const SkinDashboard: React.FC<SkinDashboardProps> = ({
           scheduledDays: formScheduleType === 'weekly' ? formScheduledDays : [],
           routineTime: formScheduleType === 'weekly' ? 'weekly' : formTimeOfDay,
           notes: formNotes.trim(),
+          imageUrl: formImageUrl.trim(),
+          thumbnailUrl: formThumbnailUrl.trim() || formImageUrl.trim(),
         },
         editingProductId
       );
@@ -368,6 +608,8 @@ export const SkinDashboard: React.FC<SkinDashboardProps> = ({
                 routineTime: formScheduleType === 'weekly' ? 'weekly' : formTimeOfDay,
                 quantity: qty,
                 notes: formNotes.trim(),
+                imageUrl: formImageUrl.trim(),
+                thumbnailUrl: formThumbnailUrl.trim() || formImageUrl.trim(),
               }
             : null
         );
@@ -396,6 +638,29 @@ export const SkinDashboard: React.FC<SkinDashboardProps> = ({
 
   return (
     <div className="space-y-4 pb-32 sm:pb-16 min-w-0">
+      {/* Hidden file inputs for 1:1 auto-crop photo uploads */}
+      <input
+        ref={cardFileInputRef}
+        type="file"
+        accept="image/*"
+        className="hidden"
+        onChange={handleCardFileChange}
+      />
+      <input
+        ref={detailFileInputRef}
+        type="file"
+        accept="image/*"
+        className="hidden"
+        onChange={handleDetailFileChange}
+      />
+      <input
+        ref={formFileInputRef}
+        type="file"
+        accept="image/*"
+        className="hidden"
+        onChange={handleFormFileChange}
+      />
+
       {/* Toast Notification */}
       {toastMsg && (
         <div className="fixed top-18 right-4 z-50 bg-white text-zinc-950 font-semibold px-4 py-2 rounded-2xl shadow-xl text-xs flex items-center gap-2 animate-in fade-in slide-in-from-top-2">
@@ -464,7 +729,7 @@ export const SkinDashboard: React.FC<SkinDashboardProps> = ({
         <div className="rounded-2xl bg-[#12141C] border border-white/8 p-3 space-y-2.5 shadow-md">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2 text-xs font-semibold text-white">
-              <Calendar className="w-3.5 h-3.5 text-rose-400 shrink-0" />
+              <WeeklyRoutineIcon className="w-3.5 h-3.5 text-rose-400 shrink-0" />
               <span>Today’s Routine Checklist</span>
             </div>
             <span className="text-xs font-mono font-bold text-rose-300 px-2.5 py-0.5 rounded-full bg-rose-500/15 border border-rose-500/30">
@@ -477,6 +742,7 @@ export const SkinDashboard: React.FC<SkinDashboardProps> = ({
               const isDone = Boolean(
                 routineCompletionsMap[`${profile.slot}_${prod.id}_${todayDate}`]?.completed
               );
+              const ItemIcon = getCategoryIcon(prod.subCategory, prod.segment);
               return (
                 <button
                   key={prod.id}
@@ -497,6 +763,7 @@ export const SkinDashboard: React.FC<SkinDashboardProps> = ({
                   >
                     {isDone && <Check className="w-2.5 h-2.5 stroke-[3]" />}
                   </div>
+                  <ItemIcon className="w-3.5 h-3.5 text-zinc-400 shrink-0" />
                   <span className="truncate max-w-[130px]">{prod.name}</span>
                   <span className="text-[10px] text-zinc-500 font-mono">({prod.subCategory})</span>
                 </button>
@@ -508,34 +775,38 @@ export const SkinDashboard: React.FC<SkinDashboardProps> = ({
 
       {/* 3. PRODUCT GRID (2×2) WITH CATEGORY FILTER CHIPS */}
       <div className="space-y-3">
-        {/* Horizontally scrollable thin row of category filter chips */}
+        {/* Horizontally scrollable thin row of category filter chips with domain SVGs */}
         <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar py-0.5">
           <button
             type="button"
             onClick={() => setSelectedSubCategory('all')}
-            className={`min-h-[32px] px-3.5 rounded-full text-xs font-semibold whitespace-nowrap transition-all active:scale-95 ${
+            className={`min-h-[32px] px-3.5 rounded-full text-xs font-semibold whitespace-nowrap transition-all active:scale-95 flex items-center gap-1.5 ${
               selectedSubCategory === 'all'
                 ? 'bg-rose-500 text-white shadow-md shadow-rose-500/20'
                 : 'bg-[#12141C] text-zinc-400 hover:text-white border border-white/8'
             }`}
           >
-            All ({segmentProducts.length})
+            {React.createElement(SEGMENT_META[activeSegment].icon, { className: 'w-3 h-3 shrink-0' })}
+            <span>All ({segmentProducts.length})</span>
           </button>
           {activeCategories.map((cat) => {
             const count = segmentProducts.filter((p) => p.subCategory === cat).length;
             const isSelected = selectedSubCategory === cat;
+            const CatIcon = getCategoryIcon(cat, activeSegment);
             return (
               <button
                 key={cat}
                 type="button"
                 onClick={() => setSelectedSubCategory(cat)}
-                className={`min-h-[32px] px-3.5 rounded-full text-xs font-semibold whitespace-nowrap transition-all active:scale-95 ${
+                className={`min-h-[32px] px-3.5 rounded-full text-xs font-semibold whitespace-nowrap transition-all active:scale-95 flex items-center gap-1.5 ${
                   isSelected
                     ? 'bg-rose-500 text-white shadow-md shadow-rose-500/20'
                     : 'bg-[#12141C] text-zinc-400 hover:text-white border border-white/8'
                 }`}
               >
-                {cat} {count > 0 && <span className="opacity-70 text-[10px] ml-0.5">({count})</span>}
+                <CatIcon className="w-3 h-3 shrink-0" />
+                <span>{cat}</span>
+                {count > 0 && <span className="opacity-70 text-[10px] ml-0.5">({count})</span>}
               </button>
             );
           })}
@@ -544,7 +815,7 @@ export const SkinDashboard: React.FC<SkinDashboardProps> = ({
         {/* 2×2 Product Grid */}
         {filteredGridProducts.length === 0 ? (
           <div className="rounded-3xl bg-[#12141C] border border-white/8 p-8 text-center space-y-3">
-            <Package className="w-8 h-8 text-zinc-600 mx-auto" />
+            <EmptyCareShelfIcon className="w-12 h-12 text-zinc-600 mx-auto" />
             <div className="space-y-1">
               <h3 className="text-sm font-bold text-white">No products found</h3>
               <p className="text-xs text-zinc-400">
@@ -570,6 +841,8 @@ export const SkinDashboard: React.FC<SkinDashboardProps> = ({
                 (product.routineTime !== 'weekly' && product.scheduleType !== 'weekly');
 
               const statusMeta = STATUS_CONFIG[product.status] || STATUS_CONFIG.in_use;
+              const isUploadingThisCard = uploadingCardProductId === product.id;
+              const CatIcon = getCategoryIcon(product.subCategory, product.segment);
 
               return (
                 <div
@@ -578,7 +851,7 @@ export const SkinDashboard: React.FC<SkinDashboardProps> = ({
                   className="rounded-2xl bg-[#12141C] border border-white/10 hover:border-white/20 p-3 flex flex-col justify-between transition-all duration-150 cursor-pointer shadow-md active:scale-[0.98] group"
                 >
                   <div className="space-y-2.5">
-                    {/* 1:1 Aspect Ratio Photo or Neutral Placeholder Icon */}
+                    {/* 1:1 Aspect Ratio Photo or Domain Silhouette Placeholder */}
                     <div className="aspect-square w-full rounded-xl bg-zinc-950 border border-white/6 overflow-hidden relative flex items-center justify-center">
                       {product.imageUrl ? (
                         <img
@@ -590,17 +863,41 @@ export const SkinDashboard: React.FC<SkinDashboardProps> = ({
                         />
                       ) : (
                         <div className="w-full h-full flex flex-col items-center justify-center text-zinc-600 bg-zinc-900/40">
-                          <Package className="w-7 h-7 text-zinc-600" />
+                          <ProductPhotoSilhouette className="w-12 h-12 text-zinc-600" />
                         </div>
                       )}
 
-                      {/* Status Dot Pill at top-right */}
-                      <div className="absolute top-2 right-2 flex items-center gap-1 px-1.5 py-0.5 rounded-full bg-black/75 backdrop-blur-sm border border-white/10">
+                      {/* Status Dot Pill at top-left */}
+                      <div className="absolute top-2 left-2 flex items-center gap-1 px-1.5 py-0.5 rounded-full bg-black/75 backdrop-blur-sm border border-white/10 z-10">
                         <span className={`w-2 h-2 rounded-full ${statusMeta.dotColor} shrink-0`} />
                         <span className="text-[9px] font-semibold text-zinc-300">
                           {statusMeta.label}
                         </span>
                       </div>
+
+                      {/* Quick 1:1 Photo Upload Button on Card */}
+                      <button
+                        type="button"
+                        onClick={(e) => handleTriggerCardUpload(e, product.id)}
+                        disabled={isUploadingThisCard}
+                        className="absolute bottom-1.5 right-1.5 w-7 h-7 rounded-lg bg-black/80 hover:bg-black/95 active:scale-90 backdrop-blur-md border border-white/20 text-zinc-300 hover:text-white flex items-center justify-center transition-all z-10 shadow-md group/btn"
+                        title="Upload 1:1 photo"
+                        aria-label="Upload 1:1 photo"
+                      >
+                        {isUploadingThisCard ? (
+                          <Loader2 className="w-3.5 h-3.5 animate-spin text-rose-400" />
+                        ) : (
+                          <CameraUploadIcon className="w-3.5 h-3.5 group-hover/btn:text-rose-400 transition-colors" />
+                        )}
+                      </button>
+
+                      {/* Processing Overlay during 1:1 Crop / Upload */}
+                      {isUploadingThisCard && (
+                        <div className="absolute inset-0 bg-black/80 backdrop-blur-xs flex flex-col items-center justify-center gap-1 z-20">
+                          <Loader2 className="w-5 h-5 animate-spin text-rose-400" />
+                          <span className="text-[9px] font-mono font-semibold text-white">Cropping 1:1...</span>
+                        </div>
+                      )}
                     </div>
 
                     {/* Brand & Name */}
@@ -613,10 +910,11 @@ export const SkinDashboard: React.FC<SkinDashboardProps> = ({
                       </h4>
                     </div>
 
-                    {/* Category Tag */}
+                    {/* Category Tag with Domain SVG Icon */}
                     <div className="flex items-center gap-1.5 flex-wrap">
-                      <span className="text-[10px] px-2 py-0.5 rounded-md bg-white/6 text-zinc-300 font-medium">
-                        {product.subCategory}
+                      <span className="inline-flex items-center gap-1 text-[10px] px-2 py-0.5 rounded-md bg-white/6 text-zinc-300 font-medium">
+                        <CatIcon className="w-3 h-3 text-zinc-400 shrink-0" />
+                        <span>{product.subCategory}</span>
                       </span>
                     </div>
                   </div>
@@ -626,14 +924,25 @@ export const SkinDashboard: React.FC<SkinDashboardProps> = ({
                     {isDaily ? (
                       /* Daily Product: Tag only, NO calendar */
                       <div className="flex items-center justify-between">
-                        <span className="text-[10px] font-mono font-semibold px-2 py-0.5 rounded-md bg-rose-500/10 text-rose-300 border border-rose-500/20">
-                          {product.routineTime === 'both'
-                            ? 'AM & PM'
-                            : product.routineTime === 'am'
-                            ? 'AM Routine'
-                            : product.routineTime === 'pm'
-                            ? 'PM Routine'
-                            : 'Daily'}
+                        <span className="inline-flex items-center gap-1 text-[10px] font-mono font-semibold px-2 py-0.5 rounded-md bg-rose-500/10 text-rose-300 border border-rose-500/20">
+                          {product.routineTime === 'both' ? (
+                            <>
+                              <SunMoonRoutineIcon className="w-3 h-3 text-rose-400 shrink-0" />
+                              <span>AM & PM</span>
+                            </>
+                          ) : product.routineTime === 'am' ? (
+                            <>
+                              <SunRoutineIcon className="w-3 h-3 text-amber-400 shrink-0" />
+                              <span>AM Routine</span>
+                            </>
+                          ) : product.routineTime === 'pm' ? (
+                            <>
+                              <MoonRoutineIcon className="w-3 h-3 text-indigo-400 shrink-0" />
+                              <span>PM Routine</span>
+                            </>
+                          ) : (
+                            <span>Daily</span>
+                          )}
                         </span>
                         <span className="text-[10px] text-zinc-500 font-mono">Daily</span>
                       </div>
@@ -728,20 +1037,73 @@ export const SkinDashboard: React.FC<SkinDashboardProps> = ({
                     />
                   ) : (
                     <div className="w-full h-full flex flex-col items-center justify-center text-zinc-600 bg-zinc-900/50">
-                      <Package className="w-14 h-14 text-zinc-600 mb-2" />
+                      <ProductPhotoSilhouette className="w-16 h-16 text-zinc-600 mb-2" />
                       <span className="text-xs text-zinc-500 font-mono">No photo uploaded</span>
                     </div>
                   )}
 
                   {/* Status & Owner Pill Overlay */}
-                  <div className="absolute top-3 left-3 flex items-center gap-1.5">
+                  <div className="absolute top-3 left-3 flex items-center gap-1.5 z-10">
                     <span className="px-2.5 py-1 rounded-full bg-black/80 backdrop-blur-sm border border-white/10 text-xs font-semibold text-white">
                       {getOwnerLabel(selectedProductForDetail.profileSlot)}
                     </span>
-                    <span className="px-2.5 py-1 rounded-full bg-black/80 backdrop-blur-sm border border-white/10 text-xs font-semibold text-zinc-200">
-                      {selectedProductForDetail.subCategory}
+                    <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-black/80 backdrop-blur-sm border border-white/10 text-xs font-semibold text-zinc-200">
+                      {(() => {
+                        const CatIcon = getCategoryIcon(
+                          selectedProductForDetail.subCategory,
+                          selectedProductForDetail.segment
+                        );
+                        return <CatIcon className="w-3.5 h-3.5 text-zinc-400 shrink-0" />;
+                      })()}
+                      <span>{selectedProductForDetail.subCategory}</span>
                     </span>
                   </div>
+
+                  {/* 1:1 Photo Actions on Detail Modal */}
+                  <div className="absolute bottom-3 right-3 flex items-center gap-2 z-10">
+                    <button
+                      type="button"
+                      onClick={() => detailFileInputRef.current?.click()}
+                      disabled={isUploadingDetailImage}
+                      className="px-3.5 py-2 rounded-xl bg-black/85 hover:bg-black/95 active:scale-95 backdrop-blur-md border border-white/20 text-white text-xs font-semibold flex items-center gap-1.5 transition-all shadow-lg"
+                    >
+                      {isUploadingDetailImage ? (
+                        <>
+                          <Loader2 className="w-3.5 h-3.5 animate-spin text-rose-400" />
+                          <span className="text-[11px] font-mono">Cropping 1:1...</span>
+                        </>
+                      ) : (
+                        <>
+                          <CameraUploadIcon className="w-3.5 h-3.5 text-rose-400" />
+                          <span className="text-[11px]">
+                            {selectedProductForDetail.imageUrl ? 'Change Photo' : 'Upload 1:1 Photo'}
+                          </span>
+                        </>
+                      )}
+                    </button>
+
+                    {selectedProductForDetail.imageUrl && !isUploadingDetailImage && (
+                      <button
+                        type="button"
+                        onClick={handleDetailRemovePhoto}
+                        className="w-9 h-9 rounded-xl bg-black/85 hover:bg-rose-950/80 active:scale-95 backdrop-blur-md border border-white/20 hover:border-rose-500/50 text-zinc-400 hover:text-rose-400 flex items-center justify-center transition-all shadow-lg"
+                        title="Remove Photo"
+                        aria-label="Remove Photo"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </button>
+                    )}
+                  </div>
+
+                  {/* Processing Overlay during Detail 1:1 Upload */}
+                  {isUploadingDetailImage && (
+                    <div className="absolute inset-0 bg-black/80 backdrop-blur-xs flex flex-col items-center justify-center gap-2 z-20">
+                      <Loader2 className="w-8 h-8 animate-spin text-rose-400" />
+                      <span className="text-xs font-mono font-semibold text-white">
+                        Cropping & uploading 1:1 photo...
+                      </span>
+                    </div>
+                  )}
                 </div>
 
                 {/* Routine Application Calendar & "Mark applied" Button */}
@@ -997,30 +1359,108 @@ export const SkinDashboard: React.FC<SkinDashboardProps> = ({
               {/* Form Body */}
               <form onSubmit={handleSaveProductSubmit} className="flex-1 flex flex-col min-h-0 overflow-hidden">
                 <div className="overflow-y-auto overscroll-contain flex-1 p-4 sm:p-5 space-y-4 no-scrollbar">
+                  {/* Dedicated 1:1 Product Photo Upload & Preview Card */}
+                  <div className="p-3.5 rounded-2xl bg-[#090A0F] border border-white/10 space-y-3">
+                    <div className="flex items-center justify-between">
+                      <label className="text-xs font-semibold text-zinc-200 flex items-center gap-1.5">
+                        <PhotoUploadIcon className="w-4 h-4 text-rose-400" />
+                        <span>Product Photo (1:1 Square)</span>
+                      </label>
+                      <span className="text-[10px] text-zinc-400 font-mono">
+                        Auto-crops to 1:1
+                      </span>
+                    </div>
+
+                    <div className="flex items-center gap-3">
+                      {/* 1:1 Preview Box */}
+                      <div className="w-20 h-20 rounded-2xl bg-zinc-950 border border-white/15 overflow-hidden relative shrink-0 flex items-center justify-center shadow-inner">
+                        {formImageUrl ? (
+                          <img
+                            src={formThumbnailUrl || formImageUrl}
+                            alt="Product Preview"
+                            className="w-full h-full object-cover"
+                          />
+                        ) : (
+                          <ProductPhotoSilhouette className="w-10 h-10 text-zinc-600" />
+                        )}
+                        {isUploadingFormImage && (
+                          <div className="absolute inset-0 bg-black/80 backdrop-blur-xs flex flex-col items-center justify-center gap-1">
+                            <Loader2 className="w-4 h-4 animate-spin text-rose-400" />
+                            <span className="text-[8px] font-mono text-zinc-300">Cropping...</span>
+                          </div>
+                        )}
+                      </div>
+
+                      {/* Upload & URL Controls */}
+                      <div className="flex-1 space-y-2 min-w-0">
+                        <div className="flex items-center gap-2">
+                          <button
+                            type="button"
+                            onClick={() => formFileInputRef.current?.click()}
+                            disabled={isUploadingFormImage}
+                            className="min-h-[38px] px-3.5 rounded-xl bg-white text-zinc-950 hover:bg-zinc-200 active:scale-95 text-xs font-bold inline-flex items-center gap-1.5 transition-all shadow-md disabled:opacity-50"
+                          >
+                            <CameraUploadIcon className="w-3.5 h-3.5" />
+                            <span>{formImageUrl ? 'Change Photo' : 'Upload Photo (1:1)'}</span>
+                          </button>
+
+                          {formImageUrl && (
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setFormImageUrl('');
+                                setFormThumbnailUrl('');
+                              }}
+                              className="min-h-[38px] px-3 rounded-xl bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 border border-rose-500/25 active:scale-95 text-xs font-medium transition-all"
+                            >
+                              Remove
+                            </button>
+                          )}
+                        </div>
+
+                        <input
+                          type="text"
+                          placeholder="Or paste image URL (https://...)"
+                          value={formImageUrl.startsWith('data:') ? '' : formImageUrl}
+                          onChange={(e) => {
+                            setFormImageUrl(e.target.value);
+                            setFormThumbnailUrl(e.target.value);
+                          }}
+                          className="w-full min-h-[34px] bg-[#12141C] border border-white/10 rounded-xl px-3 text-[11px] text-zinc-300 placeholder:text-zinc-600 focus:outline-none focus:border-rose-400 transition-colors font-mono"
+                        />
+                      </div>
+                    </div>
+                  </div>
+
                   {/* Care Segment Selector */}
                   <div>
                     <label className="block text-xs font-semibold text-zinc-300 mb-1.5">Care Segment</label>
                     <div className="grid grid-cols-3 gap-1.5 p-1 bg-[#090A0F] border border-white/10 rounded-2xl">
-                      {(['skincare', 'haircare', 'bodycare'] as CareSegment[]).map((seg) => (
-                        <button
-                          key={seg}
-                          type="button"
-                          onClick={() => {
-                            setFormSegment(seg);
-                            const cats = categoriesBySegment[seg] || ['Cleanser'];
-                            if (!cats.includes(formSubCategory)) {
-                              setFormSubCategory(cats[0] || 'Cleanser');
-                            }
-                          }}
-                          className={`min-h-[40px] rounded-xl text-xs font-semibold capitalize transition-colors ${
-                            formSegment === seg
-                              ? 'bg-white text-zinc-950 font-bold shadow-sm'
-                              : 'text-zinc-400 hover:text-white'
-                          }`}
-                        >
-                          {seg}
-                        </button>
-                      ))}
+                      {(['skincare', 'haircare', 'bodycare'] as CareSegment[]).map((seg) => {
+                        const SegIcon = SEGMENT_META[seg].icon;
+                        const isSelected = formSegment === seg;
+                        return (
+                          <button
+                            key={seg}
+                            type="button"
+                            onClick={() => {
+                              setFormSegment(seg);
+                              const cats = categoriesBySegment[seg] || ['Cleanser'];
+                              if (!cats.includes(formSubCategory)) {
+                                setFormSubCategory(cats[0] || 'Cleanser');
+                              }
+                            }}
+                            className={`min-h-[40px] rounded-xl text-xs font-semibold capitalize flex items-center justify-center gap-1.5 transition-colors ${
+                              isSelected
+                                ? 'bg-white text-zinc-950 font-bold shadow-sm'
+                                : 'text-zinc-400 hover:text-white'
+                            }`}
+                          >
+                            <SegIcon className="w-3.5 h-3.5 shrink-0" />
+                            <span>{seg}</span>
+                          </button>
+                        );
+                      })}
                     </div>
                   </div>
 
@@ -1056,20 +1496,25 @@ export const SkinDashboard: React.FC<SkinDashboardProps> = ({
                   <div className="space-y-1">
                     <label className="block text-xs font-semibold text-zinc-300">Category Tag</label>
                     <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar py-1">
-                      {(categoriesBySegment[formSegment] || []).map((cat) => (
-                        <button
-                          key={cat}
-                          type="button"
-                          onClick={() => setFormSubCategory(cat)}
-                          className={`min-h-[34px] px-3 rounded-xl text-xs font-semibold whitespace-nowrap transition-colors ${
-                            formSubCategory === cat
-                              ? 'bg-rose-500 text-white shadow-md'
-                              : 'bg-[#090A0F] text-zinc-400 border border-white/6 hover:text-white'
-                          }`}
-                        >
-                          {cat}
-                        </button>
-                      ))}
+                      {(categoriesBySegment[formSegment] || []).map((cat) => {
+                        const CatIcon = getCategoryIcon(cat, formSegment);
+                        const isSelected = formSubCategory === cat;
+                        return (
+                          <button
+                            key={cat}
+                            type="button"
+                            onClick={() => setFormSubCategory(cat)}
+                            className={`min-h-[34px] px-3 rounded-xl text-xs font-semibold whitespace-nowrap transition-colors flex items-center gap-1.5 ${
+                              isSelected
+                                ? 'bg-rose-500 text-white shadow-md'
+                                : 'bg-[#090A0F] text-zinc-400 border border-white/6 hover:text-white'
+                            }`}
+                          >
+                            <CatIcon className="w-3.5 h-3.5 shrink-0" />
+                            <span>{cat}</span>
+                          </button>
+                        );
+                      })}
                     </div>
                   </div>
 

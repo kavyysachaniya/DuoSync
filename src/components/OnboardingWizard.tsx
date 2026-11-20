@@ -286,7 +286,7 @@ export const OnboardingWizard: React.FC<OnboardingWizardProps> = ({
         <div className="flex items-center justify-between gap-4 pt-1">
           <div className="flex items-center gap-2">
             <span className="text-base sm:text-lg font-bold tracking-tight text-white font-display">
-              DuoPulse Setup
+              DuoSync Setup
             </span>
             <span className="text-xs text-zinc-500">·</span>
             <span className="text-xs text-zinc-400 font-mono tabular-nums">

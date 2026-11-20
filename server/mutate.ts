@@ -152,6 +152,8 @@ mutateRouter.post('/care-product', requireAuth, async (req: AuthenticatedRequest
       scheduleType = 'daily',
       scheduledDays = [],
       notes = '',
+      imageUrl = '',
+      thumbnailUrl = '',
     } = req.body;
 
     const targetWsId = workspaceId || req.user?.workspaceId;
@@ -162,39 +164,81 @@ mutateRouter.post('/care-product', requireAuth, async (req: AuthenticatedRequest
 
     const sql = getDb();
 
-    await sql`
-      INSERT INTO public.care_products (
-        id, workspace_id, profile_slot, segment, sub_category, name, brand, quantity,
-        ordered_date, opened_date, expiry_date, sale_info, price_paid, original_price,
-        status, routine_time, schedule_type, scheduled_days, notes, updated_by_id, updated_at
-      ) VALUES (
-        ${id}, ${targetWsId}, ${profileSlot}, ${segment}, ${subCategory}, ${name}, ${brand},
-        ${Number(quantity) || 1}, ${orderedDate}, ${openedDate}, ${expiryDate}, ${saleInfo},
-        ${Number(pricePaid) || 0}, ${Number(originalPrice) || 0}, ${status}, ${routineTime},
-        ${scheduleType}, ${scheduledDays}, ${notes}, ${req.user?.userId || null}, now()
-      )
-      ON CONFLICT (id)
-      DO UPDATE SET
-        profile_slot = EXCLUDED.profile_slot,
-        segment = EXCLUDED.segment,
-        sub_category = EXCLUDED.sub_category,
-        name = EXCLUDED.name,
-        brand = EXCLUDED.brand,
-        quantity = EXCLUDED.quantity,
-        ordered_date = EXCLUDED.ordered_date,
-        opened_date = EXCLUDED.opened_date,
-        expiry_date = EXCLUDED.expiry_date,
-        sale_info = EXCLUDED.sale_info,
-        price_paid = EXCLUDED.price_paid,
-        original_price = EXCLUDED.original_price,
-        status = EXCLUDED.status,
-        routine_time = EXCLUDED.routine_time,
-        schedule_type = EXCLUDED.schedule_type,
-        scheduled_days = EXCLUDED.scheduled_days,
-        notes = EXCLUDED.notes,
-        updated_by_id = EXCLUDED.updated_by_id,
-        updated_at = now()
-    `;
+    try {
+      await sql`
+        INSERT INTO public.care_products (
+          id, workspace_id, profile_slot, segment, sub_category, name, brand, quantity,
+          ordered_date, opened_date, expiry_date, sale_info, price_paid, original_price,
+          status, routine_time, schedule_type, scheduled_days, notes, image_url, thumbnail_url, updated_by_id, updated_at
+        ) VALUES (
+          ${id}, ${targetWsId}, ${profileSlot}, ${segment}, ${subCategory}, ${name}, ${brand},
+          ${Number(quantity) || 1}, ${orderedDate}, ${openedDate}, ${expiryDate}, ${saleInfo},
+          ${Number(pricePaid) || 0}, ${Number(originalPrice) || 0}, ${status}, ${routineTime},
+          ${scheduleType}, ${scheduledDays}, ${notes}, ${imageUrl || ''}, ${thumbnailUrl || imageUrl || ''}, ${req.user?.userId || null}, now()
+        )
+        ON CONFLICT (id)
+        DO UPDATE SET
+          profile_slot = EXCLUDED.profile_slot,
+          segment = EXCLUDED.segment,
+          sub_category = EXCLUDED.sub_category,
+          name = EXCLUDED.name,
+          brand = EXCLUDED.brand,
+          quantity = EXCLUDED.quantity,
+          ordered_date = EXCLUDED.ordered_date,
+          opened_date = EXCLUDED.opened_date,
+          expiry_date = EXCLUDED.expiry_date,
+          sale_info = EXCLUDED.sale_info,
+          price_paid = EXCLUDED.price_paid,
+          original_price = EXCLUDED.original_price,
+          status = EXCLUDED.status,
+          routine_time = EXCLUDED.routine_time,
+          schedule_type = EXCLUDED.schedule_type,
+          scheduled_days = EXCLUDED.scheduled_days,
+          notes = EXCLUDED.notes,
+          image_url = EXCLUDED.image_url,
+          thumbnail_url = EXCLUDED.thumbnail_url,
+          updated_by_id = EXCLUDED.updated_by_id,
+          updated_at = now()
+      `;
+    } catch (colErr: any) {
+      if (colErr?.message?.includes('image_url') || colErr?.message?.includes('thumbnail_url')) {
+        await sql`
+          INSERT INTO public.care_products (
+            id, workspace_id, profile_slot, segment, sub_category, name, brand, quantity,
+            ordered_date, opened_date, expiry_date, sale_info, price_paid, original_price,
+            status, routine_time, schedule_type, scheduled_days, notes, updated_by_id, updated_at
+          ) VALUES (
+            ${id}, ${targetWsId}, ${profileSlot}, ${segment}, ${subCategory}, ${name}, ${brand},
+            ${Number(quantity) || 1}, ${orderedDate}, ${openedDate}, ${expiryDate}, ${saleInfo},
+            ${Number(pricePaid) || 0}, ${Number(originalPrice) || 0}, ${status}, ${routineTime},
+            ${scheduleType}, ${scheduledDays}, ${notes}, ${req.user?.userId || null}, now()
+          )
+          ON CONFLICT (id)
+          DO UPDATE SET
+            profile_slot = EXCLUDED.profile_slot,
+            segment = EXCLUDED.segment,
+            sub_category = EXCLUDED.sub_category,
+            name = EXCLUDED.name,
+            brand = EXCLUDED.brand,
+            quantity = EXCLUDED.quantity,
+            ordered_date = EXCLUDED.ordered_date,
+            opened_date = EXCLUDED.opened_date,
+            expiry_date = EXCLUDED.expiry_date,
+            sale_info = EXCLUDED.sale_info,
+            price_paid = EXCLUDED.price_paid,
+            original_price = EXCLUDED.original_price,
+            status = EXCLUDED.status,
+            routine_time = EXCLUDED.routine_time,
+            schedule_type = EXCLUDED.schedule_type,
+            scheduled_days = EXCLUDED.scheduled_days,
+            notes = EXCLUDED.notes,
+            updated_by_id = EXCLUDED.updated_by_id,
+            updated_at = now()
+        `;
+      } else {
+        throw colErr;
+      }
+    }
 
     const newTimestamp = await bumpWorkspaceSync(sql, targetWsId);
     res.json({ success: true, timestamp: newTimestamp, id });

@@ -242,10 +242,18 @@ export const HealthDashboard: React.FC<HealthDashboardProps> = ({
     }
   };
 
-  const handleSaveSteps = async (e: React.FormEvent) => {
-    e.preventDefault();
-    const val = parseInt(stepsInput.replace(/,/g, ''), 10);
-    const cleanSteps = Number.isNaN(val) ? 0 : Math.max(0, Math.min(200000, val));
+  const handleSaveSteps = async (e?: React.FormEvent | number, overrideSteps?: number) => {
+    if (e && typeof e === 'object' && 'preventDefault' in e) {
+      e.preventDefault();
+    }
+    const targetVal = typeof e === 'number' ? e : overrideSteps;
+    const cleanSteps =
+      targetVal !== undefined
+        ? Math.max(0, Math.min(200000, targetVal))
+        : (() => {
+            const val = parseInt(stepsInput.replace(/,/g, ''), 10);
+            return Number.isNaN(val) ? 0 : Math.max(0, Math.min(200000, val));
+          })();
     setStepsInput(String(cleanSteps));
     setSavingField('steps');
     try {
@@ -350,33 +358,24 @@ export const HealthDashboard: React.FC<HealthDashboardProps> = ({
         className="snap-start flex flex-col gap-2.5 sm:gap-3 scroll-mt-[68px] sm:scroll-mt-[76px] h-[calc(100dvh-9.75rem-env(safe-area-inset-bottom,0px))] sm:h-[calc(100dvh-7.5rem)]"
       >
         {/* 1. TOP CARD ("Kavy's Dashboard") */}
-        <div className="shrink-0 rounded-3xl bg-[#12141C] border border-white/8 p-3 sm:p-3.5 space-y-2">
+        <div className="shrink-0 rounded-3xl bg-[#12141C] border border-white/8 p-3 sm:p-3.5 space-y-1.5">
           <div className="flex items-center justify-between gap-2">
-            <div className="flex items-center flex-wrap gap-1.5 text-xs text-zinc-400">
-              <span className="font-medium text-rose-400">{profile.role}</span>
-              <span aria-hidden="true">·</span>
-              <span>
-                {selectedDate === todayDate ? 'Today’s Live Vitals' : `Log Date: ${selectedDate}`}
-              </span>
-              {savedToast && (
-                <>
-                  <span aria-hidden="true">·</span>
-                  <span className="text-emerald-300 font-semibold flex items-center gap-1">
-                    <Check className="w-3.5 h-3.5" />
+            <div className="space-y-0.5 min-w-0 flex-1">
+              <div className="flex items-center gap-2">
+                <h1 className="text-lg sm:text-2xl font-bold tracking-tight text-white leading-tight truncate">
+                  {profile.name}’s Daily Health
+                </h1>
+                {savedToast && (
+                  <span className="text-[11px] font-mono text-emerald-400 font-semibold flex items-center gap-1 bg-emerald-500/10 px-2 py-0.5 rounded-full shrink-0">
+                    <Check className="w-3 h-3" />
                     {savedToast}
                   </span>
-                </>
-              )}
+                )}
+              </div>
+              <p className="text-[11px] sm:text-xs text-zinc-400 truncate">
+                Track and sync your daily vitals in real time
+              </p>
             </div>
-          </div>
-
-          <div className="space-y-0.5">
-            <h1 className="text-lg sm:text-2xl font-bold tracking-tight text-white leading-tight">
-              {profile.name}’s Daily Health
-            </h1>
-            <p className="text-[11px] sm:text-xs text-zinc-400">
-              Track and sync your daily vitals in real time
-            </p>
           </div>
 
           {/* Single Row: Left 60%, Right 40% with 12px gap */}
@@ -648,16 +647,18 @@ export const HealthDashboard: React.FC<HealthDashboardProps> = ({
         {/* Card: Body Weight (50% of available viewport) */}
         <section
           id="card-weight"
-          className="flex-1 min-h-0 scroll-mt-[68px] sm:scroll-mt-[76px] rounded-3xl bg-[#12141C] border border-white/8 p-3 sm:p-3.5 flex flex-col justify-between overflow-y-auto no-scrollbar"
+          className="flex-1 min-h-0 scroll-mt-[68px] sm:scroll-mt-[76px] rounded-3xl bg-[#12141C] border border-white/8 p-4 flex flex-col justify-between overflow-y-auto no-scrollbar"
         >
-          {/* Header Row */}
-          <div className="shrink-0 flex items-center justify-between gap-2 pb-1">
+          {/* Header Row: Clean metric title & goal info */}
+          <div className="shrink-0 flex items-center justify-between gap-2 pb-1.5">
             <div className="flex items-center gap-1.5 text-xs text-rose-400 font-semibold min-w-0 truncate">
               <Scale className="w-3.5 h-3.5 shrink-0" />
               <span className="truncate">Body Weight</span>
             </div>
             <div className="text-[11px] font-mono tabular-nums text-zinc-400 flex items-center gap-1.5 shrink-0">
               <span>Goal: {profile.targetWeight} {profile.weightUnit}</span>
+              <span className="text-zinc-600">·</span>
+              <span className="text-rose-400 font-semibold">{weightPct}% to goal</span>
               {weightDelta7d !== null && (
                 <span
                   className={`flex items-center gap-0.5 font-bold ${
@@ -675,69 +676,67 @@ export const HealthDashboard: React.FC<HealthDashboardProps> = ({
             </div>
           </div>
 
-          {/* Center Visual + Log Controls */}
-          <div className="flex items-center gap-3 sm:gap-4 my-auto py-1">
-            <div className="shrink-0">
+          {/* Two-Column Main Row: Left 50% Circle, Right 50% Other */}
+          <div className="flex items-center gap-3 w-full my-auto py-1">
+            {/* LEFT 50%: Circular Progress Ring centered */}
+            <div className="w-1/2 shrink-0 flex items-center justify-center">
               <CircularProgressRing
                 percentage={weightPct}
-                size={76}
-                strokeWidth={7}
+                size={116}
+                strokeWidth={9.5}
                 color="#F43F5E"
               >
-                <span className="text-base font-bold font-mono tabular-nums text-white leading-none">
+                <span className="text-xl font-bold font-mono tabular-nums text-white leading-none">
                   {loggedWeight > 0 ? loggedWeight.toFixed(1) : '—'}
                 </span>
-                <span className="text-[9px] font-mono text-zinc-400 leading-none mt-0.5">
+                <span className="text-[10px] font-mono text-zinc-400 leading-none mt-1">
                   {profile.weightUnit}
                 </span>
-                <span className="text-[9px] font-mono text-rose-400 leading-none mt-0.5">
+                <span className="text-[10px] font-mono text-rose-400 leading-none mt-0.5 font-bold">
                   {weightPct}%
                 </span>
               </CircularProgressRing>
             </div>
 
-            <div className="flex-1 min-w-0 space-y-1.5">
-              <div className="flex items-center justify-between text-[11px] text-zinc-400">
-                <span className="truncate">Log ({selectedDateDisplay})</span>
-                <span className="font-mono text-rose-400 text-[10px] shrink-0 font-medium">
-                  {weightPct}% to goal
+            {/* RIGHT 50%: Vertical Stack (Input + 3 Equal Action Buttons) */}
+            <div className="w-1/2 flex-1 min-w-0 flex flex-col gap-2">
+              {/* Full-width 48px high weight input with unit inside (kg) */}
+              <div className="relative w-full">
+                <input
+                  type="number"
+                  step="0.1"
+                  min="0"
+                  max="500"
+                  value={weightInput}
+                  onChange={(e) => setWeightInput(e.target.value)}
+                  placeholder={String(profile.targetWeight)}
+                  className="w-full h-12 min-h-[48px] bg-[#090A0F] border border-white/10 rounded-xl pl-3 pr-9 text-base sm:text-sm font-mono tabular-nums text-white placeholder:text-zinc-600 focus:outline-none focus:border-rose-500/60"
+                />
+                <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs font-mono text-zinc-400 pointer-events-none">
+                  {profile.weightUnit}
                 </span>
               </div>
 
-              <div className="flex items-center gap-1 sm:gap-1.5">
+              {/* Row of 3 equal buttons (-0.1, +0.1, Save) at 44-48px height */}
+              <div className="grid grid-cols-3 gap-1.5 w-full">
                 <button
                   type="button"
                   onClick={() => {
                     const base = loggedWeight || profile.startWeight || profile.targetWeight || 55;
                     handleSaveWeight(Math.max(1, Math.round((base - 0.1) * 10) / 10));
                   }}
-                  className="min-w-[44px] h-11 rounded-xl bg-zinc-900 hover:bg-zinc-800 border border-white/10 text-xs font-mono font-bold text-zinc-200 transition-colors active:scale-95"
+                  className="h-11 sm:h-12 min-h-[44px] rounded-xl bg-zinc-900 hover:bg-zinc-800 border border-white/10 text-xs font-mono font-bold text-zinc-200 flex items-center justify-center transition-colors active:scale-95 cursor-pointer"
                   title="Decrease 0.1"
                 >
                   -0.1
                 </button>
-                <div className="relative flex-1 min-w-0">
-                  <input
-                    type="number"
-                    step="0.1"
-                    min="0"
-                    max="500"
-                    value={weightInput}
-                    onChange={(e) => setWeightInput(e.target.value)}
-                    placeholder={String(profile.targetWeight)}
-                    className="w-full h-11 bg-[#090A0F] border border-white/10 rounded-xl pl-2.5 pr-8 text-sm font-mono tabular-nums text-white placeholder:text-zinc-600 focus:outline-none focus:border-rose-500/60"
-                  />
-                  <span className="absolute right-2 top-1/2 -translate-y-1/2 text-[10px] font-mono text-zinc-500 pointer-events-none">
-                    {profile.weightUnit}
-                  </span>
-                </div>
                 <button
                   type="button"
                   onClick={() => {
                     const base = loggedWeight || profile.startWeight || profile.targetWeight || 55;
                     handleSaveWeight(Math.min(500, Math.round((base + 0.1) * 10) / 10));
                   }}
-                  className="min-w-[44px] h-11 rounded-xl bg-zinc-900 hover:bg-zinc-800 border border-white/10 text-xs font-mono font-bold text-zinc-200 transition-colors active:scale-95"
+                  className="h-11 sm:h-12 min-h-[44px] rounded-xl bg-zinc-900 hover:bg-zinc-800 border border-white/10 text-xs font-mono font-bold text-zinc-200 flex items-center justify-center transition-colors active:scale-95 cursor-pointer"
                   title="Increase 0.1"
                 >
                   +0.1
@@ -746,7 +745,7 @@ export const HealthDashboard: React.FC<HealthDashboardProps> = ({
                   type="button"
                   onClick={() => handleSaveWeight()}
                   disabled={savingField === 'weight'}
-                  className="min-w-[52px] h-11 px-3 rounded-xl bg-rose-500 hover:bg-rose-600 text-xs font-semibold text-white transition-colors whitespace-nowrap shrink-0 active:scale-95"
+                  className="h-11 sm:h-12 min-h-[44px] rounded-xl bg-rose-500 hover:bg-rose-600 text-xs font-bold text-white flex items-center justify-center transition-all whitespace-nowrap active:scale-95 shadow-md shadow-rose-500/20 cursor-pointer disabled:opacity-40"
                 >
                   {savingField === 'weight' ? '...' : 'Save'}
                 </button>
@@ -804,51 +803,51 @@ export const HealthDashboard: React.FC<HealthDashboardProps> = ({
         {/* Card: Daily Steps (50% of available viewport) */}
         <section
           id="card-steps"
-          className="flex-1 min-h-0 scroll-mt-[68px] sm:scroll-mt-[76px] rounded-3xl bg-[#12141C] border border-white/8 p-3 sm:p-3.5 flex flex-col justify-between overflow-y-auto no-scrollbar"
+          className="flex-1 min-h-0 scroll-mt-[68px] sm:scroll-mt-[76px] rounded-3xl bg-[#12141C] border border-white/8 p-4 flex flex-col justify-between overflow-y-auto no-scrollbar"
         >
-          {/* Header Row */}
-          <div className="shrink-0 flex items-center justify-between gap-2 pb-1">
+          {/* Header Row: Clean metric title & goal info */}
+          <div className="shrink-0 flex items-center justify-between gap-2 pb-1.5">
             <div className="flex items-center gap-1.5 text-xs text-emerald-400 font-semibold min-w-0 truncate">
               <Footprints className="w-3.5 h-3.5 shrink-0" />
               <span className="truncate">Daily Steps</span>
             </div>
-            <div className="text-[11px] font-mono tabular-nums text-zinc-400 shrink-0">
-              Goal: {profile.stepsGoal.toLocaleString()} · Left:{' '}
-              {Math.max(0, profile.stepsGoal - loggedSteps).toLocaleString()}
+            <div className="text-[11px] font-mono tabular-nums text-zinc-400 flex items-center gap-1.5 shrink-0">
+              <span>Goal: {profile.stepsGoal.toLocaleString()}</span>
+              <span className="text-zinc-600">·</span>
+              <span className="text-emerald-400 font-semibold">{stepsPct}% to goal</span>
             </div>
           </div>
 
-          {/* Center Visual + Log Controls */}
-          <div className="flex items-center gap-3 sm:gap-4 my-auto py-1">
-            <div className="shrink-0">
+          {/* Two-Column Main Row: Left 50% Circle, Right 50% Other */}
+          <div className="flex items-center gap-3 w-full my-auto py-1">
+            {/* LEFT 50%: Circular Progress Ring centered */}
+            <div className="w-1/2 shrink-0 flex items-center justify-center">
               <CircularProgressRing
                 percentage={stepsPct}
-                size={76}
-                strokeWidth={7}
+                size={116}
+                strokeWidth={9.5}
                 color="#10B981"
               >
-                <span className="text-base font-bold font-mono tabular-nums text-white leading-none">
+                <span className="text-xl font-bold font-mono tabular-nums text-white leading-none">
                   {loggedSteps > 0
                     ? loggedSteps >= 1000
                       ? `${(loggedSteps / 1000).toFixed(1)}k`
                       : loggedSteps
                     : '0'}
                 </span>
-                <span className="text-[9px] font-mono text-emerald-400 leading-none mt-0.5">
+                <span className="text-[10px] font-mono text-zinc-400 leading-none mt-1">
+                  steps
+                </span>
+                <span className="text-[10px] font-mono text-emerald-400 leading-none mt-0.5 font-bold">
                   {stepsPct}%
                 </span>
               </CircularProgressRing>
             </div>
 
-            <form onSubmit={handleSaveSteps} className="flex-1 min-w-0 space-y-1.5">
-              <div className="flex items-center justify-between text-[11px] text-zinc-400">
-                <span className="truncate">End-of-Day Step Total</span>
-                <span className="font-mono text-emerald-400 text-[10px] shrink-0 font-medium">
-                  {loggedSteps.toLocaleString()} / {profile.stepsGoal.toLocaleString()}
-                </span>
-              </div>
-
-              <div className="flex items-center gap-1.5">
+            {/* RIGHT 50%: Vertical Stack (Input + 3 Equal Action Buttons) */}
+            <div className="w-1/2 flex-1 min-w-0 flex flex-col gap-2">
+              {/* Full-width 48px high steps input with unit inside */}
+              <div className="relative w-full">
                 <input
                   type="number"
                   inputMode="numeric"
@@ -856,18 +855,42 @@ export const HealthDashboard: React.FC<HealthDashboardProps> = ({
                   max="200000"
                   value={stepsInput}
                   onChange={(e) => setStepsInput(e.target.value)}
-                  placeholder="e.g. 9420"
-                  className="flex-1 min-w-0 h-11 bg-[#090A0F] border border-white/10 rounded-xl px-3 text-sm font-mono tabular-nums text-white placeholder:text-zinc-600 focus:outline-none focus:border-emerald-500/60"
+                  placeholder={String(profile.stepsGoal)}
+                  className="w-full h-12 min-h-[48px] bg-[#090A0F] border border-white/10 rounded-xl pl-3 pr-11 text-base sm:text-sm font-mono tabular-nums text-white placeholder:text-zinc-600 focus:outline-none focus:border-emerald-500/60"
                 />
+                <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs font-mono text-zinc-400 pointer-events-none">
+                  steps
+                </span>
+              </div>
+
+              {/* Row of 3 equal buttons (-500, +500, Save) at 44-48px height */}
+              <div className="grid grid-cols-3 gap-1.5 w-full">
                 <button
-                  type="submit"
-                  disabled={savingField === 'steps'}
-                  className="min-w-[64px] h-11 px-3 rounded-xl bg-emerald-500 hover:bg-emerald-600 text-xs font-bold text-zinc-950 transition-colors whitespace-nowrap shrink-0 active:scale-95"
+                  type="button"
+                  onClick={() => handleSaveSteps(Math.max(0, loggedSteps - 500))}
+                  className="h-11 sm:h-12 min-h-[44px] rounded-xl bg-zinc-900 hover:bg-zinc-800 border border-white/10 text-xs font-mono font-bold text-zinc-200 flex items-center justify-center transition-colors active:scale-95 cursor-pointer"
+                  title="Decrease 500 steps"
                 >
-                  {savingField === 'steps' ? '...' : 'Log'}
+                  -500
+                </button>
+                <button
+                  type="button"
+                  onClick={() => handleSaveSteps(loggedSteps + 500)}
+                  className="h-11 sm:h-12 min-h-[44px] rounded-xl bg-zinc-900 hover:bg-zinc-800 border border-white/10 text-xs font-mono font-bold text-zinc-200 flex items-center justify-center transition-colors active:scale-95 cursor-pointer"
+                  title="Increase 500 steps"
+                >
+                  +500
+                </button>
+                <button
+                  type="button"
+                  onClick={() => handleSaveSteps()}
+                  disabled={savingField === 'steps'}
+                  className="h-11 sm:h-12 min-h-[44px] rounded-xl bg-emerald-500 hover:bg-emerald-600 text-xs font-bold text-zinc-950 flex items-center justify-center transition-all whitespace-nowrap active:scale-95 shadow-md shadow-emerald-500/20 cursor-pointer disabled:opacity-40"
+                >
+                  {savingField === 'steps' ? '...' : 'Save'}
                 </button>
               </div>
-            </form>
+            </div>
           </div>
 
           {/* 7-Day Steps Sparkline */}
@@ -929,48 +952,48 @@ export const HealthDashboard: React.FC<HealthDashboardProps> = ({
         {/* Card: Sleep Duration (50% of available viewport) */}
         <section
           id="card-sleep"
-          className="flex-1 min-h-0 scroll-mt-[68px] sm:scroll-mt-[76px] rounded-3xl bg-[#12141C] border border-white/8 p-3 sm:p-3.5 flex flex-col justify-between overflow-y-auto no-scrollbar"
+          className="flex-1 min-h-0 scroll-mt-[68px] sm:scroll-mt-[76px] rounded-3xl bg-[#12141C] border border-white/8 p-4 flex flex-col justify-between overflow-y-auto no-scrollbar"
         >
-          {/* Header Row */}
-          <div className="shrink-0 flex items-center justify-between gap-2 pb-1">
+          {/* Header Row: Clean metric title & goal info */}
+          <div className="shrink-0 flex items-center justify-between gap-2 pb-1.5">
             <div className="flex items-center gap-1.5 text-xs text-indigo-400 font-semibold min-w-0 truncate">
               <Moon className="w-3.5 h-3.5 shrink-0" />
               <span className="truncate">Sleep Duration</span>
             </div>
-            <div className="text-[11px] font-mono tabular-nums text-zinc-400 shrink-0">
-              Goal: {formatSleepDuration(profile.sleepGoalMinutes)} · Logged:{' '}
-              {formatSleepDuration(loggedSleepMinutes)}
+            <div className="text-[11px] font-mono tabular-nums text-zinc-400 flex items-center gap-1.5 shrink-0">
+              <span>Goal: {formatSleepDuration(profile.sleepGoalMinutes)}</span>
+              <span className="text-zinc-600">·</span>
+              <span className="text-indigo-400 font-semibold">{sleepPct}% to goal</span>
             </div>
           </div>
 
-          {/* Center Visual + Log Controls */}
-          <div className="flex items-center gap-3 sm:gap-4 my-auto py-1">
-            <div className="shrink-0">
+          {/* Two-Column Main Row: Left 50% Circle, Right 50% Other */}
+          <div className="flex items-center gap-3 w-full my-auto py-1">
+            {/* LEFT 50%: Circular Progress Ring centered */}
+            <div className="w-1/2 shrink-0 flex items-center justify-center">
               <CircularProgressRing
                 percentage={sleepPct}
-                size={76}
-                strokeWidth={7}
+                size={116}
+                strokeWidth={9.5}
                 color="#818CF8"
               >
-                <span className="text-sm font-bold font-mono tabular-nums text-white leading-none">
+                <span className="text-base sm:text-lg font-bold font-mono tabular-nums text-white leading-none">
                   {formatSleepDuration(loggedSleepMinutes)}
                 </span>
-                <span className="text-[9px] font-mono text-indigo-400 leading-none mt-0.5">
+                <span className="text-[10px] font-mono text-zinc-400 leading-none mt-1">
+                  sleep
+                </span>
+                <span className="text-[10px] font-mono text-indigo-400 leading-none mt-0.5 font-bold">
                   {sleepPct}%
                 </span>
               </CircularProgressRing>
             </div>
 
-            <div className="flex-1 min-w-0 space-y-1.5">
-              <div className="flex items-center justify-between text-[11px] text-zinc-400">
-                <span className="truncate">Logged ({selectedDateDisplay})</span>
-                <span className="font-mono text-indigo-400 text-[10px] shrink-0 font-medium">
-                  Target {formatSleepDuration(profile.sleepGoalMinutes)}
-                </span>
-              </div>
-
-              <div className="flex items-center gap-1 sm:gap-1.5">
-                <div className="relative flex-1 min-w-0">
+            {/* RIGHT 50%: Vertical Stack (Inputs + 3 Equal Action Buttons) */}
+            <div className="w-1/2 flex-1 min-w-0 flex flex-col gap-2">
+              {/* Side-by-side 48px inputs for Hours and Minutes */}
+              <div className="grid grid-cols-2 gap-1.5 w-full">
+                <div className="relative">
                   <input
                     type="number"
                     min="0"
@@ -978,13 +1001,13 @@ export const HealthDashboard: React.FC<HealthDashboardProps> = ({
                     value={sleepHoursInput}
                     onChange={(e) => setSleepHoursInput(e.target.value)}
                     placeholder="8"
-                    className="w-full h-11 bg-[#090A0F] border border-white/10 rounded-xl pl-2 pr-6 text-sm font-mono tabular-nums text-white placeholder:text-zinc-600 focus:outline-none focus:border-indigo-500/60"
+                    className="w-full h-12 min-h-[48px] bg-[#090A0F] border border-white/10 rounded-xl pl-2.5 pr-6 text-base sm:text-sm font-mono tabular-nums text-white placeholder:text-zinc-600 focus:outline-none focus:border-indigo-500/60"
                   />
-                  <span className="absolute right-1.5 top-1/2 -translate-y-1/2 text-[10px] font-mono text-zinc-500 pointer-events-none">
+                  <span className="absolute right-2 top-1/2 -translate-y-1/2 text-xs font-mono text-zinc-400 pointer-events-none">
                     hr
                   </span>
                 </div>
-                <div className="relative flex-1 min-w-0">
+                <div className="relative">
                   <input
                     type="number"
                     min="0"
@@ -992,34 +1015,40 @@ export const HealthDashboard: React.FC<HealthDashboardProps> = ({
                     value={sleepMinsInput}
                     onChange={(e) => setSleepMinsInput(e.target.value)}
                     placeholder="00"
-                    className="w-full h-11 bg-[#090A0F] border border-white/10 rounded-xl pl-2 pr-7 text-sm font-mono tabular-nums text-white placeholder:text-zinc-600 focus:outline-none focus:border-indigo-500/60"
+                    className="w-full h-12 min-h-[48px] bg-[#090A0F] border border-white/10 rounded-xl pl-2.5 pr-7 text-base sm:text-sm font-mono tabular-nums text-white placeholder:text-zinc-600 focus:outline-none focus:border-indigo-500/60"
                   />
-                  <span className="absolute right-1.5 top-1/2 -translate-y-1/2 text-[10px] font-mono text-zinc-500 pointer-events-none">
+                  <span className="absolute right-2 top-1/2 -translate-y-1/2 text-xs font-mono text-zinc-400 pointer-events-none">
                     min
                   </span>
                 </div>
+              </div>
+
+              {/* Row of 3 equal buttons (-30m, +30m, Save) at 44-48px height */}
+              <div className="grid grid-cols-3 gap-1.5 w-full">
+                <button
+                  type="button"
+                  onClick={() => handleSaveSleep(Math.max(0, loggedSleepMinutes - 30))}
+                  className="h-11 sm:h-12 min-h-[44px] rounded-xl bg-zinc-900 hover:bg-zinc-800 border border-white/10 text-xs font-mono font-bold text-zinc-200 flex items-center justify-center transition-colors active:scale-95 cursor-pointer"
+                  title="Decrease 30 minutes"
+                >
+                  -30m
+                </button>
+                <button
+                  type="button"
+                  onClick={() => handleSaveSleep(loggedSleepMinutes + 30)}
+                  className="h-11 sm:h-12 min-h-[44px] rounded-xl bg-zinc-900 hover:bg-zinc-800 border border-white/10 text-xs font-mono font-bold text-zinc-200 flex items-center justify-center transition-colors active:scale-95 cursor-pointer"
+                  title="Increase 30 minutes"
+                >
+                  +30m
+                </button>
                 <button
                   type="button"
                   onClick={() => handleSaveSleep()}
                   disabled={savingField === 'sleep'}
-                  className="min-w-[52px] h-11 px-3 rounded-xl bg-indigo-500 hover:bg-indigo-600 text-xs font-semibold text-white transition-colors whitespace-nowrap shrink-0 active:scale-95"
+                  className="h-11 sm:h-12 min-h-[44px] rounded-xl bg-indigo-500 hover:bg-indigo-600 text-xs font-bold text-white flex items-center justify-center transition-all whitespace-nowrap active:scale-95 shadow-md shadow-indigo-500/20 cursor-pointer disabled:opacity-40"
                 >
                   {savingField === 'sleep' ? '...' : 'Save'}
                 </button>
-              </div>
-
-              {/* Quick Duration Presets */}
-              <div className="grid grid-cols-5 gap-1 pt-0.5">
-                {[390, 420, 450, 480, 510].map((presetMins) => (
-                  <button
-                    key={presetMins}
-                    type="button"
-                    onClick={() => handleSaveSleep(presetMins)}
-                    className="min-h-[26px] rounded-lg bg-zinc-900 hover:bg-zinc-800 border border-white/8 text-[9px] font-mono tabular-nums text-zinc-300 transition-colors active:scale-95"
-                  >
-                    {formatSleepDuration(presetMins)}
-                  </button>
-                ))}
               </div>
             </div>
           </div>
@@ -1077,93 +1106,87 @@ export const HealthDashboard: React.FC<HealthDashboardProps> = ({
         {/* Card: Hydration (50% of available viewport) */}
         <section
           id="card-water"
-          className="flex-1 min-h-0 scroll-mt-[68px] sm:scroll-mt-[76px] rounded-3xl bg-[#12141C] border border-white/8 p-3 sm:p-3.5 flex flex-col justify-between overflow-y-auto no-scrollbar"
+          className="flex-1 min-h-0 scroll-mt-[68px] sm:scroll-mt-[76px] rounded-3xl bg-[#12141C] border border-white/8 p-4 flex flex-col justify-between overflow-y-auto no-scrollbar"
         >
-          {/* Header Row */}
-          <div className="shrink-0 flex items-center justify-between gap-2 pb-1">
+          {/* Header Row: Clean metric title & goal info */}
+          <div className="shrink-0 flex items-center justify-between gap-2 pb-1.5">
             <div className="flex items-center gap-1.5 text-xs text-sky-400 font-semibold min-w-0 truncate">
               <Droplets className="w-3.5 h-3.5 shrink-0" />
               <span className="truncate">Hydration</span>
             </div>
-            <div className="text-[11px] font-mono tabular-nums text-zinc-400 shrink-0">
-              Goal: {(profile.waterGoalMl / 1000).toFixed(1)}L ({profile.waterGoalMl} ml)
+            <div className="text-[11px] font-mono tabular-nums text-zinc-400 flex items-center gap-1.5 shrink-0">
+              <span>Goal: {(profile.waterGoalMl / 1000).toFixed(1)}L</span>
+              <span className="text-zinc-600">·</span>
+              <span className="text-sky-400 font-semibold">{waterPct}% to goal</span>
             </div>
           </div>
 
-          {/* Center Visual + Log Controls */}
-          <div className="flex items-center gap-3 sm:gap-4 my-auto py-1">
-            <div className="shrink-0">
+          {/* Two-Column Main Row: Left 50% Circle, Right 50% Other */}
+          <div className="flex items-center gap-3 w-full my-auto py-1">
+            {/* LEFT 50%: Circular Progress Ring centered */}
+            <div className="w-1/2 shrink-0 flex items-center justify-center">
               <CircularProgressRing
                 percentage={waterPct}
-                size={76}
-                strokeWidth={7}
+                size={116}
+                strokeWidth={9.5}
                 color="#38BDF8"
               >
-                <span className="text-sm font-bold font-mono tabular-nums text-white leading-none">
+                <span className="text-xl font-bold font-mono tabular-nums text-white leading-none">
                   {(loggedWaterMl / 1000).toFixed(1)}L
                 </span>
-                <span className="text-[9px] font-mono text-sky-400 leading-none mt-0.5">
+                <span className="text-[10px] font-mono text-zinc-400 leading-none mt-1">
+                  water
+                </span>
+                <span className="text-[10px] font-mono text-sky-400 leading-none mt-0.5 font-bold">
                   {waterPct}%
                 </span>
               </CircularProgressRing>
             </div>
 
-            <div className="flex-1 min-w-0 space-y-1.5">
-              <div className="flex items-center justify-between text-[11px] text-zinc-400">
-                <span className="truncate">Logged ({selectedDateDisplay})</span>
-                <span className="font-mono text-sky-400 text-[10px] shrink-0 font-medium">
-                  {loggedWaterMl} ml ({waterPct}%)
+            {/* RIGHT 50%: Vertical Stack (Input + 3 Equal Action Buttons) */}
+            <div className="w-1/2 flex-1 min-w-0 flex flex-col gap-2">
+              {/* Full-width 48px high water input with unit inside (ml) */}
+              <div className="relative w-full">
+                <input
+                  type="number"
+                  inputMode="numeric"
+                  min="0"
+                  max="20000"
+                  value={waterInput}
+                  onChange={(e) => setWaterInput(e.target.value)}
+                  placeholder={String(profile.waterGoalMl)}
+                  className="w-full h-12 min-h-[48px] bg-[#090A0F] border border-white/10 rounded-xl pl-3 pr-8 text-base sm:text-sm font-mono tabular-nums text-white placeholder:text-zinc-600 focus:outline-none focus:border-sky-500/60"
+                />
+                <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs font-mono text-zinc-400 pointer-events-none">
+                  ml
                 </span>
               </div>
 
-              <div className="flex items-center gap-1 sm:gap-1.5">
-                <div className="relative flex-1 min-w-0">
-                  <input
-                    type="number"
-                    inputMode="numeric"
-                    min="0"
-                    max="20000"
-                    value={waterInput}
-                    onChange={(e) => setWaterInput(e.target.value)}
-                    placeholder={String(profile.waterGoalMl)}
-                    className="w-full h-11 bg-[#090A0F] border border-white/10 rounded-xl pl-2.5 pr-7 text-sm font-mono tabular-nums text-white placeholder:text-zinc-600 focus:outline-none focus:border-sky-500/60"
-                  />
-                  <span className="absolute right-2 top-1/2 -translate-y-1/2 text-[10px] font-mono text-zinc-500 pointer-events-none">
-                    ml
-                  </span>
-                </div>
-                <button
-                  type="button"
-                  onClick={() => handleSaveWater()}
-                  disabled={savingField === 'water'}
-                  className="min-w-[52px] h-11 px-3 rounded-xl bg-sky-400 hover:bg-sky-500 text-xs font-semibold text-zinc-950 transition-colors whitespace-nowrap shrink-0 active:scale-95"
-                >
-                  {savingField === 'water' ? '...' : 'Save'}
-                </button>
-              </div>
-
-              {/* Quick Add Buttons */}
-              <div className="grid grid-cols-3 gap-1 pt-0.5">
+              {/* Row of 3 equal buttons (-250, +250, Save) at 44-48px height */}
+              <div className="grid grid-cols-3 gap-1.5 w-full">
                 <button
                   type="button"
                   onClick={() => handleSaveWater(Math.max(0, loggedWaterMl - 250))}
-                  className="min-h-[26px] rounded-lg bg-zinc-900 hover:bg-zinc-800 border border-white/8 text-[9px] font-mono text-zinc-300 transition-colors active:scale-95"
+                  className="h-11 sm:h-12 min-h-[44px] rounded-xl bg-zinc-900 hover:bg-zinc-800 border border-white/10 text-xs font-mono font-bold text-zinc-200 flex items-center justify-center transition-colors active:scale-95 cursor-pointer"
+                  title="Decrease 250 ml"
                 >
-                  -250 ml
+                  -250
                 </button>
                 <button
                   type="button"
                   onClick={() => handleSaveWater(loggedWaterMl + 250)}
-                  className="min-h-[26px] rounded-lg bg-sky-500/15 hover:bg-sky-500/25 border border-sky-500/30 text-[9px] font-mono text-sky-300 font-medium transition-colors active:scale-95"
+                  className="h-11 sm:h-12 min-h-[44px] rounded-xl bg-zinc-900 hover:bg-zinc-800 border border-white/10 text-xs font-mono font-bold text-zinc-200 flex items-center justify-center transition-colors active:scale-95 cursor-pointer"
+                  title="Increase 250 ml"
                 >
-                  +250 ml
+                  +250
                 </button>
                 <button
                   type="button"
-                  onClick={() => handleSaveWater(loggedWaterMl + 500)}
-                  className="min-h-[26px] rounded-lg bg-sky-500/15 hover:bg-sky-500/25 border border-sky-500/30 text-[9px] font-mono text-sky-300 font-medium transition-colors active:scale-95"
+                  onClick={() => handleSaveWater()}
+                  disabled={savingField === 'water'}
+                  className="h-11 sm:h-12 min-h-[44px] rounded-xl bg-sky-400 hover:bg-sky-500 text-xs font-bold text-zinc-950 flex items-center justify-center transition-all whitespace-nowrap active:scale-95 shadow-md shadow-sky-400/20 cursor-pointer disabled:opacity-40"
                 >
-                  +500 ml
+                  {savingField === 'water' ? '...' : 'Save'}
                 </button>
               </div>
             </div>
@@ -1398,19 +1421,19 @@ export const HealthDashboard: React.FC<HealthDashboardProps> = ({
                 </div>
               </div>
 
-              {/* Sticky Footer */}
-              <div className="shrink-0 p-4 border-t border-white/10 bg-[#12141C] flex items-center justify-end gap-2">
+              {/* Sticky Footer: 50/50 balanced 48px buttons */}
+              <div className="shrink-0 p-4 border-t border-white/10 bg-[#12141C] grid grid-cols-2 gap-3 w-full">
                 <button
                   type="button"
                   onClick={() => setIsGoalsOpen(false)}
-                  className="min-h-[44px] px-4 rounded-xl bg-white/5 hover:bg-white/10 text-xs font-medium text-zinc-300"
+                  className="w-full min-h-[48px] h-12 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 text-xs font-semibold text-zinc-300 transition-colors flex items-center justify-center active:scale-95 cursor-pointer"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
                   disabled={savingField === 'goals'}
-                  className="min-h-[44px] px-5 rounded-xl bg-white text-zinc-950 hover:bg-zinc-200 text-xs font-semibold"
+                  className="w-full min-h-[48px] h-12 rounded-xl bg-white text-zinc-950 hover:bg-zinc-200 text-xs font-bold transition-all flex items-center justify-center active:scale-95 shadow-md shadow-white/5 cursor-pointer disabled:opacity-40"
                 >
                   {savingField === 'goals' ? 'Saving...' : 'Save Targets'}
                 </button>

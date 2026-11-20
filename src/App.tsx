@@ -32,10 +32,11 @@ import {
 import { HealthDashboard } from './components/HealthDashboard';
 import { SkinDashboard } from './components/SkinDashboard';
 import { WardrobeDashboard } from './components/WardrobeDashboard';
-import { PartnerModal } from './components/PartnerModal';
 import { AccountModal } from './components/AccountModal';
+import { UserAvatar } from './components/UserAvatar';
 import { OnboardingSubmission, OnboardingWizard } from './components/OnboardingWizard';
 import { AuthCard } from './components/AuthCard';
+import { LandingPage } from './components/landing/LandingPage';
 import { api, AuthResponse, setStoredToken } from './services/apiClient';
 
 interface AppUser {
@@ -92,9 +93,6 @@ export default function App() {
   const [authUser, setAuthUser] = useState<AppUser | null>(null);
   const [authReady, setAuthReady] = useState(false);
 
-  // Hero Preview Card Toggle on Login Screen
-  const [heroPreviewTab, setHeroPreviewTab] = useState<TopNavSection>('health');
-
   // Workspace & Profile Documents
   const [userDoc, setUserDoc] = useState<UserDoc | null>(null);
   const [workspace, setWorkspace] = useState<WorkspaceDoc | null>(null);
@@ -113,8 +111,32 @@ export default function App() {
   const [hasInitializedSlot, setHasInitializedSlot] = useState(false);
 
   // Modals
-  const [isPartnerModalOpen, setIsPartnerModalOpen] = useState(false);
   const [isAccountModalOpen, setIsAccountModalOpen] = useState(false);
+
+  // Avatar photo sync with local storage (no gradients, circular cropped)
+  const [headerAvatarPhoto, setHeaderAvatarPhoto] = useState<string | null>(null);
+
+  useEffect(() => {
+    const updatePhoto = () => {
+      if (userDoc?.uid) {
+        setHeaderAvatarPhoto(localStorage.getItem(`duosync_avatar_${userDoc.uid}`) || null);
+      } else {
+        setHeaderAvatarPhoto(null);
+      }
+    };
+    updatePhoto();
+    window.addEventListener('duosync-avatar-updated', updatePhoto);
+    return () => window.removeEventListener('duosync-avatar-updated', updatePhoto);
+  }, [userDoc?.uid]);
+
+  // Requirement 6: Reset scroll to top on login, tab change, route switch, or logout
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      window.scrollTo({ top: 0, left: 0, behavior: 'instant' });
+      document.documentElement.scrollTop = 0;
+      document.body.scrollTop = 0;
+    }
+  }, [activeSection, activeSlot, authUser?.id]);
 
   // Date State for Health Dashboard
   const [selectedDate, setSelectedDate] = useState<string>(todayDate);
@@ -868,6 +890,8 @@ export default function App() {
   }) => {
     if (!authUser || !workspace) return;
 
+    const myNewName = updates.defaultSlot === 'partner2' ? updates.partner2Name : updates.partner1Name;
+
     setWorkspace((prev) =>
       prev
         ? {
@@ -877,6 +901,26 @@ export default function App() {
             partner1Role: updates.partner1Role,
             partner2Name: updates.partner2Name,
             partner2Role: updates.partner2Role,
+          }
+        : null
+    );
+
+    setUserDoc((prev) =>
+      prev
+        ? {
+            ...prev,
+            displayName: myNewName,
+            defaultSlot: updates.defaultSlot,
+          }
+        : null
+    );
+
+    setAuthUser((prev) =>
+      prev
+        ? {
+            ...prev,
+            displayName: myNewName,
+            defaultSlot: updates.defaultSlot,
           }
         : null
     );
@@ -927,229 +971,15 @@ export default function App() {
           <div className="w-10 h-10 rounded-2xl bg-white/5 border border-white/10 flex items-center justify-center mx-auto animate-pulse">
             <HeartHandshake className="w-5 h-5 text-rose-400" />
           </div>
-          <p className="text-xs text-zinc-400 font-medium">Loading DuoPulse...</p>
+          <p className="text-xs text-zinc-400 font-medium">Loading DuoSync...</p>
         </div>
       </div>
     );
   }
 
-  // Not Logged In: Mobile-First Hero & Simple Password-Based Auth
+  // Not Logged In: Graphic-First Minimal Mobile Landing Page
   if (!authUser) {
-    return (
-      <div className="min-h-screen bg-[#090A0F] text-zinc-100 flex flex-col justify-between p-4 sm:p-10">
-        <header className="max-w-5xl w-full mx-auto flex items-center justify-between gap-4">
-          <span className="text-lg font-bold tracking-tight text-white font-display whitespace-nowrap shrink-0">
-            DuoPulse
-          </span>
-          <div className="text-xs text-zinc-400 flex items-center gap-1.5 font-medium">
-            <Sparkles className="w-3.5 h-3.5 text-rose-400" />
-            <span>Always in Sync</span>
-          </div>
-        </header>
-
-        <main className="max-w-5xl w-full mx-auto my-auto py-6 sm:py-10 grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-10 items-center">
-          <div className="lg:col-span-6 space-y-6">
-            <div className="space-y-3">
-              <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-rose-500/10 border border-rose-500/20 text-xs font-semibold text-rose-400">
-                <HeartHandshake className="w-3.5 h-3.5" />
-                <span>Designed for Two · Always Connected</span>
-              </div>
-              <h1 className="text-3xl sm:text-4xl lg:text-5xl font-extrabold tracking-tight text-white leading-[1.1] text-balance">
-                Your daily health rings, care routines & fits—synced together.
-              </h1>
-              <p className="text-xs sm:text-sm text-zinc-400 leading-relaxed">
-                Connect with your partner via a 6-digit code. Track daily steps, weight, hydration, custom weekly skincare/haircare schedules, and create stylish fits in your digital closet.
-              </p>
-            </div>
-
-            {/* Interactive Mobile-First Preview Card */}
-            <div className="rounded-3xl bg-[#12141C] border border-white/10 p-5 space-y-4">
-              <div className="flex items-center justify-between border-b border-white/8 pb-3.5 gap-2">
-                <div>
-                  <div className="text-xs text-emerald-400 font-medium">
-                    {heroPreviewTab === 'health'
-                      ? 'Fitness & Vitals Rings'
-                      : heroPreviewTab === 'skin'
-                      ? '3-Segment Care Shelf'
-                      : 'Digital Wardrobe & Fits'}
-                  </div>
-                  <div className="text-sm font-bold text-white">
-                    {heroPreviewTab === 'health'
-                      ? 'Steps · Weight · Sleep · Water'
-                      : heroPreviewTab === 'skin'
-                      ? 'Skincare · Haircare · Bodycare'
-                      : 'Closet Items · Outfit Studio'}
-                  </div>
-                </div>
-
-                <div
-                  role="tablist"
-                  className="flex items-center p-1 rounded-full bg-zinc-900 border border-white/10 text-xs font-medium shrink-0"
-                >
-                  <button
-                    type="button"
-                    onClick={() => setHeroPreviewTab('health')}
-                    className={`relative min-h-[30px] px-2.5 py-1 rounded-full text-xs font-semibold transition-colors flex items-center gap-1 ${
-                      heroPreviewTab === 'health' ? 'text-zinc-950' : 'text-zinc-400 hover:text-white'
-                    }`}
-                  >
-                    {heroPreviewTab === 'health' && (
-                      <motion.span
-                        layoutId="heroPreviewPill"
-                        transition={{ duration: 0.16, ease: [0.16, 1, 0.3, 1] }}
-                        className="absolute inset-0 rounded-full bg-white"
-                      />
-                    )}
-                    <Activity className="w-3 h-3 relative z-10" />
-                    <span className="relative z-10">Health</span>
-                  </button>
-
-                  <button
-                    type="button"
-                    onClick={() => setHeroPreviewTab('skin')}
-                    className={`relative min-h-[30px] px-2.5 py-1 rounded-full text-xs font-semibold transition-colors flex items-center gap-1 ${
-                      heroPreviewTab === 'skin' ? 'text-zinc-950' : 'text-zinc-400 hover:text-white'
-                    }`}
-                  >
-                    {heroPreviewTab === 'skin' && (
-                      <motion.span
-                        layoutId="heroPreviewPill"
-                        transition={{ duration: 0.16, ease: [0.16, 1, 0.3, 1] }}
-                        className="absolute inset-0 rounded-full bg-white"
-                      />
-                    )}
-                    <Sparkles className="w-3 h-3 relative z-10" />
-                    <span className="relative z-10">Skin</span>
-                  </button>
-
-                  <button
-                    type="button"
-                    onClick={() => setHeroPreviewTab('wardrobe')}
-                    className={`relative min-h-[30px] px-2.5 py-1 rounded-full text-xs font-semibold transition-colors flex items-center gap-1 ${
-                      heroPreviewTab === 'wardrobe' ? 'text-zinc-950' : 'text-zinc-400 hover:text-white'
-                    }`}
-                  >
-                    {heroPreviewTab === 'wardrobe' && (
-                      <motion.span
-                        layoutId="heroPreviewPill"
-                        transition={{ duration: 0.16, ease: [0.16, 1, 0.3, 1] }}
-                        className="absolute inset-0 rounded-full bg-white"
-                      />
-                    )}
-                    <Shirt className="w-3 h-3 relative z-10" />
-                    <span className="relative z-10">Fits</span>
-                  </button>
-                </div>
-              </div>
-
-              <AnimatePresence mode="wait">
-                {heroPreviewTab === 'health' ? (
-                  <motion.div
-                    key="hero-health"
-                    initial={{ opacity: 0, y: 4 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    exit={{ opacity: 0, y: -4 }}
-                    transition={{ duration: 0.15 }}
-                    className="grid grid-cols-2 gap-2.5"
-                  >
-                    <div className="rounded-2xl bg-zinc-900/90 border border-white/6 p-3 space-y-1">
-                      <div className="text-xs text-rose-400 font-medium">Daily Weight</div>
-                      <div className="text-base font-mono font-bold text-white tabular-nums">Start → Goal</div>
-                      <div className="text-[11px] text-zinc-400">Circular ring + 7d curve</div>
-                    </div>
-                    <div className="rounded-2xl bg-zinc-900/90 border border-white/6 p-3 space-y-1">
-                      <div className="text-xs text-emerald-400 font-medium">Daily Steps</div>
-                      <div className="text-base font-mono font-bold text-white tabular-nums">Step Ring</div>
-                      <div className="text-[11px] text-zinc-400">Target progress & streaks</div>
-                    </div>
-                    <div className="rounded-2xl bg-zinc-900/90 border border-white/6 p-3 space-y-1">
-                      <div className="text-xs text-indigo-400 font-medium">Total Sleep</div>
-                      <div className="text-base font-mono font-bold text-white tabular-nums">Hrs & Mins</div>
-                      <div className="text-[11px] text-zinc-400">Duration ring tracker</div>
-                    </div>
-                    <div className="rounded-2xl bg-zinc-900/90 border border-white/6 p-3 space-y-1">
-                      <div className="text-xs text-sky-400 font-medium">Water Intake</div>
-                      <div className="text-base font-mono font-bold text-white tabular-nums">Daily ml / L</div>
-                      <div className="text-[11px] text-zinc-400">Hydration progress ring</div>
-                    </div>
-                  </motion.div>
-                ) : heroPreviewTab === 'skin' ? (
-                  <motion.div
-                    key="hero-skin"
-                    initial={{ opacity: 0, y: 4 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    exit={{ opacity: 0, y: -4 }}
-                    transition={{ duration: 0.15 }}
-                    className="space-y-2.5"
-                  >
-                    <div className="rounded-2xl bg-zinc-900/90 border border-white/6 p-3 flex items-center justify-between">
-                      <div className="space-y-0.5">
-                        <div className="text-xs font-semibold text-rose-400 flex items-center gap-1.5">
-                          <Sparkles className="w-3.5 h-3.5" />
-                          <span>1. Skincare Essentials</span>
-                        </div>
-                        <div className="text-[11px] text-zinc-400">Cleanser · Serum · Moisturizer · Sunscreen</div>
-                      </div>
-                      <span className="text-xs font-mono font-semibold text-white">Qty 2+</span>
-                    </div>
-                    <div className="rounded-2xl bg-zinc-900/90 border border-white/6 p-3 flex items-center justify-between">
-                      <div className="space-y-0.5">
-                        <div className="text-xs font-semibold text-amber-400 flex items-center gap-1.5">
-                          <Wind className="w-3.5 h-3.5" />
-                          <span>2. Haircare Essentials</span>
-                        </div>
-                        <div className="text-[11px] text-zinc-400">Shampoo · Conditioner · Mask · Scalp Oil</div>
-                      </div>
-                      <span className="text-xs font-mono font-semibold text-emerald-400">Sale %</span>
-                    </div>
-                    <div className="rounded-2xl bg-zinc-900/90 border border-white/6 p-3 flex items-center justify-between">
-                      <div className="space-y-0.5">
-                        <div className="text-xs font-semibold text-sky-400 flex items-center gap-1.5">
-                          <Droplet className="w-3.5 h-3.5" />
-                          <span>3. Bodycare Essentials</span>
-                        </div>
-                        <div className="text-[11px] text-zinc-400">Body Wash · Lotion · Scrub · Deodorant</div>
-                      </div>
-                      <span className="text-xs font-mono font-semibold text-zinc-300">Dates</span>
-                    </div>
-                  </motion.div>
-                ) : (
-                  <motion.div
-                    key="hero-fits"
-                    initial={{ opacity: 0, y: 4 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    exit={{ opacity: 0, y: -4 }}
-                    transition={{ duration: 0.15 }}
-                    className="grid grid-cols-2 gap-2.5"
-                  >
-                    <div className="rounded-2xl bg-zinc-900/90 border border-white/6 p-3 space-y-1">
-                      <div className="text-xs text-rose-400 font-medium">Digital Closet</div>
-                      <div className="text-base font-bold text-white">Visual Pieces</div>
-                      <div className="text-[11px] text-zinc-400">Tops, bottoms, shoes & accessories</div>
-                    </div>
-                    <div className="rounded-2xl bg-zinc-900/90 border border-white/6 p-3 space-y-1">
-                      <div className="text-xs text-amber-400 font-medium">Outfit Studio</div>
-                      <div className="text-base font-bold text-white">Create Fits</div>
-                      <div className="text-[11px] text-zinc-400">Combine pieces for date night & work</div>
-                    </div>
-                  </motion.div>
-                )}
-              </AnimatePresence>
-            </div>
-          </div>
-
-          {/* Simple Password-Based Authentication Card */}
-          <div className="lg:col-span-6 w-full flex justify-center">
-            <AuthCard onSuccess={handleAuthSuccess} />
-          </div>
-        </main>
-
-        <footer className="max-w-5xl w-full mx-auto text-xs text-zinc-500 flex items-center justify-between">
-          <span>DuoPulse — Mobile-First Health & Care Tracker</span>
-          <span>Powered by Neon Serverless PostgreSQL</span>
-        </footer>
-      </div>
-    );
+    return <LandingPage onAuthSuccess={handleAuthSuccess} />;
   }
 
   // Loading Dashboard State
@@ -1226,7 +1056,7 @@ export default function App() {
           }}
           className="text-xs sm:text-lg font-bold tracking-tight text-white font-display whitespace-nowrap shrink-0"
         >
-          DuoPulse
+          DuoSync
         </a>
 
         {/* Top Navbar Pill: Hidden on mobile, visible on tablet/desktop */}
@@ -1318,29 +1148,19 @@ export default function App() {
             </button>
           </div>
 
-          <button
-            type="button"
-            onClick={() => setIsPartnerModalOpen(true)}
-            className="min-w-[36px] min-h-[36px] sm:px-3 rounded-full bg-[#12141C] hover:bg-white/10 border border-white/10 flex items-center justify-center gap-1.5 text-xs font-medium text-zinc-200 transition-colors shrink-0"
-            title="Partner Pairing & Profile Settings"
-          >
-            <Users className="w-3.5 h-3.5 text-rose-400" />
-            <span className="hidden md:inline font-mono tabular-nums">{workspace.pairingCode}</span>
-          </button>
-
+          {/* Account Profile Button: Pure circular avatar with NO outer oval or extra padding */}
           <button
             type="button"
             onClick={() => setIsAccountModalOpen(true)}
-            className="min-h-[36px] px-2.5 sm:px-3 rounded-full bg-[#12141C] hover:bg-white/10 border border-white/10 flex items-center justify-center gap-1.5 text-xs font-medium text-zinc-300 hover:text-white transition-colors shrink-0 active:scale-95"
-            title="Account & Profile Settings"
-            aria-label="Account & Profile Settings"
+            className="w-11 h-11 min-w-[44px] min-h-[44px] rounded-full flex items-center justify-center shrink-0 active:scale-95 cursor-pointer transition-transform focus:outline-none"
+            title="Account & Partner Settings"
+            aria-label="Account & Partner Settings"
           >
-            <div className="w-5 h-5 rounded-full bg-gradient-to-tr from-rose-500 to-indigo-500 flex items-center justify-center text-[10px] font-bold text-white uppercase shrink-0">
-              {(userDoc.displayName || 'U')[0]}
-            </div>
-            <span className="hidden sm:inline text-xs font-medium max-w-[80px] truncate">
-              Account
-            </span>
+            <UserAvatar
+              name={activeProfile?.name || userDoc?.displayName || 'User'}
+              photoUrl={headerAvatarPhoto}
+              size="md"
+            />
           </button>
         </div>
       </header>
@@ -1478,20 +1298,7 @@ export default function App() {
         </div>
       </div>
 
-      {/* Partner Pairing & Workspace Customization Modal */}
-      <PartnerModal
-        isOpen={isPartnerModalOpen}
-        onClose={() => setIsPartnerModalOpen(false)}
-        userDoc={userDoc}
-        workspace={workspace}
-        onJoinByCode={handleJoinByCode}
-        onUnlinkPartner={handleUnlinkPartner}
-        onOpenOnboardingWizard={() => setManualWizardOpen(true)}
-        onUpdateWorkspaceIdentities={handleUpdateWorkspaceIdentities}
-        onDeleteAllUserData={handleDeleteAllUserData}
-      />
-
-      {/* Account Profile & Preferences Modal */}
+      {/* Account Profile, Partner Pairing & Preferences Modal */}
       <AccountModal
         isOpen={isAccountModalOpen}
         onClose={() => setIsAccountModalOpen(false)}
@@ -1511,6 +1318,10 @@ export default function App() {
           });
         }}
         onSignOut={handleSignOut}
+        onJoinByCode={handleJoinByCode}
+        onUnlinkPartner={handleUnlinkPartner}
+        onUpdateWorkspaceIdentities={handleUpdateWorkspaceIdentities}
+        onDeleteAllUserData={handleDeleteAllUserData}
       />
     </div>
   );

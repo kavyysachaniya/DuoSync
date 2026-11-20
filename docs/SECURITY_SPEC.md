@@ -1,4 +1,4 @@
-# DuoPulse — Security Specification (Phase 0 TDD)
+# DuoSync — Security Specification (Phase 0 TDD)
 
 ## 1. Data Invariants & Master Source of Truth
 

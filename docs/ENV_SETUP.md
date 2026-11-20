@@ -1,6 +1,6 @@
 # DuoSync — Environment Variables & Production Setup Guide
 
-Welcome to the comprehensive environment setup guide for **DuoSync** (also deployed as **DuoPulse**). This guide walks you through every configuration variable, where to get it, how to set it up locally and on Vercel, and how to verify that each service works properly.
+Welcome to the comprehensive environment setup guide for **DuoSync**. This guide walks you through every configuration variable, where to get it, how to set it up locally and on Vercel, and how to verify that each service works properly.
 
 ---
 
@@ -174,7 +174,7 @@ DuoSync uses a unified serverless architecture powered by:
 To fix HTTP 500 errors and ensure production functions smoothly on Vercel:
 
 1. Open your Vercel Dashboard at [https://vercel.com](https://vercel.com).
-2. Select your DuoSync project (`duopulse18` or `DuoSync`).
+2. Select your DuoSync project (`duosync18` or `DuoSync`).
 3. Click on the **Settings** tab at the top.
 4. In the left navigation, click **Environment Variables**.
 5. Add the following variables:
@@ -197,7 +197,7 @@ To fix HTTP 500 errors and ensure production functions smoothly on Vercel:
 Once deployed or running locally, verify your setup using these direct endpoints:
 
 ### 1. API Status Endpoint
-- **URL**: `GET https://duopulse18.vercel.app/api` (or `http://localhost:3000/api`)
+- **URL**: `GET https://duosync18.vercel.app/api` (or `http://localhost:3000/api`)
 - **Expected Status**: `200 OK`
 - **Expected Body**:
   ```json
@@ -211,7 +211,7 @@ Once deployed or running locally, verify your setup using these direct endpoints
   ```
 
 ### 2. Database Health & Table Counts
-- **URL**: `GET https://duopulse18.vercel.app/api/admin/health` (or `http://localhost:3000/api/admin/health`)
+- **URL**: `GET https://duosync18.vercel.app/api/admin/health` (or `http://localhost:3000/api/admin/health`)
 - **Expected Status**: `200 OK`
 - **Expected Body**:
   ```json
@@ -228,7 +228,7 @@ Once deployed or running locally, verify your setup using these direct endpoints
   If `counts.users` and `counts.workspaces` return numbers without errors, Neon PostgreSQL is connected and operational.
 
 ### 3. Authentication Test
-- Open `https://duopulse18.vercel.app`.
+- Open `https://duosync18.vercel.app`.
 - Click **Need an account? Sign Up**.
 - Enter your email and password.
 - You will be immediately routed to the DuoSync dashboard and your session will persist across page refreshes.
