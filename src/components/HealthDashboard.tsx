@@ -1189,7 +1189,8 @@ export const HealthDashboard: React.FC<HealthDashboardProps> = ({
                 <button
                   type="button"
                   onClick={() => setIsGoalsOpen(false)}
-                  className="min-w-[44px] min-h-[44px] rounded-xl flex items-center justify-center text-zinc-400 hover:text-white hover:bg-white/5"
+                  aria-label="Close Goals Drawer"
+                  className="min-w-[44px] min-h-[44px] rounded-xl flex items-center justify-center text-zinc-400 hover:text-white hover:bg-white/5 transition-colors"
                 >
                   <X className="w-5 h-5" />
                 </button>

@@ -1206,7 +1206,8 @@ export const SkinDashboard: React.FC<SkinDashboardProps> = ({
                 <button
                   type="button"
                   onClick={() => setIsProductModalOpen(false)}
-                  className="min-w-[44px] min-h-[44px] rounded-xl flex items-center justify-center text-zinc-400 hover:text-white"
+                  aria-label="Close Product Modal"
+                  className="min-w-[44px] min-h-[44px] rounded-xl flex items-center justify-center text-zinc-400 hover:text-white transition-colors"
                 >
                   <X className="w-5 h-5" />
                 </button>
