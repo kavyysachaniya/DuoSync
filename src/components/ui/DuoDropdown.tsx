@@ -214,7 +214,7 @@ export const DuoDropdown: React.FC<DuoDropdownProps> = ({
             transition={{ duration: 0.14, ease: [0.16, 1, 0.3, 1] }}
             className={`absolute top-full mt-1.5 ${
               align === 'right' ? 'right-0' : 'left-0'
-            } w-full min-w-[200px] z-50 rounded-2xl bg-[#12141C] border border-white/12 shadow-2xl shadow-black/90 p-1.5 backdrop-blur-2xl ${menuClassName}`}
+            } w-full min-w-[200px] max-w-[calc(100vw-1.5rem)] z-50 rounded-2xl bg-[#12141C] border border-white/12 shadow-2xl shadow-black/90 p-1.5 backdrop-blur-2xl ${menuClassName}`}
           >
             {/* Search Input Filter */}
             {(searchable || allowCustom || normalizedOptions.length > 7) && (
@@ -227,15 +227,15 @@ export const DuoDropdown: React.FC<DuoDropdownProps> = ({
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
                     placeholder="Search options..."
-                    className="w-full h-8 pl-8 pr-7 bg-[#090A0F] border border-white/10 rounded-xl text-xs text-white placeholder-zinc-500 focus:outline-none focus:border-white/30"
+                    className="w-full min-h-[38px] pl-8 pr-7 bg-[#090A0F] border border-white/10 rounded-xl text-base sm:text-xs text-white placeholder-zinc-500 focus:outline-none focus:border-white/30"
                   />
                   {searchQuery && (
                     <button
                       type="button"
                       onClick={() => setSearchQuery('')}
-                      className="absolute right-2 text-zinc-500 hover:text-white"
+                      className="absolute right-2 min-w-[32px] min-h-[32px] flex items-center justify-center text-zinc-500 hover:text-white"
                     >
-                      <X className="w-3 h-3" />
+                      <X className="w-3.5 h-3.5" />
                     </button>
                   )}
                 </div>
@@ -254,7 +254,7 @@ export const DuoDropdown: React.FC<DuoDropdownProps> = ({
                       key={opt.value}
                       type="button"
                       onClick={() => handleSelect(opt.value)}
-                      className={`w-full min-h-[38px] px-3 py-2 rounded-xl text-left text-xs flex items-center justify-between gap-2.5 transition-colors ${
+                      className={`w-full min-h-[40px] px-3 py-2 rounded-xl text-left text-xs flex items-center justify-between gap-2.5 transition-colors ${
                         isSelected
                           ? 'bg-white text-zinc-950 font-semibold shadow-sm'
                           : 'text-zinc-300 hover:bg-white/8 hover:text-white'

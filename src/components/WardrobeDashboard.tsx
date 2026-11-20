@@ -552,7 +552,7 @@ export const WardrobeDashboard: React.FC<WardrobeDashboardProps> = ({
                   placeholder="Search by name, brand, color..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  className="w-full min-h-[38px] pl-9 pr-3 rounded-2xl bg-zinc-900 border border-white/10 text-xs text-zinc-100 placeholder-zinc-500 focus:outline-none focus:border-rose-400"
+                  className="w-full min-h-[44px] pl-9 pr-3 rounded-2xl bg-zinc-900 border border-white/10 text-base sm:text-xs text-zinc-100 placeholder-zinc-500 focus:outline-none focus:border-rose-400"
                 />
               </div>
 
@@ -565,7 +565,7 @@ export const WardrobeDashboard: React.FC<WardrobeDashboardProps> = ({
                     { value: 'All', label: 'All Occasions' },
                     ...WARDROBE_OCCASIONS.map((occ) => ({ value: occ, label: occ })),
                   ]}
-                  triggerClassName="!min-h-[38px] !text-xs !rounded-2xl"
+                  triggerClassName="!min-h-[44px] !text-xs !rounded-2xl"
                 />
               </div>
 
@@ -578,16 +578,16 @@ export const WardrobeDashboard: React.FC<WardrobeDashboardProps> = ({
                     { value: 'All', label: 'All Colors' },
                     ...PRESET_COLORS.map((c) => ({ value: c.name, label: c.name })),
                   ]}
-                  triggerClassName="!min-h-[38px] !text-xs !rounded-2xl"
+                  triggerClassName="!min-h-[44px] !text-xs !rounded-2xl"
                 />
               </div>
 
               {/* Profile Ownership Toggle */}
-              <div className="sm:col-span-3 flex items-center p-0.5 rounded-2xl bg-zinc-900 border border-white/10 text-xs font-medium">
+              <div className="sm:col-span-3 flex items-center p-0.5 rounded-2xl bg-zinc-900 border border-white/10 text-xs font-medium min-h-[44px]">
                 <button
                   type="button"
                   onClick={() => setOwnerFilter('all')}
-                  className={`flex-1 min-h-[32px] rounded-xl text-[11px] font-semibold transition-colors ${
+                  className={`flex-1 min-h-[38px] rounded-xl text-xs font-semibold truncate px-1.5 transition-colors ${
                     ownerFilter === 'all' ? 'bg-white text-zinc-950' : 'text-zinc-400 hover:text-white'
                   }`}
                 >
@@ -596,7 +596,7 @@ export const WardrobeDashboard: React.FC<WardrobeDashboardProps> = ({
                 <button
                   type="button"
                   onClick={() => setOwnerFilter('me')}
-                  className={`flex-1 min-h-[32px] rounded-xl text-[11px] font-semibold transition-colors ${
+                  className={`flex-1 min-h-[38px] rounded-xl text-xs font-semibold truncate px-1.5 transition-colors ${
                     ownerFilter === 'me' ? 'bg-sky-500 text-white' : 'text-zinc-400 hover:text-white'
                   }`}
                 >
@@ -605,7 +605,7 @@ export const WardrobeDashboard: React.FC<WardrobeDashboardProps> = ({
                 <button
                   type="button"
                   onClick={() => setOwnerFilter('partner')}
-                  className={`flex-1 min-h-[32px] rounded-xl text-[11px] font-semibold transition-colors ${
+                  className={`flex-1 min-h-[38px] rounded-xl text-xs font-semibold truncate px-1.5 transition-colors ${
                     ownerFilter === 'partner' ? 'bg-rose-500 text-white' : 'text-zinc-400 hover:text-white'
                   }`}
                 >
@@ -1172,16 +1172,18 @@ export const WardrobeDashboard: React.FC<WardrobeDashboardProps> = ({
       )}
 
       {/* CLOTHING ITEM ADD / EDIT MODAL */}
+      {/* CLOTHING ITEM ADD / EDIT MODAL */}
       <AnimatePresence>
         {isItemModalOpen && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-black/80 backdrop-blur-sm overflow-y-auto">
+          <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 bg-black/80 backdrop-blur-sm">
             <motion.div
               initial={{ opacity: 0, scale: 0.95, y: 10 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.95, y: 10 }}
-              className="w-full max-w-xl max-h-[92vh] overflow-y-auto rounded-3xl bg-[#12141C] border border-white/10 p-5 sm:p-6 text-zinc-100 shadow-2xl space-y-4"
+              className="w-full max-w-xl max-h-[90dvh] flex flex-col rounded-t-3xl sm:rounded-3xl bg-[#12141C] border border-white/10 text-zinc-100 shadow-2xl overflow-hidden"
             >
-              <div className="flex items-center justify-between border-b border-white/10 pb-3.5">
+              {/* Modal Header */}
+              <div className="shrink-0 p-4 sm:p-5 border-b border-white/10 bg-[#12141C] flex items-center justify-between">
                 <div className="flex items-center gap-2.5">
                   <div className="w-9 h-9 rounded-xl bg-rose-500/15 border border-rose-500/30 flex items-center justify-center text-rose-400">
                     <Shirt className="w-4 h-4" />
@@ -1198,216 +1200,219 @@ export const WardrobeDashboard: React.FC<WardrobeDashboardProps> = ({
                 <button
                   type="button"
                   onClick={() => setIsItemModalOpen(false)}
-                  className="p-2 rounded-xl text-zinc-400 hover:text-white hover:bg-white/5"
+                  className="min-w-[44px] min-h-[44px] rounded-xl flex items-center justify-center text-zinc-400 hover:text-white hover:bg-white/5"
                 >
                   <X className="w-5 h-5" />
                 </button>
               </div>
 
-              <form onSubmit={handleSaveItemSubmit} className="space-y-4">
-                {/* Item Name */}
-                <div className="space-y-1.5">
-                  <label className="text-xs font-semibold text-zinc-300">Clothing Name *</label>
-                  <input
-                    type="text"
-                    required
-                    placeholder="e.g. Crisp White Poplin Shirt, Straight Indigo Jeans..."
-                    value={formName}
-                    onChange={(e) => setFormName(e.target.value)}
-                    className="w-full min-h-[42px] px-3.5 rounded-2xl bg-zinc-900 border border-white/10 text-xs text-zinc-100 placeholder-zinc-500 focus:outline-none focus:border-rose-400"
-                  />
-                </div>
-
-                {/* Category & Brand */}
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              {/* Modal Body & Form */}
+              <form onSubmit={handleSaveItemSubmit} className="flex-1 flex flex-col min-h-0 overflow-hidden">
+                <div className="overflow-y-auto overscroll-contain flex-1 p-4 sm:p-5 space-y-4 no-scrollbar">
+                  {/* Item Name */}
                   <div className="space-y-1.5">
-                    <label className="text-xs font-semibold text-zinc-300">Category *</label>
-                    <DuoDropdown
-                      value={formCategory}
-                      onChange={(val) => setFormCategory(val as WardrobeCategory)}
-                      options={WARDROBE_CATEGORIES.map((cat) => ({ value: cat, label: cat }))}
-                      searchable={true}
-                    />
-                  </div>
-
-                  <div className="space-y-1.5">
-                    <label className="text-xs font-semibold text-zinc-300">Brand (Optional)</label>
+                    <label className="text-xs font-semibold text-zinc-300">Clothing Name *</label>
                     <input
                       type="text"
-                      placeholder="e.g. Zara, Uniqlo, Nike, Levi's..."
-                      value={formBrand}
-                      onChange={(e) => setFormBrand(e.target.value)}
-                      className="w-full min-h-[42px] px-3.5 rounded-2xl bg-zinc-900 border border-white/10 text-xs text-zinc-100 placeholder-zinc-500 focus:outline-none focus:border-rose-400"
-                    />
-                  </div>
-                </div>
-
-                {/* Color & Size */}
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                  <div className="space-y-1.5">
-                    <label className="text-xs font-semibold text-zinc-300">Colour</label>
-                    <input
-                      type="text"
-                      placeholder="e.g. Black, Navy, Off-White..."
-                      value={formColor}
-                      onChange={(e) => setFormColor(e.target.value)}
-                      className="w-full min-h-[42px] px-3.5 rounded-2xl bg-zinc-900 border border-white/10 text-xs text-zinc-100 placeholder-zinc-500 focus:outline-none focus:border-rose-400"
+                      required
+                      placeholder="e.g. Crisp White Poplin Shirt, Straight Indigo Jeans..."
+                      value={formName}
+                      onChange={(e) => setFormName(e.target.value)}
+                      className="w-full min-h-[44px] px-3.5 rounded-2xl bg-zinc-900 border border-white/10 text-base sm:text-xs text-zinc-100 placeholder-zinc-500 focus:outline-none focus:border-rose-400"
                     />
                   </div>
 
-                  <div className="space-y-1.5">
-                    <label className="text-xs font-semibold text-zinc-300">Size</label>
-                    <input
-                      type="text"
-                      placeholder="e.g. M, L, 32/30, 42..."
-                      value={formSize}
-                      onChange={(e) => setFormSize(e.target.value)}
-                      className="w-full min-h-[42px] px-3.5 rounded-2xl bg-zinc-900 border border-white/10 text-xs text-zinc-100 placeholder-zinc-500 focus:outline-none focus:border-rose-400"
-                    />
-                  </div>
-                </div>
-
-                {/* Occasion & Season */}
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                  <div className="space-y-1.5">
-                    <label className="text-xs font-semibold text-zinc-300">Occasion</label>
-                    <DuoDropdown
-                      value={formOccasion}
-                      onChange={(val) => setFormOccasion(val as WardrobeOccasion)}
-                      options={WARDROBE_OCCASIONS.map((occ) => ({ value: occ, label: occ }))}
-                    />
-                  </div>
-
-                  <div className="space-y-1.5">
-                    <label className="text-xs font-semibold text-zinc-300">Season</label>
-                    <DuoDropdown
-                      value={formSeason}
-                      onChange={(val) => setFormSeason(val as WardrobeSeason)}
-                      options={WARDROBE_SEASONS.map((s) => ({ value: s, label: s }))}
-                    />
-                  </div>
-                </div>
-
-                {/* Profile Ownership */}
-                <div className="space-y-1.5">
-                  <label className="text-xs font-semibold text-zinc-300">Closet Owner</label>
-                  <div className="grid grid-cols-3 gap-2">
-                    <button
-                      type="button"
-                      onClick={() => setFormOwnerSlot(profile.slot)}
-                      className={`min-h-[36px] rounded-xl text-xs font-semibold transition-colors ${
-                        formOwnerSlot === profile.slot
-                          ? 'bg-sky-500 text-white'
-                          : 'bg-zinc-900 text-zinc-400 border border-white/6'
-                      }`}
-                    >
-                      {profile.name}
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => setFormOwnerSlot(partnerProfile.slot)}
-                      className={`min-h-[36px] rounded-xl text-xs font-semibold transition-colors ${
-                        formOwnerSlot === partnerProfile.slot
-                          ? 'bg-rose-500 text-white'
-                          : 'bg-zinc-900 text-zinc-400 border border-white/6'
-                      }`}
-                    >
-                      {partnerProfile.name}
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => setFormOwnerSlot('shared')}
-                      className={`min-h-[36px] rounded-xl text-xs font-semibold transition-colors ${
-                        formOwnerSlot === 'shared'
-                          ? 'bg-amber-500 text-zinc-950 font-bold'
-                          : 'bg-zinc-900 text-zinc-400 border border-white/6'
-                      }`}
-                    >
-                      Shared
-                    </button>
-                  </div>
-                </div>
-
-                {/* Clothing Photo / Image Upload or URL */}
-                <div className="space-y-2">
-                  <label className="text-xs font-semibold text-zinc-300">Clothing Image</label>
-                  <div className="flex items-center gap-3">
-                    {/* Thumbnail preview */}
-                    <div className="w-16 h-16 rounded-2xl bg-zinc-900 border border-white/10 overflow-hidden flex items-center justify-center shrink-0">
-                      {formImageUrl ? (
-                        <img
-                          src={formImageUrl}
-                          alt="Preview"
-                          className="w-full h-full object-cover"
-                        />
-                      ) : (
-                        <ImageIcon className="w-6 h-6 text-zinc-600" />
-                      )}
+                  {/* Category & Brand */}
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <div className="space-y-1.5">
+                      <label className="text-xs font-semibold text-zinc-300">Category *</label>
+                      <DuoDropdown
+                        value={formCategory}
+                        onChange={(val) => setFormCategory(val as WardrobeCategory)}
+                        options={WARDROBE_CATEGORIES.map((cat) => ({ value: cat, label: cat }))}
+                        searchable={true}
+                      />
                     </div>
 
-                    <div className="flex-1 space-y-2">
+                    <div className="space-y-1.5">
+                      <label className="text-xs font-semibold text-zinc-300">Brand (Optional)</label>
                       <input
-                        type="file"
-                        ref={fileInputRef}
-                        accept="image/*"
-                        onChange={handleImageFileChange}
-                        className="hidden"
+                        type="text"
+                        placeholder="e.g. Zara, Uniqlo, Nike, Levi's..."
+                        value={formBrand}
+                        onChange={(e) => setFormBrand(e.target.value)}
+                        className="w-full min-h-[44px] px-3.5 rounded-2xl bg-zinc-900 border border-white/10 text-base sm:text-xs text-zinc-100 placeholder-zinc-500 focus:outline-none focus:border-rose-400"
                       />
+                    </div>
+                  </div>
+
+                  {/* Color & Size */}
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <div className="space-y-1.5">
+                      <label className="text-xs font-semibold text-zinc-300">Colour</label>
+                      <input
+                        type="text"
+                        placeholder="e.g. Black, Navy, Off-White..."
+                        value={formColor}
+                        onChange={(e) => setFormColor(e.target.value)}
+                        className="w-full min-h-[44px] px-3.5 rounded-2xl bg-zinc-900 border border-white/10 text-base sm:text-xs text-zinc-100 placeholder-zinc-500 focus:outline-none focus:border-rose-400"
+                      />
+                    </div>
+
+                    <div className="space-y-1.5">
+                      <label className="text-xs font-semibold text-zinc-300">Size</label>
+                      <input
+                        type="text"
+                        placeholder="e.g. M, L, 32/30, 42..."
+                        value={formSize}
+                        onChange={(e) => setFormSize(e.target.value)}
+                        className="w-full min-h-[44px] px-3.5 rounded-2xl bg-zinc-900 border border-white/10 text-base sm:text-xs text-zinc-100 placeholder-zinc-500 focus:outline-none focus:border-rose-400"
+                      />
+                    </div>
+                  </div>
+
+                  {/* Occasion & Season */}
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <div className="space-y-1.5">
+                      <label className="text-xs font-semibold text-zinc-300">Occasion</label>
+                      <DuoDropdown
+                        value={formOccasion}
+                        onChange={(val) => setFormOccasion(val as WardrobeOccasion)}
+                        options={WARDROBE_OCCASIONS.map((occ) => ({ value: occ, label: occ }))}
+                      />
+                    </div>
+
+                    <div className="space-y-1.5">
+                      <label className="text-xs font-semibold text-zinc-300">Season</label>
+                      <DuoDropdown
+                        value={formSeason}
+                        onChange={(val) => setFormSeason(val as WardrobeSeason)}
+                        options={WARDROBE_SEASONS.map((s) => ({ value: s, label: s }))}
+                      />
+                    </div>
+                  </div>
+
+                  {/* Profile Ownership */}
+                  <div className="space-y-1.5">
+                    <label className="text-xs font-semibold text-zinc-300">Closet Owner</label>
+                    <div className="grid grid-cols-3 gap-2">
                       <button
                         type="button"
-                        onClick={() => fileInputRef.current?.click()}
-                        disabled={isUploadingPhoto}
-                        className="w-full min-h-[38px] px-3 rounded-xl bg-zinc-900 hover:bg-zinc-800 border border-white/10 text-xs font-semibold text-zinc-200 flex items-center justify-center gap-2 transition-colors disabled:opacity-50"
+                        onClick={() => setFormOwnerSlot(profile.slot)}
+                        className={`min-h-[44px] rounded-xl text-xs font-semibold transition-colors ${
+                          formOwnerSlot === profile.slot
+                            ? 'bg-sky-500 text-white'
+                            : 'bg-zinc-900 text-zinc-400 border border-white/6'
+                        }`}
                       >
-                        {isUploadingPhoto ? (
-                          <>
-                            <Loader2 className="w-3.5 h-3.5 animate-spin text-rose-400" />
-                            <span>Uploading to Cloud Storage...</span>
-                          </>
-                        ) : (
-                          <>
-                            <Upload className="w-3.5 h-3.5" />
-                            <span>Upload Photo from Device</span>
-                          </>
-                        )}
+                        {profile.name}
                       </button>
-
-                      <input
-                        type="url"
-                        placeholder="Or paste image web link..."
-                        value={formImageUrl.startsWith('data:') ? '' : formImageUrl}
-                        onChange={(e) => setFormImageUrl(e.target.value)}
-                        className="w-full min-h-[36px] px-3 rounded-xl bg-zinc-900 border border-white/10 text-xs text-zinc-200 placeholder-zinc-500 focus:outline-none focus:border-rose-400"
-                      />
+                      <button
+                        type="button"
+                        onClick={() => setFormOwnerSlot(partnerProfile.slot)}
+                        className={`min-h-[44px] rounded-xl text-xs font-semibold transition-colors ${
+                          formOwnerSlot === partnerProfile.slot
+                            ? 'bg-rose-500 text-white'
+                            : 'bg-zinc-900 text-zinc-400 border border-white/6'
+                        }`}
+                      >
+                        {partnerProfile.name}
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setFormOwnerSlot('shared')}
+                        className={`min-h-[44px] rounded-xl text-xs font-semibold transition-colors ${
+                          formOwnerSlot === 'shared'
+                            ? 'bg-amber-500 text-zinc-950 font-bold'
+                            : 'bg-zinc-900 text-zinc-400 border border-white/6'
+                        }`}
+                      >
+                        Shared
+                      </button>
                     </div>
+                  </div>
+
+                  {/* Clothing Photo / Image Upload or URL */}
+                  <div className="space-y-2">
+                    <label className="text-xs font-semibold text-zinc-300">Clothing Image</label>
+                    <div className="flex items-center gap-3">
+                      {/* Thumbnail preview */}
+                      <div className="w-16 h-16 rounded-2xl bg-zinc-900 border border-white/10 overflow-hidden flex items-center justify-center shrink-0">
+                        {formImageUrl ? (
+                          <img
+                            src={formImageUrl}
+                            alt="Preview"
+                            className="w-full h-full object-cover"
+                          />
+                        ) : (
+                          <ImageIcon className="w-6 h-6 text-zinc-600" />
+                        )}
+                      </div>
+
+                      <div className="flex-1 space-y-2">
+                        <input
+                          type="file"
+                          ref={fileInputRef}
+                          accept="image/*"
+                          onChange={handleImageFileChange}
+                          className="hidden"
+                        />
+                        <button
+                          type="button"
+                          onClick={() => fileInputRef.current?.click()}
+                          disabled={isUploadingPhoto}
+                          className="w-full min-h-[44px] px-3 rounded-xl bg-zinc-900 hover:bg-zinc-800 border border-white/10 text-xs font-semibold text-zinc-200 flex items-center justify-center gap-2 transition-colors disabled:opacity-50"
+                        >
+                          {isUploadingPhoto ? (
+                            <>
+                              <Loader2 className="w-3.5 h-3.5 animate-spin text-rose-400" />
+                              <span>Uploading to Cloud Storage...</span>
+                            </>
+                          ) : (
+                            <>
+                              <Upload className="w-3.5 h-3.5" />
+                              <span>Upload Photo from Device</span>
+                            </>
+                          )}
+                        </button>
+
+                        <input
+                          type="url"
+                          placeholder="Or paste image web link..."
+                          value={formImageUrl.startsWith('data:') ? '' : formImageUrl}
+                          onChange={(e) => setFormImageUrl(e.target.value)}
+                          className="w-full min-h-[44px] px-3 rounded-xl bg-zinc-900 border border-white/10 text-base sm:text-xs text-zinc-200 placeholder-zinc-500 focus:outline-none focus:border-rose-400"
+                        />
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Notes */}
+                  <div className="space-y-1.5">
+                    <label className="text-xs font-semibold text-zinc-300">Notes & Fit Advice</label>
+                    <textarea
+                      rows={2}
+                      placeholder="e.g. Dry clean only, oversized fit, goes best with Chelsea boots..."
+                      value={formNotes}
+                      onChange={(e) => setFormNotes(e.target.value)}
+                      className="w-full p-3 rounded-2xl bg-zinc-900 border border-white/10 text-base sm:text-xs text-zinc-100 placeholder-zinc-500 focus:outline-none focus:border-rose-400 resize-none"
+                    />
                   </div>
                 </div>
 
-                {/* Notes */}
-                <div className="space-y-1.5">
-                  <label className="text-xs font-semibold text-zinc-300">Notes & Fit Advice</label>
-                  <textarea
-                    rows={2}
-                    placeholder="e.g. Dry clean only, oversized fit, goes best with Chelsea boots..."
-                    value={formNotes}
-                    onChange={(e) => setFormNotes(e.target.value)}
-                    className="w-full p-3 rounded-2xl bg-zinc-900 border border-white/10 text-xs text-zinc-100 placeholder-zinc-500 focus:outline-none focus:border-rose-400 resize-none"
-                  />
-                </div>
-
-                {/* Submit Actions */}
-                <div className="pt-2 flex items-center justify-end gap-2 border-t border-white/10">
+                {/* Sticky Footer */}
+                <div className="shrink-0 p-4 border-t border-white/10 bg-[#12141C] flex items-center justify-end gap-2">
                   <button
                     type="button"
                     onClick={() => setIsItemModalOpen(false)}
-                    className="min-h-[42px] px-4 rounded-2xl bg-zinc-900 border border-white/10 text-xs font-semibold text-zinc-300 hover:text-white"
+                    className="min-h-[44px] px-4 rounded-2xl bg-zinc-900 border border-white/10 text-xs font-semibold text-zinc-300 hover:text-white"
                   >
                     Cancel
                   </button>
                   <button
                     type="submit"
                     disabled={itemSaving}
-                    className="min-h-[42px] px-6 rounded-2xl bg-white text-zinc-950 hover:bg-zinc-200 text-xs font-bold transition-all shadow-lg shadow-white/5"
+                    className="min-h-[44px] px-6 rounded-2xl bg-white text-zinc-950 hover:bg-zinc-200 text-xs font-bold transition-all shadow-lg shadow-white/5"
                   >
                     {itemSaving ? 'Saving...' : editingItemId ? 'Save Changes' : 'Add to Closet'}
                   </button>

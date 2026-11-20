@@ -310,7 +310,7 @@ export const OnboardingWizard: React.FC<OnboardingWizardProps> = ({
                         key={sym}
                         type="button"
                         onClick={() => setCurrency(sym)}
-                        className={`min-h-[40px] rounded-xl text-xs font-mono font-semibold transition-colors ${
+                        className={`min-h-[44px] rounded-xl text-xs font-mono font-semibold transition-colors flex items-center justify-center ${
                           currency === sym
                             ? 'bg-white text-zinc-950'
                             : 'text-zinc-400 hover:text-white'
@@ -381,7 +381,7 @@ export const OnboardingWizard: React.FC<OnboardingWizardProps> = ({
                           value={partnerName}
                           onChange={(e) => setPartnerName(e.target.value)}
                           placeholder="e.g. Partner's Name"
-                          className="w-full min-h-[42px] bg-[#12141C] border border-white/10 rounded-xl px-3.5 text-sm text-white placeholder:text-zinc-600 focus:outline-none focus:border-white/30"
+                          className="w-full min-h-[44px] bg-[#12141C] border border-white/10 rounded-xl px-3.5 text-base sm:text-sm text-white placeholder:text-zinc-600 focus:outline-none focus:border-white/30"
                         />
                       </div>
                       {pairingCode && (
@@ -407,7 +407,7 @@ export const OnboardingWizard: React.FC<OnboardingWizardProps> = ({
                           setPartnerCodeInput(e.target.value.replace(/\D/g, '').slice(0, 6))
                         }
                         placeholder="e.g. 482910"
-                        className="w-full min-h-[44px] bg-[#12141C] border border-white/10 rounded-xl px-4 text-lg font-mono tracking-[0.25em] text-white placeholder:text-zinc-600 focus:outline-none focus:border-rose-500"
+                        className="w-full min-h-[44px] bg-[#12141C] border border-white/10 rounded-xl px-4 text-base sm:text-lg font-mono tracking-[0.25em] text-white placeholder:text-zinc-600 focus:outline-none focus:border-rose-500"
                       />
                     </div>
                   )}
@@ -443,7 +443,7 @@ export const OnboardingWizard: React.FC<OnboardingWizardProps> = ({
                         key={unit}
                         type="button"
                         onClick={() => setWeightUnit(unit)}
-                        className={`min-h-[42px] rounded-xl text-xs sm:text-sm font-mono font-semibold transition-colors ${
+                        className={`min-h-[44px] rounded-xl text-xs sm:text-sm font-mono font-semibold transition-colors flex items-center justify-center ${
                           weightUnit === unit
                             ? 'bg-rose-500 text-white'
                             : 'text-zinc-400 hover:text-white'
@@ -539,7 +539,7 @@ export const OnboardingWizard: React.FC<OnboardingWizardProps> = ({
                         key={preset}
                         type="button"
                         onClick={() => setStepsGoal(String(preset))}
-                        className={`min-h-[34px] rounded-lg text-xs font-mono tabular-nums transition-colors ${
+                        className={`min-h-[44px] rounded-xl text-xs font-mono tabular-nums transition-colors flex items-center justify-center ${
                           stepsGoal === String(preset)
                             ? 'bg-emerald-500 text-zinc-950 font-semibold'
                             : 'bg-zinc-900 text-zinc-400 hover:text-white'
@@ -622,7 +622,7 @@ export const OnboardingWizard: React.FC<OnboardingWizardProps> = ({
                         key={preset}
                         type="button"
                         onClick={() => setWaterGoalMl(String(preset))}
-                        className={`min-h-[34px] rounded-lg text-xs font-mono tabular-nums transition-colors ${
+                        className={`min-h-[44px] rounded-xl text-xs font-mono tabular-nums transition-colors flex items-center justify-center ${
                           waterGoalMl === String(preset)
                             ? 'bg-sky-400 text-zinc-950 font-semibold'
                             : 'bg-zinc-900 text-zinc-400 hover:text-white'
@@ -653,7 +653,7 @@ export const OnboardingWizard: React.FC<OnboardingWizardProps> = ({
                 </p>
               </div>
 
-              <div className="space-y-4 max-h-[48vh] overflow-y-auto pr-1">
+              <div className="space-y-4 max-h-[min(52dvh,28rem)] overflow-y-auto pr-1 overscroll-contain no-scrollbar">
                 {/* Skincare Categories */}
                 <div className="rounded-2xl bg-[#090A0F] border border-white/10 p-3.5 space-y-2.5">
                   <span className="text-xs font-semibold text-rose-400 flex items-center gap-1.5">
@@ -669,7 +669,7 @@ export const OnboardingWizard: React.FC<OnboardingWizardProps> = ({
                             key={cat}
                             type="button"
                             onClick={() => toggleCategory(skincareCats, setSkincareCats, cat)}
-                            className={`min-h-[34px] px-3 py-1 rounded-xl text-xs font-medium transition-colors flex items-center gap-1.5 ${
+                            className={`min-h-[38px] px-3.5 py-1.5 rounded-xl text-xs font-medium transition-colors flex items-center gap-1.5 ${
                               active
                                 ? 'bg-rose-500 text-white font-semibold'
                                 : 'bg-zinc-900 text-zinc-400 hover:text-white border border-white/6'
@@ -690,7 +690,7 @@ export const OnboardingWizard: React.FC<OnboardingWizardProps> = ({
                       onChange={(e) => setCustomSkincareInput(e.target.value)}
                       onKeyDown={(e) => {
                         if (e.key === 'Enter') {
-                          e.preventDefault();
+                           e.preventDefault();
                           addCustomCategory(
                             customSkincareInput,
                             setCustomSkincareInput,
@@ -700,7 +700,7 @@ export const OnboardingWizard: React.FC<OnboardingWizardProps> = ({
                         }
                       }}
                       placeholder="Add custom skincare category..."
-                      className="flex-1 min-h-[38px] bg-[#12141C] border border-white/10 rounded-xl px-3 text-xs text-white placeholder:text-zinc-600"
+                      className="flex-1 min-h-[44px] bg-[#12141C] border border-white/10 rounded-xl px-3 text-base sm:text-xs text-white placeholder:text-zinc-600 focus:outline-none focus:border-white/30"
                     />
                     <button
                       type="button"
@@ -712,7 +712,7 @@ export const OnboardingWizard: React.FC<OnboardingWizardProps> = ({
                           setSkincareCats
                         )
                       }
-                      className="min-h-[38px] px-3 rounded-xl bg-white/10 hover:bg-white/15 text-xs font-medium text-white flex items-center gap-1"
+                      className="min-h-[44px] px-4 rounded-xl bg-white/10 hover:bg-white/15 text-xs font-semibold text-white flex items-center justify-center gap-1 shrink-0"
                     >
                       <Plus className="w-3.5 h-3.5" />
                       <span>Add</span>
@@ -735,7 +735,7 @@ export const OnboardingWizard: React.FC<OnboardingWizardProps> = ({
                             key={cat}
                             type="button"
                             onClick={() => toggleCategory(haircareCats, setHaircareCats, cat)}
-                            className={`min-h-[34px] px-3 py-1 rounded-xl text-xs font-medium transition-colors flex items-center gap-1.5 ${
+                            className={`min-h-[38px] px-3.5 py-1.5 rounded-xl text-xs font-medium transition-colors flex items-center gap-1.5 ${
                               active
                                 ? 'bg-amber-500 text-zinc-950 font-semibold'
                                 : 'bg-zinc-900 text-zinc-400 hover:text-white border border-white/6'
@@ -766,7 +766,7 @@ export const OnboardingWizard: React.FC<OnboardingWizardProps> = ({
                         }
                       }}
                       placeholder="Add custom haircare category..."
-                      className="flex-1 min-h-[38px] bg-[#12141C] border border-white/10 rounded-xl px-3 text-xs text-white placeholder:text-zinc-600"
+                      className="flex-1 min-h-[44px] bg-[#12141C] border border-white/10 rounded-xl px-3 text-base sm:text-xs text-white placeholder:text-zinc-600 focus:outline-none focus:border-white/30"
                     />
                     <button
                       type="button"
@@ -778,7 +778,7 @@ export const OnboardingWizard: React.FC<OnboardingWizardProps> = ({
                           setHaircareCats
                         )
                       }
-                      className="min-h-[38px] px-3 rounded-xl bg-white/10 hover:bg-white/15 text-xs font-medium text-white flex items-center gap-1"
+                      className="min-h-[44px] px-4 rounded-xl bg-white/10 hover:bg-white/15 text-xs font-semibold text-white flex items-center justify-center gap-1 shrink-0"
                     >
                       <Plus className="w-3.5 h-3.5" />
                       <span>Add</span>
@@ -801,7 +801,7 @@ export const OnboardingWizard: React.FC<OnboardingWizardProps> = ({
                             key={cat}
                             type="button"
                             onClick={() => toggleCategory(bodycareCats, setBodycareCats, cat)}
-                            className={`min-h-[34px] px-3 py-1 rounded-xl text-xs font-medium transition-colors flex items-center gap-1.5 ${
+                            className={`min-h-[38px] px-3.5 py-1.5 rounded-xl text-xs font-medium transition-colors flex items-center gap-1.5 ${
                               active
                                 ? 'bg-sky-400 text-zinc-950 font-semibold'
                                 : 'bg-zinc-900 text-zinc-400 hover:text-white border border-white/6'
@@ -832,7 +832,7 @@ export const OnboardingWizard: React.FC<OnboardingWizardProps> = ({
                         }
                       }}
                       placeholder="Add custom bodycare category..."
-                      className="flex-1 min-h-[38px] bg-[#12141C] border border-white/10 rounded-xl px-3 text-xs text-white placeholder:text-zinc-600"
+                      className="flex-1 min-h-[44px] bg-[#12141C] border border-white/10 rounded-xl px-3 text-base sm:text-xs text-white placeholder:text-zinc-600 focus:outline-none focus:border-white/30"
                     />
                     <button
                       type="button"
@@ -844,7 +844,7 @@ export const OnboardingWizard: React.FC<OnboardingWizardProps> = ({
                           setBodycareCats
                         )
                       }
-                      className="min-h-[38px] px-3 rounded-xl bg-white/10 hover:bg-white/15 text-xs font-medium text-white flex items-center gap-1"
+                      className="min-h-[44px] px-4 rounded-xl bg-white/10 hover:bg-white/15 text-xs font-semibold text-white flex items-center justify-center gap-1 shrink-0"
                     >
                       <Plus className="w-3.5 h-3.5" />
                       <span>Add</span>

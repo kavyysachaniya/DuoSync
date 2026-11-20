@@ -73,7 +73,7 @@ export const AuthCard: React.FC<AuthCardProps> = ({ onSuccess }) => {
   };
 
   return (
-    <div className="w-full max-w-md mx-auto rounded-3xl bg-[#12141C] border border-white/10 p-5 sm:p-7 shadow-2xl shadow-black/60 space-y-5">
+    <div className="w-full max-w-md mx-auto rounded-3xl bg-[#12141C] border border-white/10 p-4 sm:p-7 shadow-2xl shadow-black/60 space-y-5">
       {/* Auth Mode Toggle Pill */}
       <div className="flex items-center p-1 rounded-2xl bg-[#090A0F] border border-white/8 text-xs font-semibold">
         <button
@@ -82,7 +82,7 @@ export const AuthCard: React.FC<AuthCardProps> = ({ onSuccess }) => {
             setAuthMode('signin');
             setErrorMessage(null);
           }}
-          className={`flex-1 min-h-[38px] rounded-xl transition-all flex items-center justify-center gap-1.5 ${
+          className={`flex-1 min-h-[44px] rounded-xl transition-all flex items-center justify-center gap-1.5 ${
             authMode === 'signin'
               ? 'bg-white text-zinc-950 font-bold shadow-sm'
               : 'text-zinc-400 hover:text-white'
@@ -96,7 +96,7 @@ export const AuthCard: React.FC<AuthCardProps> = ({ onSuccess }) => {
             setAuthMode('signup');
             setErrorMessage(null);
           }}
-          className={`flex-1 min-h-[38px] rounded-xl transition-all flex items-center justify-center gap-1.5 ${
+          className={`flex-1 min-h-[44px] rounded-xl transition-all flex items-center justify-center gap-1.5 ${
             authMode === 'signup'
               ? 'bg-white text-zinc-950 font-bold shadow-sm'
               : 'text-zinc-400 hover:text-white'
@@ -120,7 +120,7 @@ export const AuthCard: React.FC<AuthCardProps> = ({ onSuccess }) => {
                 placeholder="e.g. Alex"
                 maxLength={40}
                 required
-                className="w-full min-h-[44px] bg-[#090A0F] border border-white/10 rounded-xl pl-9 pr-3 text-xs text-zinc-100 placeholder:text-zinc-600 focus:outline-none focus:border-rose-500/70"
+                className="w-full min-h-[44px] bg-[#090A0F] border border-white/10 rounded-xl pl-9 pr-3 text-base sm:text-sm text-zinc-100 placeholder:text-zinc-600 focus:outline-none focus:border-rose-500/70"
               />
             </div>
           </div>
@@ -137,7 +137,7 @@ export const AuthCard: React.FC<AuthCardProps> = ({ onSuccess }) => {
               onChange={(e) => setEmail(e.target.value)}
               placeholder="you@example.com"
               autoComplete="email"
-              className="w-full min-h-[44px] bg-[#090A0F] border border-white/10 rounded-xl pl-9 pr-3 text-xs text-zinc-100 placeholder:text-zinc-600 focus:outline-none focus:border-rose-500/70"
+              className="w-full min-h-[44px] bg-[#090A0F] border border-white/10 rounded-xl pl-9 pr-3 text-base sm:text-sm text-zinc-100 placeholder:text-zinc-600 focus:outline-none focus:border-rose-500/70"
             />
           </div>
         </div>
@@ -154,12 +154,12 @@ export const AuthCard: React.FC<AuthCardProps> = ({ onSuccess }) => {
               onChange={(e) => setPassword(e.target.value)}
               placeholder="Min. 6 characters"
               autoComplete={authMode === 'signup' ? 'new-password' : 'current-password'}
-              className="w-full min-h-[44px] bg-[#090A0F] border border-white/10 rounded-xl pl-9 pr-10 text-xs text-zinc-100 placeholder:text-zinc-600 focus:outline-none focus:border-rose-500/70"
+              className="w-full min-h-[44px] bg-[#090A0F] border border-white/10 rounded-xl pl-9 pr-12 text-base sm:text-sm text-zinc-100 placeholder:text-zinc-600 focus:outline-none focus:border-rose-500/70"
             />
             <button
               type="button"
               onClick={() => setShowPassword(!showPassword)}
-              className="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-500 hover:text-zinc-300"
+              className="absolute right-1 top-1/2 -translate-y-1/2 min-w-[44px] min-h-[44px] flex items-center justify-center text-zinc-500 hover:text-zinc-300"
               aria-label={showPassword ? 'Hide password' : 'Show password'}
             >
               {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}

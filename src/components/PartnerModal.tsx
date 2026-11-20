@@ -114,33 +114,35 @@ export const PartnerModal: React.FC<PartnerModalProps> = ({
 
   return (
     <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/75 backdrop-blur-sm p-0 sm:p-4">
-      <div className="w-full sm:max-w-lg max-h-[92vh] overflow-y-auto rounded-t-3xl sm:rounded-3xl bg-[#12141C] border border-white/10 p-5 sm:p-6 text-zinc-100 shadow-2xl">
-        {/* Grab handle on mobile */}
-        <div className="w-10 h-1.5 bg-zinc-700 rounded-full mx-auto mb-4 sm:hidden" />
-
-        <div className="flex items-center justify-between gap-4 pb-4 border-b border-white/10">
-          <div className="flex items-center gap-2.5">
-            <div className="w-9 h-9 rounded-xl bg-rose-500/15 border border-rose-500/30 flex items-center justify-center text-rose-400">
-              <Users className="w-4 h-4" />
+      <div className="w-full sm:max-w-lg max-h-[90dvh] flex flex-col rounded-t-3xl sm:rounded-3xl bg-[#12141C] border border-white/10 text-zinc-100 shadow-2xl overflow-hidden">
+        {/* Sticky Header */}
+        <div className="shrink-0 p-4 sm:p-5 border-b border-white/10 bg-[#12141C]">
+          <div className="w-10 h-1 bg-zinc-700 rounded-full mx-auto mb-3 sm:hidden" />
+          <div className="flex items-center justify-between gap-4">
+            <div className="flex items-center gap-2.5">
+              <div className="w-9 h-9 rounded-xl bg-rose-500/15 border border-rose-500/30 flex items-center justify-center text-rose-400 shrink-0">
+                <Users className="w-4 h-4" />
+              </div>
+              <div className="min-w-0">
+                <h2 className="text-base font-semibold text-white truncate">Partner Connection & Profiles</h2>
+                <p className="text-xs text-zinc-400 truncate">
+                  Link with partner via 6-digit code or customize names
+                </p>
+              </div>
             </div>
-            <div>
-              <h2 className="text-base font-semibold text-white">Partner Connection & Profiles</h2>
-              <p className="text-xs text-zinc-400">
-                Link with your partner via 6-digit code or customize names
-              </p>
-            </div>
+            <button
+              type="button"
+              onClick={onClose}
+              className="min-w-[44px] min-h-[44px] rounded-xl flex items-center justify-center text-zinc-400 hover:text-white hover:bg-white/5 transition-colors shrink-0"
+              aria-label="Close modal"
+            >
+              <X className="w-5 h-5" />
+            </button>
           </div>
-          <button
-            type="button"
-            onClick={onClose}
-            className="min-w-[44px] min-h-[44px] rounded-xl flex items-center justify-center text-zinc-400 hover:text-white hover:bg-white/5 transition-colors"
-            aria-label="Close modal"
-          >
-            <X className="w-5 h-5" />
-          </button>
         </div>
 
-        <div className="space-y-6 pt-5">
+        {/* Scrollable Body */}
+        <div className="overflow-y-auto overscroll-contain flex-1 p-4 sm:p-5 space-y-5 no-scrollbar">
           {/* 6-Digit Pairing Code Card */}
           <div className="rounded-2xl bg-zinc-900/90 border border-white/10 p-4 space-y-3">
             <div className="flex items-center justify-between">
@@ -159,7 +161,7 @@ export const PartnerModal: React.FC<PartnerModalProps> = ({
               <button
                 type="button"
                 onClick={handleCopyCode}
-                className="min-h-[40px] px-3.5 py-2 rounded-lg bg-white/10 hover:bg-white/15 text-xs font-medium text-white flex items-center gap-1.5 transition-colors whitespace-nowrap shrink-0"
+                className="min-h-[44px] px-4 py-2 rounded-xl bg-white/10 hover:bg-white/15 text-xs font-medium text-white flex items-center gap-1.5 transition-colors whitespace-nowrap shrink-0"
               >
                 {copied ? (
                   <>
@@ -187,7 +189,7 @@ export const PartnerModal: React.FC<PartnerModalProps> = ({
                 <button
                   type="button"
                   onClick={onUnlinkPartner}
-                  className="min-h-[36px] px-3 py-1.5 rounded-lg text-xs font-medium text-rose-400 hover:bg-rose-500/10 flex items-center gap-1.5 transition-colors"
+                  className="min-h-[44px] px-3.5 py-1.5 rounded-lg text-xs font-medium text-rose-400 hover:bg-rose-500/10 flex items-center gap-1.5 transition-colors"
                 >
                   <Unlink className="w-3.5 h-3.5" />
                   <span>Unlink Account</span>
@@ -209,7 +211,7 @@ export const PartnerModal: React.FC<PartnerModalProps> = ({
                 value={inputCode}
                 onChange={(e) => setInputCode(e.target.value.replace(/\D/g, '').slice(0, 6))}
                 placeholder="Enter 6-digit code (e.g. 482910)"
-                className="flex-1 min-h-[44px] bg-[#090A0F] border border-white/10 rounded-xl px-3.5 text-sm font-mono tabular-nums text-white placeholder:text-zinc-600 focus:outline-none focus:border-rose-500/60"
+                className="flex-1 min-h-[44px] bg-[#090A0F] border border-white/10 rounded-xl px-3.5 text-base sm:text-sm font-mono tabular-nums text-white placeholder:text-zinc-600 focus:outline-none focus:border-rose-500/60"
               />
               <button
                 type="submit"
@@ -237,7 +239,7 @@ export const PartnerModal: React.FC<PartnerModalProps> = ({
                   onClose();
                   onOpenOnboardingWizard();
                 }}
-                className="text-xs text-rose-400 hover:text-rose-300 flex items-center gap-1 transition-colors"
+                className="min-h-[36px] text-xs text-rose-400 hover:text-rose-300 flex items-center gap-1 transition-colors px-2 py-1"
               >
                 <RotateCcw className="w-3.5 h-3.5" />
                 <span>Setup Wizard</span>
@@ -254,7 +256,7 @@ export const PartnerModal: React.FC<PartnerModalProps> = ({
                     maxLength={60}
                     value={partner1Name}
                     onChange={(e) => setPartner1Name(e.target.value)}
-                    className="w-full min-h-[40px] bg-[#090A0F] border border-white/10 rounded-lg px-3 text-sm text-white focus:outline-none focus:border-sky-500/60"
+                    className="w-full min-h-[44px] bg-[#090A0F] border border-white/10 rounded-xl px-3 text-base sm:text-sm text-white focus:outline-none focus:border-sky-500/60"
                   />
                 </div>
                 <div>
@@ -264,7 +266,7 @@ export const PartnerModal: React.FC<PartnerModalProps> = ({
                     maxLength={40}
                     value={partner1Role}
                     onChange={(e) => setPartner1Role(e.target.value)}
-                    className="w-full min-h-[40px] bg-[#090A0F] border border-white/10 rounded-lg px-3 text-xs text-zinc-200 focus:outline-none focus:border-sky-500/60"
+                    className="w-full min-h-[44px] bg-[#090A0F] border border-white/10 rounded-xl px-3 text-base sm:text-xs text-zinc-200 focus:outline-none focus:border-sky-500/60"
                   />
                 </div>
               </div>
@@ -278,7 +280,7 @@ export const PartnerModal: React.FC<PartnerModalProps> = ({
                     maxLength={60}
                     value={partner2Name}
                     onChange={(e) => setPartner2Name(e.target.value)}
-                    className="w-full min-h-[40px] bg-[#090A0F] border border-white/10 rounded-lg px-3 text-sm text-white focus:outline-none focus:border-rose-500/60"
+                    className="w-full min-h-[44px] bg-[#090A0F] border border-white/10 rounded-xl px-3 text-base sm:text-sm text-white focus:outline-none focus:border-rose-500/60"
                   />
                 </div>
                 <div>
@@ -288,7 +290,7 @@ export const PartnerModal: React.FC<PartnerModalProps> = ({
                     maxLength={40}
                     value={partner2Role}
                     onChange={(e) => setPartner2Role(e.target.value)}
-                    className="w-full min-h-[40px] bg-[#090A0F] border border-white/10 rounded-lg px-3 text-xs text-zinc-200 focus:outline-none focus:border-rose-500/60"
+                    className="w-full min-h-[44px] bg-[#090A0F] border border-white/10 rounded-xl px-3 text-base sm:text-xs text-zinc-200 focus:outline-none focus:border-rose-500/60"
                   />
                 </div>
               </div>
@@ -303,9 +305,9 @@ export const PartnerModal: React.FC<PartnerModalProps> = ({
                   <button
                     type="button"
                     onClick={() => setDefaultSlot('partner1')}
-                    className={`min-h-[38px] rounded-lg text-xs font-medium transition-colors truncate px-2 ${
+                    className={`min-h-[44px] rounded-lg text-xs font-medium transition-colors truncate px-2 ${
                       defaultSlot === 'partner1'
-                        ? 'bg-sky-500 text-white'
+                        ? 'bg-sky-500 text-white font-semibold'
                         : 'text-zinc-400 hover:text-white'
                     }`}
                   >
@@ -314,9 +316,9 @@ export const PartnerModal: React.FC<PartnerModalProps> = ({
                   <button
                     type="button"
                     onClick={() => setDefaultSlot('partner2')}
-                    className={`min-h-[38px] rounded-lg text-xs font-medium transition-colors truncate px-2 ${
+                    className={`min-h-[44px] rounded-lg text-xs font-medium transition-colors truncate px-2 ${
                       defaultSlot === 'partner2'
-                        ? 'bg-rose-500 text-white'
+                        ? 'bg-rose-500 text-white font-semibold'
                         : 'text-zinc-400 hover:text-white'
                     }`}
                   >
@@ -335,9 +337,9 @@ export const PartnerModal: React.FC<PartnerModalProps> = ({
                       key={sym}
                       type="button"
                       onClick={() => setCurrency(sym)}
-                      className={`min-h-[38px] rounded-lg text-xs font-mono font-semibold transition-colors ${
+                      className={`min-h-[44px] rounded-lg text-xs font-mono font-semibold transition-colors ${
                         currency === sym
-                          ? 'bg-white text-zinc-950'
+                          ? 'bg-white text-zinc-950 shadow-sm'
                           : 'text-zinc-400 hover:text-white'
                       }`}
                     >
@@ -393,7 +395,7 @@ export const PartnerModal: React.FC<PartnerModalProps> = ({
                       }
                     }}
                     disabled={deletingData}
-                    className={`min-h-[40px] px-4 rounded-xl text-xs font-semibold transition-colors flex items-center gap-1.5 ${
+                    className={`min-h-[44px] px-4 rounded-xl text-xs font-semibold transition-colors flex items-center gap-1.5 ${
                       confirmDelete
                         ? 'bg-rose-600 hover:bg-rose-700 text-white'
                         : 'bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 border border-rose-500/30'
@@ -412,7 +414,7 @@ export const PartnerModal: React.FC<PartnerModalProps> = ({
                     <button
                       type="button"
                       onClick={() => setConfirmDelete(false)}
-                      className="min-h-[40px] px-3 rounded-xl text-xs text-zinc-400 hover:text-white bg-[#090A0F] border border-white/10"
+                      className="min-h-[44px] px-3 rounded-xl text-xs text-zinc-400 hover:text-white bg-[#090A0F] border border-white/10"
                     >
                       Cancel
                     </button>

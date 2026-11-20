@@ -1203,7 +1203,7 @@ export default function App() {
   return (
     <div className="min-h-screen bg-[#090A0F] text-zinc-100 flex flex-col font-sans selection:bg-rose-500 selection:text-white pb-20 sm:pb-8">
       {/* Top Header */}
-      <header className="sticky top-0 z-40 bg-[#090A0F]/85 backdrop-blur-xl border-b border-white/8 px-4 sm:px-8 py-3 flex items-center justify-between gap-3">
+      <header className="sticky top-0 z-40 bg-[#090A0F]/85 backdrop-blur-xl border-b border-white/8 px-2.5 sm:px-8 py-2.5 sm:py-3 pt-[max(0.65rem,env(safe-area-inset-top,0px))] flex items-center justify-between gap-1.5 sm:gap-3">
         {/* Brand */}
         <a
           href="#dashboard"
@@ -1211,7 +1211,7 @@ export default function App() {
             e.preventDefault();
             window.scrollTo({ top: 0, behavior: 'smooth' });
           }}
-          className="text-sm sm:text-lg font-bold tracking-tight text-white font-display whitespace-nowrap shrink-0"
+          className="text-xs sm:text-lg font-bold tracking-tight text-white font-display whitespace-nowrap shrink-0"
         >
           DuoPulse
         </a>
@@ -1277,12 +1277,12 @@ export default function App() {
         </nav>
 
         {/* Partner Switcher & Actions */}
-        <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
+        <div className="flex items-center gap-1 sm:gap-2 shrink-0">
           <div className="flex items-center p-0.5 rounded-full bg-[#12141C] border border-white/10">
             <button
               type="button"
               onClick={() => setActiveSlot('partner1')}
-              className={`min-h-[32px] sm:min-h-[34px] px-2.5 sm:px-3 rounded-full text-xs font-medium transition-colors whitespace-nowrap truncate max-w-[76px] sm:max-w-[130px] ${
+              className={`min-h-[34px] px-2 sm:px-3 rounded-full text-[11px] sm:text-xs font-medium transition-colors whitespace-nowrap truncate max-w-[58px] sm:max-w-[130px] ${
                 activeSlot === 'partner1'
                   ? 'bg-sky-500 text-white font-semibold'
                   : 'text-zinc-400 hover:text-white'
@@ -1294,7 +1294,7 @@ export default function App() {
             <button
               type="button"
               onClick={() => setActiveSlot('partner2')}
-              className={`min-h-[32px] sm:min-h-[34px] px-2.5 sm:px-3 rounded-full text-xs font-medium transition-colors whitespace-nowrap truncate max-w-[76px] sm:max-w-[130px] ${
+              className={`min-h-[34px] px-2 sm:px-3 rounded-full text-[11px] sm:text-xs font-medium transition-colors whitespace-nowrap truncate max-w-[58px] sm:max-w-[130px] ${
                 activeSlot === 'partner2'
                   ? 'bg-rose-500 text-white font-semibold'
                   : 'text-zinc-400 hover:text-white'
@@ -1328,7 +1328,7 @@ export default function App() {
       </header>
 
       {/* Main Content Area */}
-      <main className="max-w-6xl w-full mx-auto flex-1 px-3.5 sm:px-6 pt-3 sm:pt-5 pb-28 sm:pb-10">
+      <main className="max-w-6xl w-full mx-auto flex-1 px-3 sm:px-6 pt-3 sm:pt-5 pb-[calc(5.5rem+env(safe-area-inset-bottom,0px))] sm:pb-12 min-w-0">
         <AnimatePresence mode="wait">
           {activeSection === 'health' ? (
             <motion.div
@@ -1402,7 +1402,7 @@ export default function App() {
       </main>
 
       {/* Mobile-Only Floating Bottom Navbar Pill [ Health | Skin | Fits ] */}
-      <div className="sm:hidden fixed bottom-4 inset-x-0 mx-auto w-[92%] max-w-sm z-40 pb-[max(0.25rem,env(safe-area-inset-bottom))]">
+      <div className="sm:hidden fixed bottom-[max(0.75rem,env(safe-area-inset-bottom,0px))] inset-x-0 mx-auto w-[min(92%,360px)] z-40">
         <div className="bg-[#12141C]/92 backdrop-blur-xl border border-white/12 shadow-2xl shadow-black/80 rounded-full p-1.5 flex items-center justify-between gap-1">
           <button
             type="button"

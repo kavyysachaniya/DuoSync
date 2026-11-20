@@ -317,7 +317,7 @@ export const DuoDatePicker: React.FC<DuoDatePickerProps> = ({
             transition={{ duration: 0.14, ease: [0.16, 1, 0.3, 1] }}
             className={`absolute top-full mt-2 ${
               align === 'right' ? 'right-0' : 'left-0'
-            } w-[300px] sm:w-[320px] z-50 rounded-3xl bg-[#12141C] border border-white/12 shadow-2xl shadow-black/95 p-4 backdrop-blur-2xl select-none`}
+            } max-w-[calc(100vw-1.5rem)] w-[min(290px,calc(100vw-1.5rem))] z-50 rounded-3xl bg-[#12141C] border border-white/12 shadow-2xl shadow-black/95 p-3.5 sm:p-4 backdrop-blur-2xl select-none`}
           >
             {/* Calendar Navigation Header */}
             <div className="flex items-center justify-between gap-2 pb-3 border-b border-white/8">
@@ -422,3 +422,4 @@ export const DuoDatePicker: React.FC<DuoDatePickerProps> = ({
     </div>
   );
 };
+

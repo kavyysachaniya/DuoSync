@@ -9,6 +9,7 @@ interface CircularProgressRingProps {
   children?: React.ReactNode;
   label?: string;
   sublabel?: string;
+  className?: string;
 }
 
 export const CircularProgressRing: React.FC<CircularProgressRingProps> = ({
@@ -20,6 +21,7 @@ export const CircularProgressRing: React.FC<CircularProgressRingProps> = ({
   children,
   label,
   sublabel,
+  className = '',
 }) => {
   const safePct = Math.max(0, Math.min(100, Number.isFinite(percentage) ? percentage : 0));
   const radius = (size - strokeWidth) / 2;
@@ -27,9 +29,9 @@ export const CircularProgressRing: React.FC<CircularProgressRingProps> = ({
   const strokeDashoffset = circumference - (safePct / 100) * circumference;
 
   return (
-    <div className="flex flex-col items-center">
+    <div className={`flex flex-col items-center min-w-0 max-w-full ${className}`}>
       <div
-        className="relative flex items-center justify-center select-none"
+        className="relative flex items-center justify-center select-none shrink-0"
         style={{ width: size, height: size }}
       >
         <svg
@@ -64,17 +66,17 @@ export const CircularProgressRing: React.FC<CircularProgressRingProps> = ({
             }}
           />
         </svg>
-        <div className="absolute inset-0 flex flex-col items-center justify-center text-center px-2">
+        <div className="absolute inset-0 flex flex-col items-center justify-center text-center px-1">
           {children}
         </div>
       </div>
       {label && (
-        <span className="mt-2 text-xs font-medium text-zinc-200 tracking-tight whitespace-nowrap">
+        <span className="mt-1.5 text-xs font-medium text-zinc-200 tracking-tight text-center max-w-full truncate px-0.5">
           {label}
         </span>
       )}
       {sublabel && (
-        <span className="text-[11px] font-mono tabular-nums text-zinc-400 whitespace-nowrap">
+        <span className="text-[11px] font-mono tabular-nums text-zinc-400 text-center max-w-full truncate px-0.5">
           {sublabel}
         </span>
       )}

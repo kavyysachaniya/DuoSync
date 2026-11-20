@@ -354,7 +354,7 @@ export const HealthDashboard: React.FC<HealthDashboardProps> = ({
         </div>
 
         {/* Mobile-First Action Row */}
-        <div className="grid grid-cols-2 sm:flex sm:flex-wrap items-center gap-2">
+        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
           {/* Customize Targets Button */}
           <button
             type="button"
@@ -365,21 +365,21 @@ export const HealthDashboard: React.FC<HealthDashboardProps> = ({
             <span className="truncate">Targets & Profile</span>
           </button>
 
-          {/* Quick Partner Glance / Switch Button (Full width on mobile below the 2 buttons) */}
+          {/* Quick Partner Glance / Switch Button */}
           <button
             type="button"
             onClick={onSwitchToPartner}
-            className="col-span-2 sm:col-span-1 min-h-[44px] px-3.5 py-2 rounded-2xl bg-zinc-900 hover:bg-zinc-800/90 border border-white/10 text-left flex items-center justify-between sm:justify-start gap-3 transition-colors"
+            className="min-h-[44px] px-3.5 py-2 rounded-2xl bg-zinc-900 hover:bg-zinc-800/90 border border-white/10 text-left flex items-center justify-between sm:justify-start gap-3 transition-colors"
           >
             <div className="flex items-center gap-2.5">
               <div className="w-7 h-7 rounded-xl bg-white/5 flex items-center justify-center text-xs font-bold text-zinc-200 shrink-0">
                 {partnerProfile.name.slice(0, 1).toUpperCase()}
               </div>
-              <div>
-                <div className="text-xs font-medium text-white">
+              <div className="min-w-0">
+                <div className="text-xs font-medium text-white truncate">
                   Switch to {partnerProfile.name}
                 </div>
-                <div className="text-[11px] font-mono tabular-nums text-zinc-400">
+                <div className="text-[11px] font-mono tabular-nums text-zinc-400 truncate">
                   Today:{' '}
                   {partnerTodayLog?.steps
                     ? `${partnerTodayLog.steps.toLocaleString()} steps`
@@ -409,6 +409,7 @@ export const HealthDashboard: React.FC<HealthDashboardProps> = ({
                 onChange={(val) => {
                   if (val) onSelectDate(val);
                 }}
+                align="right"
                 placeholder="Pick date..."
               />
             </div>
@@ -486,8 +487,8 @@ export const HealthDashboard: React.FC<HealthDashboardProps> = ({
           <div className="grid grid-cols-4 gap-2 sm:gap-5">
             <CircularProgressRing
               percentage={todayWeightPct}
-              size={60}
-              strokeWidth={6}
+              size={52}
+              strokeWidth={5}
               color="#F43F5E"
               label="Weight"
               sublabel={
@@ -499,8 +500,8 @@ export const HealthDashboard: React.FC<HealthDashboardProps> = ({
 
             <CircularProgressRing
               percentage={todayStepsPct}
-              size={60}
-              strokeWidth={6}
+              size={52}
+              strokeWidth={5}
               color="#10B981"
               label="Steps"
               sublabel={`${todayStepsPct}%`}
@@ -510,8 +511,8 @@ export const HealthDashboard: React.FC<HealthDashboardProps> = ({
 
             <CircularProgressRing
               percentage={todaySleepPct}
-              size={60}
-              strokeWidth={6}
+              size={52}
+              strokeWidth={5}
               color="#818CF8"
               label="Sleep"
               sublabel={`${todaySleepPct}%`}
@@ -521,8 +522,8 @@ export const HealthDashboard: React.FC<HealthDashboardProps> = ({
 
             <CircularProgressRing
               percentage={todayWaterPct}
-              size={60}
-              strokeWidth={6}
+              size={52}
+              strokeWidth={5}
               color="#38BDF8"
               label="Water"
               sublabel={`${todayWaterPct}%`}
@@ -613,7 +614,7 @@ export const HealthDashboard: React.FC<HealthDashboardProps> = ({
                     value={weightInput}
                     onChange={(e) => setWeightInput(e.target.value)}
                     placeholder={`e.g. ${profile.targetWeight}`}
-                    className="w-full min-h-[44px] bg-[#090A0F] border border-white/10 rounded-xl pl-3 pr-9 text-sm font-mono tabular-nums text-white placeholder:text-zinc-600 focus:outline-none focus:border-rose-500/60"
+                    className="w-full min-h-[44px] bg-[#090A0F] border border-white/10 rounded-xl pl-3 pr-9 text-base sm:text-sm font-mono tabular-nums text-white placeholder:text-zinc-600 focus:outline-none focus:border-rose-500/60"
                   />
                   <span className="absolute right-2.5 top-1/2 -translate-y-1/2 text-xs font-mono text-zinc-500">
                     {profile.weightUnit}
@@ -738,7 +739,7 @@ export const HealthDashboard: React.FC<HealthDashboardProps> = ({
                   value={stepsInput}
                   onChange={(e) => setStepsInput(e.target.value)}
                   placeholder="Enter total steps (e.g. 9420)"
-                  className="flex-1 min-h-[44px] bg-[#090A0F] border border-white/10 rounded-xl px-3.5 text-sm font-mono tabular-nums text-white placeholder:text-zinc-600 focus:outline-none focus:border-emerald-500/60"
+                  className="flex-1 min-h-[44px] bg-[#090A0F] border border-white/10 rounded-xl px-3.5 text-base sm:text-sm font-mono tabular-nums text-white placeholder:text-zinc-600 focus:outline-none focus:border-emerald-500/60"
                 />
                 <button
                   type="submit"
@@ -853,7 +854,7 @@ export const HealthDashboard: React.FC<HealthDashboardProps> = ({
                     value={sleepHoursInput}
                     onChange={(e) => setSleepHoursInput(e.target.value)}
                     placeholder="8"
-                    className="w-full min-h-[44px] bg-[#090A0F] border border-white/10 rounded-xl pl-3.5 pr-9 text-sm font-mono tabular-nums text-white placeholder:text-zinc-600 focus:outline-none focus:border-indigo-500/60"
+                    className="w-full min-h-[44px] bg-[#090A0F] border border-white/10 rounded-xl pl-3.5 pr-9 text-base sm:text-sm font-mono tabular-nums text-white placeholder:text-zinc-600 focus:outline-none focus:border-indigo-500/60"
                   />
                   <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs font-mono text-zinc-500">
                     hr
@@ -867,7 +868,7 @@ export const HealthDashboard: React.FC<HealthDashboardProps> = ({
                     value={sleepMinsInput}
                     onChange={(e) => setSleepMinsInput(e.target.value)}
                     placeholder="00"
-                    className="w-full min-h-[44px] bg-[#090A0F] border border-white/10 rounded-xl pl-3.5 pr-11 text-sm font-mono tabular-nums text-white placeholder:text-zinc-600 focus:outline-none focus:border-indigo-500/60"
+                    className="w-full min-h-[44px] bg-[#090A0F] border border-white/10 rounded-xl pl-3.5 pr-11 text-base sm:text-sm font-mono tabular-nums text-white placeholder:text-zinc-600 focus:outline-none focus:border-indigo-500/60"
                   />
                   <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs font-mono text-zinc-500">
                     min
@@ -890,7 +891,7 @@ export const HealthDashboard: React.FC<HealthDashboardProps> = ({
                     key={presetMins}
                     type="button"
                     onClick={() => handleSaveSleep(presetMins)}
-                    className="min-h-[34px] rounded-lg bg-zinc-900 hover:bg-zinc-800 border border-white/8 text-[11px] font-mono tabular-nums text-zinc-300 transition-colors"
+                    className="min-h-[38px] rounded-lg bg-zinc-900 hover:bg-zinc-800 border border-white/8 text-[11px] font-mono tabular-nums text-zinc-300 transition-colors"
                   >
                     {formatSleepDuration(presetMins)}
                   </button>
@@ -1001,7 +1002,7 @@ export const HealthDashboard: React.FC<HealthDashboardProps> = ({
                     value={waterInput}
                     onChange={(e) => setWaterInput(e.target.value)}
                     placeholder={`e.g. ${profile.waterGoalMl}`}
-                    className="w-full min-h-[44px] bg-[#090A0F] border border-white/10 rounded-xl pl-3.5 pr-10 text-sm font-mono tabular-nums text-white placeholder:text-zinc-600 focus:outline-none focus:border-sky-500/60"
+                    className="w-full min-h-[44px] bg-[#090A0F] border border-white/10 rounded-xl pl-3.5 pr-10 text-base sm:text-sm font-mono tabular-nums text-white placeholder:text-zinc-600 focus:outline-none focus:border-sky-500/60"
                   />
                   <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs font-mono text-zinc-500">
                     ml
@@ -1022,21 +1023,21 @@ export const HealthDashboard: React.FC<HealthDashboardProps> = ({
                 <button
                   type="button"
                   onClick={() => handleSaveWater(Math.max(0, loggedWaterMl - 250))}
-                  className="min-h-[40px] rounded-xl bg-zinc-900 hover:bg-zinc-800 border border-white/8 text-xs font-mono font-medium text-zinc-300 transition-colors"
+                  className="min-h-[44px] rounded-xl bg-zinc-900 hover:bg-zinc-800 border border-white/8 text-xs font-mono font-medium text-zinc-300 transition-colors"
                 >
                   -250 ml
                 </button>
                 <button
                   type="button"
                   onClick={() => handleSaveWater(loggedWaterMl + 250)}
-                  className="min-h-[40px] rounded-xl bg-sky-500/15 hover:bg-sky-500/25 border border-sky-500/30 text-xs font-mono font-medium text-sky-300 transition-colors"
+                  className="min-h-[44px] rounded-xl bg-sky-500/15 hover:bg-sky-500/25 border border-sky-500/30 text-xs font-mono font-medium text-sky-300 transition-colors"
                 >
                   +250 ml
                 </button>
                 <button
                   type="button"
                   onClick={() => handleSaveWater(loggedWaterMl + 500)}
-                  className="min-h-[40px] rounded-xl bg-sky-500/15 hover:bg-sky-500/25 border border-sky-500/30 text-xs font-mono font-medium text-sky-300 transition-colors"
+                  className="min-h-[44px] rounded-xl bg-sky-500/15 hover:bg-sky-500/25 border border-sky-500/30 text-xs font-mono font-medium text-sky-300 transition-colors"
                 >
                   +500 ml
                 </button>
@@ -1115,7 +1116,7 @@ export const HealthDashboard: React.FC<HealthDashboardProps> = ({
           value={noteInput}
           onChange={(e) => setNoteInput(e.target.value)}
           placeholder="Add a note for today (e.g. Evening walk together, post-workout weigh-in)..."
-          className="flex-1 min-h-[44px] bg-[#090A0F] border border-white/10 rounded-xl px-3.5 text-sm text-white placeholder:text-zinc-600 focus:outline-none focus:border-amber-400/60"
+          className="flex-1 min-h-[44px] bg-[#090A0F] border border-white/10 rounded-xl px-3.5 text-base sm:text-sm text-white placeholder:text-zinc-600 focus:outline-none focus:border-amber-400/60"
         />
         <button
           type="submit"
@@ -1129,145 +1130,150 @@ export const HealthDashboard: React.FC<HealthDashboardProps> = ({
       {/* Customize Daily Targets & Fitness App Modal / Sheet */}
       {isGoalsOpen && (
         <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/75 backdrop-blur-sm p-0 sm:p-4">
-          <div className="w-full sm:max-w-md max-h-[90vh] overflow-y-auto rounded-t-3xl sm:rounded-3xl bg-[#12141C] border border-white/10 p-5 sm:p-6 text-zinc-100 shadow-2xl">
-            <div className="w-10 h-1.5 bg-zinc-700 rounded-full mx-auto mb-4 sm:hidden" />
-
-            <div className="flex items-center justify-between pb-4 border-b border-white/10">
-              <div>
-                <h3 className="text-base font-semibold text-white">
-                  Customize {profile.name}’s Targets & App
-                </h3>
-                <p className="text-xs text-zinc-400">
-                  Saved automatically across your devices
-                </p>
+          <div className="w-full sm:max-w-md max-h-[90dvh] flex flex-col rounded-t-3xl sm:rounded-3xl bg-[#12141C] border border-white/10 text-zinc-100 shadow-2xl overflow-hidden">
+            {/* Modal Header */}
+            <div className="shrink-0 p-4 sm:p-5 pb-3 border-b border-white/10 bg-[#12141C]">
+              <div className="w-10 h-1 bg-zinc-700 rounded-full mx-auto mb-3 sm:hidden" />
+              <div className="flex items-center justify-between">
+                <div>
+                  <h3 className="text-base font-semibold text-white">
+                    Customize {profile.name}’s Targets & App
+                  </h3>
+                  <p className="text-xs text-zinc-400">
+                    Saved automatically across your devices
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setIsGoalsOpen(false)}
+                  className="min-w-[44px] min-h-[44px] rounded-xl flex items-center justify-center text-zinc-400 hover:text-white hover:bg-white/5"
+                >
+                  <X className="w-5 h-5" />
+                </button>
               </div>
-              <button
-                type="button"
-                onClick={() => setIsGoalsOpen(false)}
-                className="min-w-[44px] min-h-[44px] rounded-xl flex items-center justify-center text-zinc-400 hover:text-white hover:bg-white/5"
-              >
-                <X className="w-5 h-5" />
-              </button>
             </div>
 
-            <form onSubmit={handleSaveGoalsSubmit} className="space-y-4 pt-4">
-
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className="block text-xs text-zinc-400 mb-1">Profile Name</label>
-                  <input
-                    type="text"
-                    maxLength={60}
-                    value={goalName}
-                    onChange={(e) => setGoalName(e.target.value)}
-                    className="w-full min-h-[42px] bg-[#090A0F] border border-white/10 rounded-xl px-3 text-sm text-white"
-                  />
-                </div>
-                <div>
-                  <label className="block text-xs text-zinc-400 mb-1">Weight Unit</label>
-                  <div className="grid grid-cols-2 gap-1 p-1 bg-[#090A0F] border border-white/10 rounded-xl">
-                    {(['kg', 'lbs'] as const).map((u) => (
-                      <button
-                        key={u}
-                        type="button"
-                        onClick={() => setGoalWeightUnit(u)}
-                        className={`min-h-[34px] rounded-lg text-xs font-mono font-semibold ${
-                          goalWeightUnit === u
-                            ? 'bg-rose-500 text-white'
-                            : 'text-zinc-400 hover:text-white'
-                        }`}
-                      >
-                        {u}
-                      </button>
-                    ))}
+            {/* Modal Body & Form */}
+            <form onSubmit={handleSaveGoalsSubmit} className="flex-1 flex flex-col min-h-0 overflow-hidden">
+              <div className="overflow-y-auto overscroll-contain flex-1 p-4 sm:p-5 space-y-4 no-scrollbar">
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <label className="block text-xs text-zinc-400 mb-1">Profile Name</label>
+                    <input
+                      type="text"
+                      maxLength={60}
+                      value={goalName}
+                      onChange={(e) => setGoalName(e.target.value)}
+                      className="w-full min-h-[44px] bg-[#090A0F] border border-white/10 rounded-xl px-3 text-base sm:text-sm text-white focus:outline-none focus:border-rose-500/60"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-xs text-zinc-400 mb-1">Weight Unit</label>
+                    <div className="grid grid-cols-2 gap-1 p-1 bg-[#090A0F] border border-white/10 rounded-xl">
+                      {(['kg', 'lbs'] as const).map((u) => (
+                        <button
+                          key={u}
+                          type="button"
+                          onClick={() => setGoalWeightUnit(u)}
+                          className={`min-h-[40px] rounded-lg text-xs font-mono font-semibold transition-colors ${
+                            goalWeightUnit === u
+                              ? 'bg-rose-500 text-white'
+                              : 'text-zinc-400 hover:text-white'
+                          }`}
+                        >
+                          {u}
+                        </button>
+                      ))}
+                    </div>
                   </div>
                 </div>
-              </div>
 
-              <div className="grid grid-cols-2 gap-3">
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <label className="block text-xs text-zinc-400 mb-1">
+                      Starting Weight ({goalWeightUnit})
+                    </label>
+                    <input
+                      type="number"
+                      step="0.1"
+                      min="0"
+                      max="500"
+                      value={goalStartWeight}
+                      onChange={(e) => setGoalStartWeight(e.target.value)}
+                      className="w-full min-h-[44px] bg-[#090A0F] border border-white/10 rounded-xl px-3 text-base sm:text-sm font-mono tabular-nums text-white focus:outline-none focus:border-rose-500/60"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-xs text-zinc-400 mb-1">
+                      Target Weight ({goalWeightUnit})
+                    </label>
+                    <input
+                      type="number"
+                      step="0.1"
+                      min="0"
+                      max="500"
+                      value={goalTargetWeight}
+                      onChange={(e) => setGoalTargetWeight(e.target.value)}
+                      className="w-full min-h-[44px] bg-[#090A0F] border border-white/10 rounded-xl px-3 text-base sm:text-sm font-mono tabular-nums text-white focus:outline-none focus:border-rose-500/60"
+                    />
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-xs text-zinc-400 mb-1">Daily Steps Target</label>
+                  <input
+                    type="number"
+                    min="100"
+                    max="100000"
+                    value={goalSteps}
+                    onChange={(e) => setGoalSteps(e.target.value)}
+                    className="w-full min-h-[44px] bg-[#090A0F] border border-white/10 rounded-xl px-3 text-base sm:text-sm font-mono tabular-nums text-white focus:outline-none focus:border-emerald-500/60"
+                  />
+                </div>
+
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <label className="block text-xs text-zinc-400 mb-1">Sleep Target (Hours)</label>
+                    <input
+                      type="number"
+                      min="1"
+                      max="24"
+                      value={goalSleepHours}
+                      onChange={(e) => setGoalSleepHours(e.target.value)}
+                      className="w-full min-h-[44px] bg-[#090A0F] border border-white/10 rounded-xl px-3 text-base sm:text-sm font-mono tabular-nums text-white focus:outline-none focus:border-indigo-500/60"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-xs text-zinc-400 mb-1">Sleep Target (Minutes)</label>
+                    <input
+                      type="number"
+                      min="0"
+                      max="59"
+                      value={goalSleepMins}
+                      onChange={(e) => setGoalSleepMins(e.target.value)}
+                      className="w-full min-h-[44px] bg-[#090A0F] border border-white/10 rounded-xl px-3 text-base sm:text-sm font-mono tabular-nums text-white focus:outline-none focus:border-indigo-500/60"
+                    />
+                  </div>
+                </div>
+
                 <div>
                   <label className="block text-xs text-zinc-400 mb-1">
-                    Starting Weight ({goalWeightUnit})
+                    Daily Water Target (ml)
                   </label>
                   <input
                     type="number"
-                    step="0.1"
-                    min="0"
-                    max="500"
-                    value={goalStartWeight}
-                    onChange={(e) => setGoalStartWeight(e.target.value)}
-                    className="w-full min-h-[42px] bg-[#090A0F] border border-white/10 rounded-xl px-3 text-sm font-mono tabular-nums text-white"
-                  />
-                </div>
-                <div>
-                  <label className="block text-xs text-zinc-400 mb-1">
-                    Target Weight ({goalWeightUnit})
-                  </label>
-                  <input
-                    type="number"
-                    step="0.1"
-                    min="0"
-                    max="500"
-                    value={goalTargetWeight}
-                    onChange={(e) => setGoalTargetWeight(e.target.value)}
-                    className="w-full min-h-[42px] bg-[#090A0F] border border-white/10 rounded-xl px-3 text-sm font-mono tabular-nums text-white"
+                    min="250"
+                    max="15000"
+                    step="50"
+                    value={goalWaterMl}
+                    onChange={(e) => setGoalWaterMl(e.target.value)}
+                    className="w-full min-h-[44px] bg-[#090A0F] border border-white/10 rounded-xl px-3 text-base sm:text-sm font-mono tabular-nums text-white focus:outline-none focus:border-sky-500/60"
                   />
                 </div>
               </div>
 
-              <div>
-                <label className="block text-xs text-zinc-400 mb-1">Daily Steps Target</label>
-                <input
-                  type="number"
-                  min="100"
-                  max="100000"
-                  value={goalSteps}
-                  onChange={(e) => setGoalSteps(e.target.value)}
-                  className="w-full min-h-[42px] bg-[#090A0F] border border-white/10 rounded-xl px-3 text-sm font-mono tabular-nums text-white"
-                />
-              </div>
-
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className="block text-xs text-zinc-400 mb-1">Sleep Target (Hours)</label>
-                  <input
-                    type="number"
-                    min="1"
-                    max="24"
-                    value={goalSleepHours}
-                    onChange={(e) => setGoalSleepHours(e.target.value)}
-                    className="w-full min-h-[42px] bg-[#090A0F] border border-white/10 rounded-xl px-3 text-sm font-mono tabular-nums text-white"
-                  />
-                </div>
-                <div>
-                  <label className="block text-xs text-zinc-400 mb-1">Sleep Target (Minutes)</label>
-                  <input
-                    type="number"
-                    min="0"
-                    max="59"
-                    value={goalSleepMins}
-                    onChange={(e) => setGoalSleepMins(e.target.value)}
-                    className="w-full min-h-[42px] bg-[#090A0F] border border-white/10 rounded-xl px-3 text-sm font-mono tabular-nums text-white"
-                  />
-                </div>
-              </div>
-
-              <div>
-                <label className="block text-xs text-zinc-400 mb-1">
-                  Daily Water Target (ml)
-                </label>
-                <input
-                  type="number"
-                  min="250"
-                  max="15000"
-                  step="50"
-                  value={goalWaterMl}
-                  onChange={(e) => setGoalWaterMl(e.target.value)}
-                  className="w-full min-h-[42px] bg-[#090A0F] border border-white/10 rounded-xl px-3 text-sm font-mono tabular-nums text-white"
-                />
-              </div>
-
-              <div className="pt-2 flex items-center justify-end gap-2">
+              {/* Sticky Footer */}
+              <div className="shrink-0 p-4 border-t border-white/10 bg-[#12141C] flex items-center justify-end gap-2">
                 <button
                   type="button"
                   onClick={() => setIsGoalsOpen(false)}

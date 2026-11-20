@@ -1,0 +1,65 @@
+{
+  "Health-320px-SE-narrow": {
+    "scrollWidth": 320,
+    "innerWidth": 320,
+    "overflow": false,
+    "overElementsCount": 0,
+    "overElements": []
+  },
+  "Health-360px-Galaxy-S8": {
+    "scrollWidth": 360,
+    "innerWidth": 360,
+    "overflow": false,
+    "overElementsCount": 0,
+    "overElements": []
+  },
+  "Health-375px-iPhone-Mini": {
+    "scrollWidth": 375,
+    "innerWidth": 375,
+    "overflow": false,
+    "overElementsCount": 0,
+    "overElements": []
+  },
+  "Health-390px-iPhone-14": {
+    "scrollWidth": 390,
+    "innerWidth": 390,
+    "overflow": false,
+    "overElementsCount": 0,
+    "overElements": []
+  },
+  "Health-412px-Pixel-7": {
+    "scrollWidth": 412,
+    "innerWidth": 412,
+    "overflow": false,
+    "overElementsCount": 0,
+    "overElements": []
+  },
+  "Health-430px-iPhone-ProMax": {
+    "scrollWidth": 430,
+    "innerWidth": 430,
+    "overflow": false,
+    "overElementsCount": 0,
+    "overElements": []
+  },
+  "Health-667x375-landscape": {
+    "scrollWidth": 667,
+    "innerWidth": 667,
+    "overflow": false,
+    "overElementsCount": 0,
+    "overElements": []
+  },
+  "Health-768px-iPad": {
+    "scrollWidth": 768,
+    "innerWidth": 768,
+    "overflow": false,
+    "overElementsCount": 0,
+    "overElements": []
+  },
+  "Health-1280px-Desktop": {
+    "scrollWidth": 1280,
+    "innerWidth": 1280,
+    "overflow": false,
+    "overElementsCount": 0,
+    "overElements": []
+  }
+}

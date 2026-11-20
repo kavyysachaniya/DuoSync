@@ -6,6 +6,12 @@
     --font-display: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif;
     --font-sans: 'DM Sans', -apple-system, BlinkMacSystemFont, sans-serif;
     --font-mono: 'JetBrains Mono', monospace;
+
+    /* Safe Area Inset Tokens (Notch, Dynamic Island, Home Indicator) */
+    --sat: env(safe-area-inset-top, 0px);
+    --sab: env(safe-area-inset-bottom, 0px);
+    --sal: env(safe-area-inset-left, 0px);
+    --sar: env(safe-area-inset-right, 0px);
   }
 
   html {
@@ -40,6 +46,16 @@
   .font-mono, .tabular-nums {
     font-family: var(--font-mono);
     font-variant-numeric: tabular-nums;
+  }
+
+  /* Prevent iOS Safari auto-zoom on input focus: enforce 16px minimum on mobile */
+  input, select, textarea {
+    font-size: 16px;
+  }
+  @media (min-width: 640px) {
+    input, select, textarea {
+      font-size: 14px;
+    }
   }
 }
 
@@ -94,24 +110,31 @@ section::-webkit-scrollbar {
   background: transparent !important;
 }
 
-*::-webkit-scrollbar-thumb,
-*::-webkit-scrollbar-track {
-  background: transparent !important;
-  display: none !important;
+/* Safe Area Inset Helpers */
+.pt-safe {
+  padding-top: max(0.75rem, env(safe-area-inset-top, 0px));
 }
 
-/* Explicit utility classes support */
-.no-scrollbar,
-.scrollbar-none {
-  scrollbar-width: none !important;
-  -ms-overflow-style: none !important;
+.pb-safe {
+  padding-bottom: max(1rem, env(safe-area-inset-bottom, 0px));
 }
 
-.no-scrollbar::-webkit-scrollbar,
-.scrollbar-none::-webkit-scrollbar {
-  display: none !important;
-  width: 0px !important;
-  height: 0px !important;
-  background: transparent !important;
+.pl-safe {
+  padding-left: max(0.75rem, env(safe-area-inset-left, 0px));
 }
 
+.pr-safe {
+  padding-right: max(0.75rem, env(safe-area-inset-right, 0px));
+}
+
+/* Respect prefers-reduced-motion */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
