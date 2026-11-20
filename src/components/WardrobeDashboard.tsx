@@ -3,25 +3,28 @@ import {
   Camera,
   Check,
   Edit3,
-  Filter,
-  Heart,
   Image as ImageIcon,
   Layers,
-  Palette,
+  Loader2,
   Plus,
-  Search,
   Shirt,
   Sparkles,
   Tag,
   Trash2,
   Upload,
-  Users,
   X,
-  Loader2,
 } from 'lucide-react';
 import { AnimatePresence, motion } from 'motion/react';
 import { DuoDropdown } from './ui/DuoDropdown';
 import { api } from '../services/apiClient';
+import {
+  ScreenHeader,
+  ChipBar,
+  TodayRow,
+  ItemCard,
+  EmptyState,
+  FilterSheet,
+} from './shared';
 import {
   OutfitDoc,
   PartnerProfileView,
@@ -34,6 +37,118 @@ import {
   WardrobeOccasion,
   WardrobeSeason,
 } from '../types';
+
+// Curated preview seed items for DuoSync (shown when wardrobe is first viewed)
+export const PREVIEW_SEED_ITEMS: WardrobeItemDoc[] = [
+  {
+    id: 'seed_1',
+    workspaceId: 'shared',
+    profileSlot: 'partner1',
+    name: 'Black Oxford Shirt',
+    brand: 'Westside',
+    category: 'Tops',
+    color: 'Black',
+    size: 'M',
+    occasion: 'Casual',
+    season: 'All Season',
+    notes: 'Crisp casual button-up',
+    imageUrl: '',
+    thumbnailUrl: '',
+    updatedByUid: '',
+    createdAt: new Date().toISOString() as any,
+    updatedAt: new Date().toISOString() as any,
+  },
+  {
+    id: 'seed_2',
+    workspaceId: 'shared',
+    profileSlot: 'partner1',
+    name: 'Slim Fit Blue Jeans',
+    brand: "Levi's",
+    category: 'Bottoms',
+    color: 'Navy Blue',
+    size: '32',
+    occasion: 'Casual',
+    season: 'All Season',
+    notes: 'Classic denim',
+    imageUrl: '',
+    thumbnailUrl: '',
+    updatedByUid: '',
+    createdAt: new Date().toISOString() as any,
+    updatedAt: new Date().toISOString() as any,
+  },
+  {
+    id: 'seed_3',
+    workspaceId: 'shared',
+    profileSlot: 'partner1',
+    name: 'Air Force 1 White',
+    brand: 'Nike',
+    category: 'Footwear',
+    color: 'White',
+    size: 'UK 9',
+    occasion: 'Casual',
+    season: 'All Season',
+    notes: 'Clean leather sneakers',
+    imageUrl: '',
+    thumbnailUrl: '',
+    updatedByUid: '',
+    createdAt: new Date().toISOString() as any,
+    updatedAt: new Date().toISOString() as any,
+  },
+  {
+    id: 'seed_4',
+    workspaceId: 'shared',
+    profileSlot: 'partner1',
+    name: 'Oversized Beige Hoodie',
+    brand: 'H&M',
+    category: 'Outerwear',
+    color: 'Beige / Cream',
+    size: 'L',
+    occasion: 'Casual',
+    season: 'Winter',
+    notes: 'Soft fleece hoodie',
+    imageUrl: '',
+    thumbnailUrl: '',
+    updatedByUid: '',
+    createdAt: new Date().toISOString() as any,
+    updatedAt: new Date().toISOString() as any,
+  },
+  {
+    id: 'seed_5',
+    workspaceId: 'shared',
+    profileSlot: 'partner1',
+    name: 'Linen Cream Shirt',
+    brand: 'Zara',
+    category: 'Tops',
+    color: 'Beige / Cream',
+    size: 'M',
+    occasion: 'Casual',
+    season: 'Summer',
+    notes: 'Breathable relaxed linen',
+    imageUrl: '',
+    thumbnailUrl: '',
+    updatedByUid: '',
+    createdAt: new Date().toISOString() as any,
+    updatedAt: new Date().toISOString() as any,
+  },
+  {
+    id: 'seed_6',
+    workspaceId: 'shared',
+    profileSlot: 'partner1',
+    name: 'Graphic Black Tee',
+    brand: 'Bewakoof',
+    category: 'Tops',
+    color: 'Black',
+    size: 'L',
+    occasion: 'College',
+    season: 'All Season',
+    notes: 'Heavyweight cotton graphic tee',
+    imageUrl: '',
+    thumbnailUrl: '',
+    updatedByUid: '',
+    createdAt: new Date().toISOString() as any,
+    updatedAt: new Date().toISOString() as any,
+  },
+];
 
 interface WardrobeDashboardProps {
   profile: PartnerProfileView;
@@ -125,6 +240,13 @@ export const WardrobeDashboard: React.FC<WardrobeDashboardProps> = ({
   const [selectedColorFilter, setSelectedColorFilter] = useState<string>('All');
   const [ownerFilter, setOwnerFilter] = useState<'all' | 'me' | 'partner' | 'shared'>('all');
   const [searchQuery, setSearchQuery] = useState('');
+  const [isSearchOpen, setIsSearchOpen] = useState(false);
+  const [isFilterSheetOpen, setIsFilterSheetOpen] = useState(false);
+
+  // Effective items: use real items, or seed preview pieces if wardrobe is empty
+  const effectiveItems = useMemo(() => {
+    return items.length > 0 ? items : PREVIEW_SEED_ITEMS;
+  }, [items]);
 
   // Item Modal State (Add / Edit)
   const [isItemModalOpen, setIsItemModalOpen] = useState(false);
@@ -165,21 +287,23 @@ export const WardrobeDashboard: React.FC<WardrobeDashboardProps> = ({
 
   // Filtered wardrobe items
   const filteredItems = useMemo(() => {
-    return items.filter((item) => {
+    return effectiveItems.filter((item) => {
       if (selectedCategory !== 'All' && item.category !== selectedCategory) return false;
       if (selectedOccasionFilter !== 'All' && item.occasion !== selectedOccasionFilter) return false;
       if (selectedColorFilter !== 'All' && !item.color.toLowerCase().includes(selectedColorFilter.toLowerCase()))
         return false;
 
-      if (ownerFilter === 'me') {
-        if (item.profileSlot !== profile.slot) return false;
-      } else if (ownerFilter === 'partner') {
-        if (item.profileSlot !== partnerProfile.slot) return false;
-      } else if (ownerFilter === 'shared') {
-        if (item.profileSlot !== 'shared') return false;
-      } else {
-        // 'all' in active profile's view shows this profile's items + shared items
-        if (item.profileSlot !== profile.slot && item.profileSlot !== 'shared') return false;
+      if (items.length > 0) {
+        if (ownerFilter === 'me') {
+          if (item.profileSlot !== profile.slot) return false;
+        } else if (ownerFilter === 'partner') {
+          if (item.profileSlot !== partnerProfile.slot) return false;
+        } else if (ownerFilter === 'shared') {
+          if (item.profileSlot !== 'shared') return false;
+        } else {
+          // 'all' in active profile's view shows this profile's items + shared items
+          if (item.profileSlot !== profile.slot && item.profileSlot !== 'shared') return false;
+        }
       }
 
       if (searchQuery.trim()) {
@@ -192,7 +316,7 @@ export const WardrobeDashboard: React.FC<WardrobeDashboardProps> = ({
       }
       return true;
     });
-  }, [items, selectedCategory, selectedOccasionFilter, selectedColorFilter, ownerFilter, searchQuery, profile.slot, partnerProfile.slot]);
+  }, [effectiveItems, items.length, selectedCategory, selectedOccasionFilter, selectedColorFilter, ownerFilter, searchQuery, profile.slot, partnerProfile.slot]);
 
   // Filtered outfits
   const filteredOutfits = useMemo(() => {
@@ -453,7 +577,7 @@ export const WardrobeDashboard: React.FC<WardrobeDashboardProps> = ({
   };
 
   return (
-    <div className="space-y-6 pb-20 sm:pb-12 text-zinc-100">
+    <div className="space-y-4 pb-28 sm:pb-16 text-zinc-100 min-w-0">
       {/* Toast Feedback */}
       <AnimatePresence>
         {toastMessage && (
@@ -463,351 +587,164 @@ export const WardrobeDashboard: React.FC<WardrobeDashboardProps> = ({
             exit={{ opacity: 0, y: -16 }}
             className="fixed top-18 right-4 sm:right-8 z-50 px-4 py-2.5 rounded-2xl bg-zinc-900 border border-white/20 text-white text-xs font-semibold shadow-2xl flex items-center gap-2"
           >
-            <Sparkles className="w-3.5 h-3.5 text-rose-400" />
+            <span className="w-2 h-2 rounded-full bg-rose-400" />
             <span>{toastMessage}</span>
           </motion.div>
         )}
       </AnimatePresence>
 
-      {/* Hero Header & Wardrobe Actions */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-white/8 pb-4">
-        <div>
-          <div className="flex items-center gap-2 text-xs font-semibold text-rose-400 tracking-wide uppercase">
-            <Shirt className="w-4 h-4" />
-            <span>Digital Wardrobe & Outfit Studio</span>
-          </div>
-          <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-white mt-1">
-            {profile.name}’s Closet
-          </h1>
-          <p className="text-xs sm:text-sm text-zinc-400 mt-0.5">
-            Catalog clothing pieces, style combined fits, and coordinate styles with {partnerProfile.name}.
-          </p>
+      {/* 1. PERSONAL HEADER */}
+      <ScreenHeader
+        eyebrow="PERSONAL CLOSET STUDIO"
+        title={`${profile.name}’s Closet`}
+        subtitle="Your wardrobe pieces, outfits and daily looks, in one place."
+      />
+
+      {/* 2. NAVIGATION ROW (Closet / Fits / Create Fit as text only) + Round White "+" Button */}
+      <div className="flex items-center justify-between gap-2.5">
+        <div className="flex-1 flex items-center p-1 rounded-full bg-[#12141C] border border-white/10 shadow-lg">
+          <button
+            type="button"
+            onClick={() => setActiveTab('closet')}
+            className={`relative flex-1 min-h-[40px] px-2 sm:px-4 rounded-full text-xs font-semibold flex items-center justify-center transition-colors ${
+              activeTab === 'closet' ? 'text-zinc-950 font-bold' : 'text-zinc-400 hover:text-white'
+            }`}
+          >
+            {activeTab === 'closet' && (
+              <motion.span
+                layoutId="closetNavPill"
+                transition={{ type: 'spring', damping: 25, stiffness: 350 }}
+                className="absolute inset-0 rounded-full bg-white shadow-md"
+              />
+            )}
+            <span className="relative z-10">Closet</span>
+          </button>
+
+          <button
+            type="button"
+            onClick={() => setActiveTab('fits')}
+            className={`relative flex-1 min-h-[40px] px-2 sm:px-4 rounded-full text-xs font-semibold flex items-center justify-center transition-colors ${
+              activeTab === 'fits' ? 'text-zinc-950 font-bold' : 'text-zinc-400 hover:text-white'
+            }`}
+          >
+            {activeTab === 'fits' && (
+              <motion.span
+                layoutId="closetNavPill"
+                transition={{ type: 'spring', damping: 25, stiffness: 350 }}
+                className="absolute inset-0 rounded-full bg-white shadow-md"
+              />
+            )}
+            <span className="relative z-10">Fits ({outfits.length})</span>
+          </button>
+
+          <button
+            type="button"
+            onClick={() => handleStartOutfitBuilder()}
+            className={`relative flex-1 min-h-[40px] px-2 sm:px-4 rounded-full text-xs font-semibold flex items-center justify-center transition-colors ${
+              activeTab === 'builder' ? 'text-zinc-950 font-bold' : 'text-zinc-400 hover:text-white'
+            }`}
+          >
+            {activeTab === 'builder' && (
+              <motion.span
+                layoutId="closetNavPill"
+                transition={{ type: 'spring', damping: 25, stiffness: 350 }}
+                className="absolute inset-0 rounded-full bg-white shadow-md"
+              />
+            )}
+            <span className="relative z-10">Create Fit</span>
+          </button>
         </div>
 
-        {/* View Switcher Pills */}
-        <div className="flex items-center gap-2 self-start sm:self-auto">
-          <div className="flex items-center p-1 rounded-full bg-[#12141C] border border-white/10 text-xs">
-            <button
-              type="button"
-              onClick={() => setActiveTab('closet')}
-              className={`min-h-[34px] px-3.5 rounded-full font-semibold transition-colors flex items-center gap-1.5 ${
-                activeTab === 'closet' ? 'bg-white text-zinc-950 shadow-md' : 'text-zinc-400 hover:text-white'
-              }`}
-            >
-              <Shirt className="w-3.5 h-3.5" />
-              <span>Closet ({items.length})</span>
-            </button>
-
-            <button
-              type="button"
-              onClick={() => setActiveTab('fits')}
-              className={`min-h-[34px] px-3.5 rounded-full font-semibold transition-colors flex items-center gap-1.5 ${
-                activeTab === 'fits' ? 'bg-white text-zinc-950 shadow-md' : 'text-zinc-400 hover:text-white'
-              }`}
-            >
-              <Layers className="w-3.5 h-3.5" />
-              <span>Fits ({outfits.length})</span>
-            </button>
-
-            <button
-              type="button"
-              onClick={() => handleStartOutfitBuilder()}
-              className={`min-h-[34px] px-3.5 rounded-full font-semibold transition-colors flex items-center gap-1.5 ${
-                activeTab === 'builder'
-                  ? 'bg-gradient-to-r from-rose-500 to-amber-500 text-white font-bold'
-                  : 'text-rose-400 hover:text-rose-300'
-              }`}
-            >
-              <Sparkles className="w-3.5 h-3.5" />
-              <span>Create Fit</span>
-            </button>
-          </div>
-
-          {activeTab === 'closet' && (
-            <button
-              type="button"
-              onClick={handleOpenAddItem}
-              className="min-h-[40px] px-4 rounded-2xl bg-white hover:bg-zinc-200 text-zinc-950 text-xs font-bold transition-all shadow-lg shadow-white/5 flex items-center gap-1.5 shrink-0"
-            >
-              <Plus className="w-4 h-4 text-zinc-950" />
-              <span>Add Clothing</span>
-            </button>
-          )}
-        </div>
+        {/* Round White "+" Add Button */}
+        <button
+          type="button"
+          onClick={handleOpenAddItem}
+          className="w-11 h-11 rounded-full bg-white hover:bg-zinc-200 text-zinc-950 flex items-center justify-center shadow-lg transition-transform active:scale-95 shrink-0 cursor-pointer"
+          title="Add Clothing Piece"
+          aria-label="Add Clothing Piece"
+        >
+          <Plus className="w-4 h-4 stroke-[2.5]" />
+        </button>
       </div>
 
       {/* TAB 1: CLOSET INVENTORY */}
       {activeTab === 'closet' && (
-        <div className="space-y-5">
-          {/* Filter Bar: Categories, Occasions, Colors, Search */}
-          <div className="rounded-3xl bg-[#12141C] border border-white/10 p-4 space-y-3.5">
-            {/* Top row: Category Tabs */}
-            <div className="flex items-center gap-2 overflow-x-auto pb-1 scrollbar-none">
-              <button
-                type="button"
-                onClick={() => setSelectedCategory('All')}
-                className={`min-h-[32px] px-3.5 rounded-xl text-xs font-semibold whitespace-nowrap transition-colors ${
-                  selectedCategory === 'All'
-                    ? 'bg-rose-500 text-white shadow-md'
-                    : 'bg-zinc-900/90 text-zinc-400 hover:text-white border border-white/6'
-                }`}
-              >
-                All Pieces ({items.length})
-              </button>
-              {WARDROBE_CATEGORIES.map((cat) => {
-                const count = items.filter((i) => i.category === cat).length;
-                return (
-                  <button
-                    key={cat}
-                    type="button"
-                    onClick={() => setSelectedCategory(cat)}
-                    className={`min-h-[32px] px-3.5 rounded-xl text-xs font-semibold whitespace-nowrap transition-colors flex items-center gap-1.5 ${
-                      selectedCategory === cat
-                        ? 'bg-rose-500 text-white shadow-md'
-                        : 'bg-zinc-900/90 text-zinc-400 hover:text-white border border-white/6'
-                    }`}
-                  >
-                    <span>{cat}</span>
-                    {count > 0 && <span className="text-[10px] opacity-75">({count})</span>}
-                  </button>
-                );
-              })}
-            </div>
+        <div className="space-y-4">
+          {/* 3. TODAY'S FIT ROW (Hairline above and below, inline expanding search, filter button) */}
+          <TodayRow
+            title="Today’s Fit"
+            statusText={
+              outfits.length > 0
+                ? `${outfits[0].occasion || 'Casual'} · ${outfits[0].itemIds?.length || 2} pieces`
+                : 'No fit styled today'
+            }
+            showSearchFilter={true}
+            isSearchOpen={isSearchOpen}
+            onToggleSearch={() => setIsSearchOpen((prev) => !prev)}
+            searchValue={searchQuery}
+            onSearchChange={setSearchQuery}
+            onOpenFilter={() => setIsFilterSheetOpen(true)}
+            hasActiveFilters={selectedOccasionFilter !== 'All' || selectedColorFilter !== 'All'}
+          />
 
-            {/* Middle row: Owner filter, Occasion, Color, Search */}
-            <div className="grid grid-cols-1 sm:grid-cols-12 gap-2.5 pt-1">
-              {/* Search Bar */}
-              <div className="sm:col-span-4 relative">
-                <Search className="w-3.5 h-3.5 text-zinc-400 absolute left-3 top-1/2 -translate-y-1/2" />
-                <input
-                  type="text"
-                  placeholder="Search by name, brand, color..."
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  className="w-full min-h-[44px] pl-9 pr-3 rounded-2xl bg-zinc-900 border border-white/10 text-base sm:text-xs text-zinc-100 placeholder-zinc-500 focus:outline-none focus:border-rose-400"
-                />
-              </div>
+          {/* 4. CATEGORY CHIP BAR (Directly on --bg, single row, ghost inactive, rose active) */}
+          <ChipBar
+            categories={[
+              { id: 'All', label: 'All', count: effectiveItems.length },
+              ...WARDROBE_CATEGORIES.map((cat) => ({
+                id: cat,
+                label: cat,
+                count: effectiveItems.filter((i) => i.category === cat).length,
+              })),
+            ]}
+            selectedCategory={selectedCategory}
+            onSelectCategory={(cat) => setSelectedCategory(cat as WardrobeCategory | 'All')}
+          />
 
-              {/* Occasion Filter */}
-              <div className="sm:col-span-3">
-                <DuoDropdown
-                  value={selectedOccasionFilter}
-                  onChange={(val) => setSelectedOccasionFilter(val)}
-                  options={[
-                    { value: 'All', label: 'All Occasions' },
-                    ...WARDROBE_OCCASIONS.map((occ) => ({ value: occ, label: occ })),
-                  ]}
-                  triggerClassName="!min-h-[44px] !text-xs !rounded-2xl"
-                />
-              </div>
-
-              {/* Color Filter */}
-              <div className="sm:col-span-2">
-                <DuoDropdown
-                  value={selectedColorFilter}
-                  onChange={(val) => setSelectedColorFilter(val)}
-                  options={[
-                    { value: 'All', label: 'All Colors' },
-                    ...PRESET_COLORS.map((c) => ({ value: c.name, label: c.name })),
-                  ]}
-                  triggerClassName="!min-h-[44px] !text-xs !rounded-2xl"
-                />
-              </div>
-
-              {/* Profile Ownership Toggle */}
-              <div className="sm:col-span-3 flex items-center p-0.5 rounded-2xl bg-zinc-900 border border-white/10 text-xs font-medium min-h-[44px]">
-                <button
-                  type="button"
-                  onClick={() => setOwnerFilter('all')}
-                  className={`flex-1 min-h-[38px] rounded-xl text-xs font-semibold truncate px-1.5 transition-colors ${
-                    ownerFilter === 'all' ? 'bg-white text-zinc-950' : 'text-zinc-400 hover:text-white'
-                  }`}
-                >
-                  All
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setOwnerFilter('me')}
-                  className={`flex-1 min-h-[38px] rounded-xl text-xs font-semibold truncate px-1.5 transition-colors ${
-                    ownerFilter === 'me' ? 'bg-sky-500 text-white' : 'text-zinc-400 hover:text-white'
-                  }`}
-                >
-                  {profile.name}
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setOwnerFilter('partner')}
-                  className={`flex-1 min-h-[38px] rounded-xl text-xs font-semibold truncate px-1.5 transition-colors ${
-                    ownerFilter === 'partner' ? 'bg-rose-500 text-white' : 'text-zinc-400 hover:text-white'
-                  }`}
-                >
-                  {partnerProfile.name}
-                </button>
-              </div>
-            </div>
-          </div>
-
-          {/* Clothing Items Grid */}
+          {/* 5. 2-COLUMN CLOTHING GRID OR EMPTY STATE */}
           {filteredItems.length === 0 ? (
-            <div className="rounded-3xl bg-[#12141C] border border-white/8 p-12 text-center space-y-4">
-              <div className="w-14 h-14 rounded-3xl bg-zinc-900 border border-white/10 flex items-center justify-center mx-auto text-rose-400">
-                <Shirt className="w-6 h-6" />
-              </div>
-              <div className="space-y-1">
-                <h3 className="text-base font-bold text-white">No clothing pieces found</h3>
-                <p className="text-xs text-zinc-400 max-w-sm mx-auto">
-                  {items.length === 0
-                    ? 'Your digital wardrobe is empty. Start adding your tops, bottoms, shoes, and outerwear to build your closet!'
-                    : 'No items match your active filters. Try resetting the category, occasion, or search.'}
-                </p>
-              </div>
-              {items.length === 0 ? (
-                <button
-                  type="button"
-                  onClick={handleOpenAddItem}
-                  className="min-h-[44px] px-6 rounded-2xl bg-white text-zinc-950 hover:bg-zinc-200 text-xs font-bold inline-flex items-center gap-2 transition-all shadow-lg shadow-white/5"
-                >
-                  <Plus className="w-4 h-4 text-zinc-950" />
-                  <span>Add First Clothing Item</span>
-                </button>
-              ) : (
-                <button
-                  type="button"
-                  onClick={() => {
-                    setSelectedCategory('All');
-                    setSelectedOccasionFilter('All');
-                    setSelectedColorFilter('All');
-                    setOwnerFilter('all');
-                    setSearchQuery('');
-                  }}
-                  className="min-h-[36px] px-4 rounded-xl bg-zinc-800 text-zinc-200 hover:bg-zinc-700 text-xs font-medium"
-                >
-                  Clear Filters
-                </button>
-              )}
-            </div>
+            <EmptyState
+              title="No clothing pieces yet"
+              subtitle="Add your first piece to start building fits."
+              actionLabel="+ Add Clothing"
+              onAction={handleOpenAddItem}
+            />
           ) : (
-            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3.5 sm:gap-4">
-              {filteredItems.map((item) => {
-                const ownerLabel =
-                  item.profileSlot === 'shared'
-                    ? 'Shared'
-                    : item.profileSlot === profile.slot
-                    ? profile.name
-                    : partnerProfile.name;
-                const ownerColor =
-                  item.profileSlot === 'shared'
-                    ? 'text-amber-400 bg-amber-500/10 border-amber-500/20'
-                    : item.profileSlot === 'partner1'
-                    ? 'text-sky-400 bg-sky-500/10 border-sky-500/20'
-                    : 'text-rose-400 bg-rose-500/10 border-rose-500/20';
-
-                return (
-                  <motion.div
-                    key={item.id}
-                    layout
-                    initial={{ opacity: 0, scale: 0.96 }}
-                    animate={{ opacity: 1, scale: 1 }}
-                    exit={{ opacity: 0, scale: 0.96 }}
-                    className="group relative rounded-3xl bg-[#12141C] border border-white/10 hover:border-white/20 transition-all overflow-hidden flex flex-col justify-between"
-                  >
-                    {/* Visual Card Image / Silhouette Banner */}
-                    <div className="relative aspect-[4/3] w-full bg-zinc-900 overflow-hidden flex items-center justify-center">
-                      {item.imageUrl ? (
-                        <img
-                          src={item.thumbnailUrl || item.imageUrl}
-                          alt={item.name}
-                          loading="lazy"
-                          decoding="async"
-                          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                        />
-                      ) : (
-                        <div className="w-full h-full bg-gradient-to-br from-zinc-800 to-zinc-950 flex flex-col items-center justify-center p-3 text-center space-y-2">
-                          <Shirt className="w-8 h-8 text-zinc-600 group-hover:text-rose-400 transition-colors" />
-                          <span className="text-[10px] font-mono text-zinc-500 uppercase tracking-widest">
-                            {item.category}
-                          </span>
-                        </div>
-                      )}
-
-                      {/* Top Badges: Category & Owner */}
-                      <div className="absolute top-2.5 left-2.5 right-2.5 flex items-center justify-between gap-1 pointer-events-none">
-                        <span className="px-2 py-0.5 rounded-lg bg-black/60 backdrop-blur-md border border-white/10 text-[10px] font-semibold text-white">
-                          {item.category}
-                        </span>
-                        <span className={`px-2 py-0.5 rounded-lg border text-[10px] font-semibold ${ownerColor}`}>
-                          {ownerLabel}
-                        </span>
-                      </div>
-
-                      {/* Quick Action Overlay (Edit / Delete) */}
-                      <div className="absolute bottom-2.5 right-2.5 flex items-center gap-1 opacity-90 sm:opacity-0 group-hover:opacity-100 transition-opacity">
-                        <button
-                          type="button"
-                          onClick={() => handleOpenEditItem(item)}
-                          className="w-8 h-8 rounded-xl bg-black/70 backdrop-blur-md border border-white/20 text-zinc-200 hover:text-white flex items-center justify-center"
-                          title="Edit Piece"
-                        >
-                          <Edit3 className="w-3.5 h-3.5" />
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => onDeleteItem(item.id)}
-                          className="w-8 h-8 rounded-xl bg-black/70 backdrop-blur-md border border-white/20 text-zinc-400 hover:text-rose-400 flex items-center justify-center"
-                          title="Delete Piece"
-                        >
-                          <Trash2 className="w-3.5 h-3.5" />
-                        </button>
-                      </div>
-                    </div>
-
-                    {/* Item Details */}
-                    <div className="p-3.5 space-y-2">
-                      <div>
-                        {item.brand && (
-                          <div className="text-[10px] font-semibold text-zinc-400 uppercase tracking-wider truncate">
-                            {item.brand}
-                          </div>
-                        )}
-                        <h4 className="text-xs sm:text-sm font-bold text-white truncate leading-tight mt-0.5">
-                          {item.name}
-                        </h4>
-                      </div>
-
-                      {/* Attribute Pills: Color Swatch, Size, Occasion */}
-                      <div className="flex flex-wrap items-center gap-1.5 pt-0.5">
-                        {/* Color Pill */}
-                        <div className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-zinc-900 border border-white/8 text-[10px] text-zinc-300">
-                          <span className="w-2 h-2 rounded-full border border-white/20 bg-zinc-400" />
-                          <span className="truncate max-w-[70px]">{item.color}</span>
-                        </div>
-
-                        {/* Size Pill */}
-                        {item.size && (
-                          <span className="px-1.5 py-0.5 rounded-md bg-zinc-900 border border-white/8 text-[10px] font-mono text-zinc-400">
-                            {item.size}
-                          </span>
-                        )}
-
-                        {/* Occasion Pill */}
-                        {item.occasion && (
-                          <span className={`px-2 py-0.5 rounded-md border text-[10px] font-medium ${getOccasionColor(item.occasion)}`}>
-                            {item.occasion}
-                          </span>
-                        )}
-                      </div>
-
-                      {item.notes && (
-                        <p className="text-[11px] text-zinc-400 line-clamp-2 pt-0.5 italic">
-                          "{item.notes}"
-                        </p>
-                      )}
-                    </div>
-                  </motion.div>
-                );
-              })}
+            <div className="grid grid-cols-2 gap-3">
+              {filteredItems.map((item, idx) => (
+                <ItemCard
+                  key={item.id}
+                  id={item.id}
+                  name={item.name}
+                  brand={item.brand}
+                  category={item.category}
+                  color={item.color}
+                  imageUrl={item.imageUrl}
+                  thumbnailUrl={item.thumbnailUrl}
+                  index={idx}
+                  onClick={() => handleOpenEditItem(item)}
+                />
+              ))}
             </div>
           )}
+
+          {/* Filter Bottom Sheet */}
+          <FilterSheet
+            isOpen={isFilterSheetOpen}
+            onClose={() => setIsFilterSheetOpen(false)}
+            occasionOptions={WARDROBE_OCCASIONS}
+            selectedOccasion={selectedOccasionFilter}
+            colorOptions={PRESET_COLORS}
+            selectedColor={selectedColorFilter}
+            onApply={(occ, col) => {
+              setSelectedOccasionFilter(occ);
+              setSelectedColorFilter(col);
+            }}
+            onReset={() => {
+              setSelectedOccasionFilter('All');
+              setSelectedColorFilter('All');
+            }}
+          />
         </div>
       )}
 

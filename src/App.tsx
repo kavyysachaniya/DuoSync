@@ -1068,7 +1068,7 @@ export default function App() {
             type="button"
             onClick={() => setActiveSection('health')}
             className={`relative min-h-[34px] sm:min-h-[36px] px-3.5 sm:px-5 py-1 rounded-full text-xs font-semibold transition-colors whitespace-nowrap shrink-0 flex items-center gap-1.5 ${
-              activeSection === 'health' ? 'text-zinc-950' : 'text-zinc-400 hover:text-white'
+              activeSection === 'health' ? 'text-zinc-950' : 'text-white/60 hover:text-white'
             }`}
           >
             {activeSection === 'health' && (
@@ -1078,7 +1078,7 @@ export default function App() {
                 className="absolute inset-0 rounded-full bg-white"
               />
             )}
-            <Activity className="w-3.5 h-3.5 relative z-10" />
+            <Activity className="w-3.5 h-3.5 relative z-10" strokeWidth={1.5} />
             <span className="relative z-10">Health</span>
           </button>
 
@@ -1086,7 +1086,7 @@ export default function App() {
             type="button"
             onClick={() => setActiveSection('skin')}
             className={`relative min-h-[34px] sm:min-h-[36px] px-3.5 sm:px-5 py-1 rounded-full text-xs font-semibold transition-colors whitespace-nowrap shrink-0 flex items-center gap-1.5 ${
-              activeSection === 'skin' ? 'text-zinc-950' : 'text-zinc-400 hover:text-white'
+              activeSection === 'skin' ? 'text-zinc-950' : 'text-white/60 hover:text-white'
             }`}
           >
             {activeSection === 'skin' && (
@@ -1096,7 +1096,7 @@ export default function App() {
                 className="absolute inset-0 rounded-full bg-white"
               />
             )}
-            <Sparkles className="w-3.5 h-3.5 relative z-10" />
+            <Sparkles className="w-3.5 h-3.5 relative z-10" strokeWidth={1.5} />
             <span className="relative z-10">Skin</span>
           </button>
 
@@ -1104,7 +1104,7 @@ export default function App() {
             type="button"
             onClick={() => setActiveSection('wardrobe')}
             className={`relative min-h-[34px] sm:min-h-[36px] px-3.5 sm:px-5 py-1 rounded-full text-xs font-semibold transition-colors whitespace-nowrap shrink-0 flex items-center gap-1.5 ${
-              activeSection === 'wardrobe' ? 'text-zinc-950' : 'text-zinc-400 hover:text-white'
+              activeSection === 'wardrobe' ? 'text-zinc-950' : 'text-white/60 hover:text-white'
             }`}
           >
             {activeSection === 'wardrobe' && (
@@ -1114,7 +1114,7 @@ export default function App() {
                 className="absolute inset-0 rounded-full bg-white"
               />
             )}
-            <Shirt className="w-3.5 h-3.5 relative z-10" />
+            <Shirt className="w-3.5 h-3.5 relative z-10" strokeWidth={1.5} />
             <span className="relative z-10">Fits</span>
           </button>
         </nav>
@@ -1246,7 +1246,7 @@ export default function App() {
             type="button"
             onClick={() => setActiveSection('health')}
             className={`relative flex-1 min-h-[46px] rounded-full text-xs font-semibold flex items-center justify-center gap-1.5 transition-colors ${
-              activeSection === 'health' ? 'text-zinc-950 font-bold' : 'text-zinc-400 hover:text-white'
+              activeSection === 'health' ? 'text-zinc-950 font-bold' : 'text-white/60 hover:text-white'
             }`}
           >
             {activeSection === 'health' && (
@@ -1256,7 +1256,7 @@ export default function App() {
                 className="absolute inset-0 rounded-full bg-white shadow-md"
               />
             )}
-            <Activity className="w-4 h-4 relative z-10" />
+            <Activity className="w-4 h-4 relative z-10" strokeWidth={1.5} />
             <span className="relative z-10 text-xs">Health</span>
           </button>
 
@@ -1264,7 +1264,7 @@ export default function App() {
             type="button"
             onClick={() => setActiveSection('skin')}
             className={`relative flex-1 min-h-[46px] rounded-full text-xs font-semibold flex items-center justify-center gap-1.5 transition-colors ${
-              activeSection === 'skin' ? 'text-zinc-950 font-bold' : 'text-zinc-400 hover:text-white'
+              activeSection === 'skin' ? 'text-zinc-950 font-bold' : 'text-white/60 hover:text-white'
             }`}
           >
             {activeSection === 'skin' && (
@@ -1274,7 +1274,7 @@ export default function App() {
                 className="absolute inset-0 rounded-full bg-white shadow-md"
               />
             )}
-            <Sparkles className="w-4 h-4 relative z-10" />
+            <Sparkles className="w-4 h-4 relative z-10" strokeWidth={1.5} />
             <span className="relative z-10 text-xs">Skin</span>
           </button>
 
@@ -1282,7 +1282,7 @@ export default function App() {
             type="button"
             onClick={() => setActiveSection('wardrobe')}
             className={`relative flex-1 min-h-[46px] rounded-full text-xs font-semibold flex items-center justify-center gap-1.5 transition-colors ${
-              activeSection === 'wardrobe' ? 'text-zinc-950 font-bold' : 'text-zinc-400 hover:text-white'
+              activeSection === 'wardrobe' ? 'text-zinc-950 font-bold' : 'text-white/60 hover:text-white'
             }`}
           >
             {activeSection === 'wardrobe' && (
@@ -1292,7 +1292,7 @@ export default function App() {
                 className="absolute inset-0 rounded-full bg-white shadow-md"
               />
             )}
-            <Shirt className="w-4 h-4 relative z-10" />
+            <Shirt className="w-4 h-4 relative z-10" strokeWidth={1.5} />
             <span className="relative z-10 text-xs">Fits</span>
           </button>
         </div>

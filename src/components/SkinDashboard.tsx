@@ -2,7 +2,6 @@ import React, { useMemo, useRef, useState } from 'react';
 import {
   Calendar,
   Check,
-  CheckCircle2,
   Edit3,
   Loader2,
   Plus,
@@ -13,19 +12,18 @@ import { motion, AnimatePresence } from 'motion/react';
 import { api } from '../services/apiClient';
 import { cropImageToSquare } from '../utils/imageCropper';
 import {
-  SkincareSegmentIcon,
-  HaircareSegmentIcon,
-  BodycareSegmentIcon,
   getCategoryIcon,
   ProductPhotoSilhouette,
   CameraUploadIcon,
   PhotoUploadIcon,
-  SunRoutineIcon,
-  MoonRoutineIcon,
-  SunMoonRoutineIcon,
-  WeeklyRoutineIcon,
-  EmptyCareShelfIcon,
 } from './SkinIcons';
+import {
+  ScreenHeader,
+  ChipBar,
+  TodayRow,
+  ItemCard,
+  EmptyState,
+} from './shared';
 import {
   CareProductDoc,
   CareSegment,
@@ -64,24 +62,16 @@ const SEGMENT_META: Record<
   CareSegment,
   {
     title: string;
-    icon: React.FC<{ className?: string }>;
-    accentColor: string;
   }
 > = {
   skincare: {
     title: 'Skincare',
-    icon: SkincareSegmentIcon,
-    accentColor: 'text-rose-400',
   },
   haircare: {
     title: 'Haircare',
-    icon: HaircareSegmentIcon,
-    accentColor: 'text-amber-400',
   },
   bodycare: {
     title: 'Bodycare',
-    icon: BodycareSegmentIcon,
-    accentColor: 'text-sky-400',
   },
 };
 
@@ -669,12 +659,18 @@ export const SkinDashboard: React.FC<SkinDashboardProps> = ({
         </div>
       )}
 
-      {/* 1. TOP SEGMENT TOGGLE (Skincare / Haircare / Bodycare) + Add Product "+" Button */}
+      {/* 1. PERSONAL HEADER */}
+      <ScreenHeader
+        eyebrow="PERSONAL CARE STUDIO"
+        title={`${profile.name}’s Personal Care Routine`}
+        subtitle="Your skincare, haircare and bodycare, in one shelf."
+      />
+
+      {/* 2. SEGMENTED CONTROL (Skincare / Haircare / Bodycare) + Round White "+" Button */}
       <div className="flex items-center justify-between gap-2.5">
         <div className="flex-1 flex items-center p-1 rounded-full bg-[#12141C] border border-white/10 shadow-lg">
           {(['skincare', 'haircare', 'bodycare'] as CareSegment[]).map((seg) => {
             const meta = SEGMENT_META[seg];
-            const Icon = meta.icon;
             const isActive = activeSegment === seg;
             return (
               <button
@@ -684,7 +680,7 @@ export const SkinDashboard: React.FC<SkinDashboardProps> = ({
                   setActiveSegment(seg);
                   setSelectedSubCategory('all');
                 }}
-                className={`relative flex-1 min-h-[40px] px-2 sm:px-4 rounded-full text-xs font-semibold flex items-center justify-center gap-1.5 transition-colors ${
+                className={`relative flex-1 min-h-[40px] px-2 sm:px-4 rounded-full text-xs font-semibold flex items-center justify-center transition-colors ${
                   isActive ? 'text-zinc-950 font-bold' : 'text-zinc-400 hover:text-white'
                 }`}
               >
@@ -695,18 +691,17 @@ export const SkinDashboard: React.FC<SkinDashboardProps> = ({
                     className="absolute inset-0 rounded-full bg-white shadow-md"
                   />
                 )}
-                <Icon className="w-3.5 h-3.5 relative z-10 shrink-0" />
                 <span className="relative z-10">{meta.title}</span>
               </button>
             );
           })}
         </div>
 
-        {/* Small "+" Add Product Button */}
+        {/* Round White "+" Add Product Button */}
         <button
           type="button"
           onClick={() => handleOpenAddProduct()}
-          className="w-11 h-11 rounded-full bg-white hover:bg-zinc-200 text-zinc-950 flex items-center justify-center shadow-lg transition-transform active:scale-95 shrink-0"
+          className="w-11 h-11 rounded-full bg-white hover:bg-zinc-200 text-zinc-950 flex items-center justify-center shadow-lg transition-transform active:scale-95 shrink-0 cursor-pointer"
           title={`Add ${SEGMENT_META[activeSegment].title} Product`}
           aria-label={`Add ${SEGMENT_META[activeSegment].title} Product`}
         >
@@ -714,281 +709,85 @@ export const SkinDashboard: React.FC<SkinDashboardProps> = ({
         </button>
       </div>
 
-      {/* 2. REMINDER / CHECKLIST STRIP */}
-      {todayScheduledProducts.length === 0 ? (
-        /* Collapsed slim row (about 40px) when nothing scheduled */
-        <div className="min-h-[40px] px-4 py-2 rounded-2xl bg-[#12141C] border border-white/8 flex items-center justify-between text-xs text-zinc-400">
-          <div className="flex items-center gap-2">
-            <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
-            <span className="font-medium text-zinc-300">Today’s Care Routine</span>
-          </div>
-          <span className="text-zinc-500 font-mono text-[11px]">No routine today ✓</span>
-        </div>
-      ) : (
-        /* Compact horizontal checklist with done counter */
-        <div className="rounded-2xl bg-[#12141C] border border-white/8 p-3 space-y-2.5 shadow-md">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2 text-xs font-semibold text-white">
-              <WeeklyRoutineIcon className="w-3.5 h-3.5 text-rose-400 shrink-0" />
-              <span>Today’s Routine Checklist</span>
-            </div>
-            <span className="text-xs font-mono font-bold text-rose-300 px-2.5 py-0.5 rounded-full bg-rose-500/15 border border-rose-500/30">
-              {checklistDoneCount}/{todayScheduledProducts.length} done
-            </span>
-          </div>
-
-          <div className="flex items-center gap-2 overflow-x-auto no-scrollbar pb-0.5">
+      {/* 3. TODAY'S CARE ROUTINE ROW (1px hairline above and below, no box, no fill) */}
+      <TodayRow
+        title="Today’s Care Routine"
+        statusText={
+          todayScheduledProducts.length === 0
+            ? 'No routine today'
+            : `${checklistDoneCount}/${todayScheduledProducts.length} completed`
+        }
+      >
+        {todayScheduledProducts.length > 0 && (
+          <div className="flex items-center gap-2 overflow-x-auto no-scrollbar py-1">
             {sortedChecklist.map((prod) => {
               const isDone = Boolean(
                 routineCompletionsMap[`${profile.slot}_${prod.id}_${todayDate}`]?.completed
               );
-              const ItemIcon = getCategoryIcon(prod.subCategory, prod.segment);
               return (
                 <button
                   key={prod.id}
                   type="button"
                   onClick={() => onToggleRoutineCompletion(prod.id, todayDate, !isDone)}
-                  className={`min-h-[38px] px-3 py-1.5 rounded-xl border flex items-center gap-2 text-xs font-medium whitespace-nowrap transition-all active:scale-95 shrink-0 ${
+                  className={`min-h-[34px] px-3.5 py-1 rounded-full border text-xs font-medium whitespace-nowrap transition-all active:scale-95 shrink-0 flex items-center gap-1.5 ${
                     isDone
                       ? 'bg-emerald-500/10 border-emerald-500/30 text-emerald-300 line-through opacity-75'
-                      : 'bg-[#090A0F] border-white/10 text-white hover:border-white/20'
+                      : 'bg-white/[0.04] border-white/10 text-white hover:border-white/20'
                   }`}
                 >
-                  <div
-                    className={`w-4 h-4 rounded-full flex items-center justify-center border transition-colors ${
-                      isDone
-                        ? 'bg-emerald-500 border-emerald-500 text-white'
-                        : 'border-zinc-500 bg-transparent'
-                    }`}
-                  >
-                    {isDone && <Check className="w-2.5 h-2.5 stroke-[3]" />}
-                  </div>
-                  <ItemIcon className="w-3.5 h-3.5 text-zinc-400 shrink-0" />
-                  <span className="truncate max-w-[130px]">{prod.name}</span>
-                  <span className="text-[10px] text-zinc-500 font-mono">({prod.subCategory})</span>
+                  <span className={`w-1.5 h-1.5 rounded-full ${isDone ? 'bg-emerald-400' : 'bg-white/40'}`} />
+                  <span>{prod.name}</span>
+                  <span className="text-[10px] text-white/40 font-mono">({prod.subCategory})</span>
                 </button>
               );
             })}
           </div>
+        )}
+      </TodayRow>
+
+      {/* 4. CATEGORY CHIP BAR (Single row, ghost inactive, rose active, no icons) */}
+      <ChipBar
+        categories={[
+          { id: 'all', label: 'All', count: segmentProducts.length },
+          ...activeCategories.map((cat) => ({
+            id: cat,
+            label: cat,
+            count: segmentProducts.filter((p) => p.subCategory === cat).length,
+          })),
+        ]}
+        selectedCategory={selectedSubCategory}
+        onSelectCategory={setSelectedSubCategory}
+      />
+
+      {/* 5. 2-COLUMN PRODUCT GRID OR TEXT-ONLY EMPTY STATE */}
+      {filteredGridProducts.length === 0 ? (
+        <EmptyState
+          title="No products yet"
+          subtitle={
+            selectedSubCategory === 'all'
+              ? `Add your first ${SEGMENT_META[activeSegment].title.toLowerCase()} product to start your care routine.`
+              : `No products in "${selectedSubCategory}". Add your first product to this shelf.`
+          }
+          actionLabel="+ Add Product"
+          onAction={() => handleOpenAddProduct(selectedSubCategory)}
+        />
+      ) : (
+        <div className="grid grid-cols-2 gap-3">
+          {filteredGridProducts.map((product, idx) => (
+            <ItemCard
+              key={product.id}
+              id={product.id}
+              name={product.name}
+              brand={product.brand}
+              category={product.subCategory}
+              imageUrl={product.imageUrl}
+              thumbnailUrl={product.thumbnailUrl}
+              index={idx}
+              onClick={() => setSelectedProductForDetail(product)}
+            />
+          ))}
         </div>
       )}
-
-      {/* 3. PRODUCT GRID (2×2) WITH CATEGORY FILTER CHIPS */}
-      <div className="space-y-3">
-        {/* Horizontally scrollable thin row of category filter chips with domain SVGs */}
-        <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar py-0.5">
-          <button
-            type="button"
-            onClick={() => setSelectedSubCategory('all')}
-            className={`min-h-[32px] px-3.5 rounded-full text-xs font-semibold whitespace-nowrap transition-all active:scale-95 flex items-center gap-1.5 ${
-              selectedSubCategory === 'all'
-                ? 'bg-rose-500 text-white shadow-md shadow-rose-500/20'
-                : 'bg-[#12141C] text-zinc-400 hover:text-white border border-white/8'
-            }`}
-          >
-            {React.createElement(SEGMENT_META[activeSegment].icon, { className: 'w-3 h-3 shrink-0' })}
-            <span>All ({segmentProducts.length})</span>
-          </button>
-          {activeCategories.map((cat) => {
-            const count = segmentProducts.filter((p) => p.subCategory === cat).length;
-            const isSelected = selectedSubCategory === cat;
-            const CatIcon = getCategoryIcon(cat, activeSegment);
-            return (
-              <button
-                key={cat}
-                type="button"
-                onClick={() => setSelectedSubCategory(cat)}
-                className={`min-h-[32px] px-3.5 rounded-full text-xs font-semibold whitespace-nowrap transition-all active:scale-95 flex items-center gap-1.5 ${
-                  isSelected
-                    ? 'bg-rose-500 text-white shadow-md shadow-rose-500/20'
-                    : 'bg-[#12141C] text-zinc-400 hover:text-white border border-white/8'
-                }`}
-              >
-                <CatIcon className="w-3 h-3 shrink-0" />
-                <span>{cat}</span>
-                {count > 0 && <span className="opacity-70 text-[10px] ml-0.5">({count})</span>}
-              </button>
-            );
-          })}
-        </div>
-
-        {/* 2×2 Product Grid */}
-        {filteredGridProducts.length === 0 ? (
-          <div className="rounded-3xl bg-[#12141C] border border-white/8 p-8 text-center space-y-3">
-            <EmptyCareShelfIcon className="w-12 h-12 text-zinc-600 mx-auto" />
-            <div className="space-y-1">
-              <h3 className="text-sm font-bold text-white">No products found</h3>
-              <p className="text-xs text-zinc-400">
-                {selectedSubCategory === 'all'
-                  ? `No ${SEGMENT_META[activeSegment].title} items added yet.`
-                  : `No products in "${selectedSubCategory}".`}
-              </p>
-            </div>
-            <button
-              type="button"
-              onClick={() => handleOpenAddProduct(selectedSubCategory)}
-              className="min-h-[40px] px-5 rounded-xl bg-white text-zinc-950 font-bold text-xs inline-flex items-center gap-1.5 transition-transform active:scale-95 shadow-md"
-            >
-              <Plus className="w-3.5 h-3.5 stroke-[2.5]" />
-              <span>Add Product</span>
-            </button>
-          </div>
-        ) : (
-          <div className="grid grid-cols-2 gap-3">
-            {filteredGridProducts.map((product) => {
-              const isDaily =
-                product.scheduleType === 'daily' ||
-                (product.routineTime !== 'weekly' && product.scheduleType !== 'weekly');
-
-              const statusMeta = STATUS_CONFIG[product.status] || STATUS_CONFIG.in_use;
-              const isUploadingThisCard = uploadingCardProductId === product.id;
-              const CatIcon = getCategoryIcon(product.subCategory, product.segment);
-
-              return (
-                <div
-                  key={product.id}
-                  onClick={() => setSelectedProductForDetail(product)}
-                  className="rounded-2xl bg-[#12141C] border border-white/10 hover:border-white/20 p-3 flex flex-col justify-between transition-all duration-150 cursor-pointer shadow-md active:scale-[0.98] group"
-                >
-                  <div className="space-y-2.5">
-                    {/* 1:1 Aspect Ratio Photo or Domain Silhouette Placeholder */}
-                    <div className="aspect-square w-full rounded-xl bg-zinc-950 border border-white/6 overflow-hidden relative flex items-center justify-center">
-                      {product.imageUrl ? (
-                        <img
-                          src={product.thumbnailUrl || product.imageUrl}
-                          alt={product.name}
-                          loading="lazy"
-                          decoding="async"
-                          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-200"
-                        />
-                      ) : (
-                        <div className="w-full h-full flex flex-col items-center justify-center text-zinc-600 bg-zinc-900/40">
-                          <ProductPhotoSilhouette className="w-12 h-12 text-zinc-600" />
-                        </div>
-                      )}
-
-                      {/* Status Dot Pill at top-left */}
-                      <div className="absolute top-2 left-2 flex items-center gap-1 px-1.5 py-0.5 rounded-full bg-black/75 backdrop-blur-sm border border-white/10 z-10">
-                        <span className={`w-2 h-2 rounded-full ${statusMeta.dotColor} shrink-0`} />
-                        <span className="text-[9px] font-semibold text-zinc-300">
-                          {statusMeta.label}
-                        </span>
-                      </div>
-
-                      {/* Quick 1:1 Photo Upload Button on Card */}
-                      <button
-                        type="button"
-                        onClick={(e) => handleTriggerCardUpload(e, product.id)}
-                        disabled={isUploadingThisCard}
-                        className="absolute bottom-1.5 right-1.5 w-7 h-7 rounded-lg bg-black/80 hover:bg-black/95 active:scale-90 backdrop-blur-md border border-white/20 text-zinc-300 hover:text-white flex items-center justify-center transition-all z-10 shadow-md group/btn"
-                        title="Upload 1:1 photo"
-                        aria-label="Upload 1:1 photo"
-                      >
-                        {isUploadingThisCard ? (
-                          <Loader2 className="w-3.5 h-3.5 animate-spin text-rose-400" />
-                        ) : (
-                          <CameraUploadIcon className="w-3.5 h-3.5 group-hover/btn:text-rose-400 transition-colors" />
-                        )}
-                      </button>
-
-                      {/* Processing Overlay during 1:1 Crop / Upload */}
-                      {isUploadingThisCard && (
-                        <div className="absolute inset-0 bg-black/80 backdrop-blur-xs flex flex-col items-center justify-center gap-1 z-20">
-                          <Loader2 className="w-5 h-5 animate-spin text-rose-400" />
-                          <span className="text-[9px] font-mono font-semibold text-white">Cropping 1:1...</span>
-                        </div>
-                      )}
-                    </div>
-
-                    {/* Brand & Name */}
-                    <div className="space-y-0.5">
-                      <div className="text-[10px] text-zinc-400 font-mono truncate uppercase tracking-wider">
-                        {product.brand || 'Care Essential'}
-                      </div>
-                      <h4 className="text-xs sm:text-sm font-bold text-white line-clamp-2 leading-snug">
-                        {product.name}
-                      </h4>
-                    </div>
-
-                    {/* Category Tag with Domain SVG Icon */}
-                    <div className="flex items-center gap-1.5 flex-wrap">
-                      <span className="inline-flex items-center gap-1 text-[10px] px-2 py-0.5 rounded-md bg-white/6 text-zinc-300 font-medium">
-                        <CatIcon className="w-3 h-3 text-zinc-400 shrink-0" />
-                        <span>{product.subCategory}</span>
-                      </span>
-                    </div>
-                  </div>
-
-                  {/* Bottom: Schedule Indicator */}
-                  <div className="pt-2.5 mt-2 border-t border-white/6">
-                    {isDaily ? (
-                      /* Daily Product: Tag only, NO calendar */
-                      <div className="flex items-center justify-between">
-                        <span className="inline-flex items-center gap-1 text-[10px] font-mono font-semibold px-2 py-0.5 rounded-md bg-rose-500/10 text-rose-300 border border-rose-500/20">
-                          {product.routineTime === 'both' ? (
-                            <>
-                              <SunMoonRoutineIcon className="w-3 h-3 text-rose-400 shrink-0" />
-                              <span>AM & PM</span>
-                            </>
-                          ) : product.routineTime === 'am' ? (
-                            <>
-                              <SunRoutineIcon className="w-3 h-3 text-amber-400 shrink-0" />
-                              <span>AM Routine</span>
-                            </>
-                          ) : product.routineTime === 'pm' ? (
-                            <>
-                              <MoonRoutineIcon className="w-3 h-3 text-indigo-400 shrink-0" />
-                              <span>PM Routine</span>
-                            </>
-                          ) : (
-                            <span>Daily</span>
-                          )}
-                        </span>
-                        <span className="text-[10px] text-zinc-500 font-mono">Daily</span>
-                      </div>
-                    ) : (
-                      /* Weekly Non-Daily Product: Mini Calendar Strip (S M T W T F S) */
-                      <div className="space-y-1">
-                        <div className="flex items-center justify-between gap-1">
-                          {DAYS_OF_WEEK.map((day) => {
-                            const res = getDayStatus(day, product);
-                            if (!res.isScheduled) {
-                              return (
-                                <div
-                                  key={day.id}
-                                  className="w-5 h-5 rounded-full flex items-center justify-center text-[9px] font-mono text-zinc-700 select-none"
-                                >
-                                  {day.letter}
-                                </div>
-                              );
-                            }
-
-                            return (
-                              <div
-                                key={day.id}
-                                className={`w-5 h-5 rounded-full flex items-center justify-center text-[9px] font-mono transition-transform select-none ${
-                                  res.status === 'applied'
-                                    ? 'bg-emerald-500 text-white font-bold'
-                                    : res.status === 'missed'
-                                    ? 'bg-rose-500 text-white font-bold'
-                                    : 'bg-amber-400 text-zinc-950 font-bold'
-                                } ${res.isToday ? 'ring-1.5 ring-white shadow-sm' : ''}`}
-                                title={`${day.id}: ${res.status}`}
-                              >
-                                {day.letter}
-                              </div>
-                            );
-                          })}
-                        </div>
-                      </div>
-                    )}
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-        )}
-      </div>
 
       {/* 4. CARD DETAIL MODAL (ON TAP) */}
       <AnimatePresence>
@@ -1437,7 +1236,6 @@ export const SkinDashboard: React.FC<SkinDashboardProps> = ({
                     <label className="block text-xs font-semibold text-zinc-300 mb-1.5">Care Segment</label>
                     <div className="grid grid-cols-3 gap-1.5 p-1 bg-[#090A0F] border border-white/10 rounded-2xl">
                       {(['skincare', 'haircare', 'bodycare'] as CareSegment[]).map((seg) => {
-                        const SegIcon = SEGMENT_META[seg].icon;
                         const isSelected = formSegment === seg;
                         return (
                           <button
@@ -1450,13 +1248,12 @@ export const SkinDashboard: React.FC<SkinDashboardProps> = ({
                                 setFormSubCategory(cats[0] || 'Cleanser');
                               }
                             }}
-                            className={`min-h-[40px] rounded-xl text-xs font-semibold capitalize flex items-center justify-center gap-1.5 transition-colors ${
+                            className={`min-h-[40px] rounded-xl text-xs font-semibold capitalize flex items-center justify-center transition-colors ${
                               isSelected
                                 ? 'bg-white text-zinc-950 font-bold shadow-sm'
                                 : 'text-zinc-400 hover:text-white'
                             }`}
                           >
-                            <SegIcon className="w-3.5 h-3.5 shrink-0" />
                             <span>{seg}</span>
                           </button>
                         );
